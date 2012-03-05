@@ -3,7 +3,7 @@ CC = clang
 SRC = arbre.c  scanner.c  token.c     source.c  tokens.c\
 	  util.c   parser.c   generator.c tree.c    report.c\
 	  io.c     node.c     runtime.c   value.c   hash.c\
-	  vm.c     op.c       symtab.c    command.c
+	  vm.c     op.c       symtab.c    command.c error.c
 HEADERS = *.h
 CFLAGS = -Wall -pedantic -std=c99 -O0
 TARGET = bin/arbre

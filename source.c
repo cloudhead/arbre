@@ -14,9 +14,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <error.h>
 
 #include "source.h"
+#include "error.h"
 
 static char *readfile(const char *, size_t *);
 

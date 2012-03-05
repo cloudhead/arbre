@@ -13,7 +13,6 @@
 #include  <string.h>
 #include  <inttypes.h>
 #include  <errno.h>
-#include  <error.h>
 
 #include  "arbre.h"
 #include  "scanner.h"
@@ -23,6 +22,7 @@
 #include  "vm.h"
 #include  "generator.h"
 #include  "command.h"
+#include  "error.h"
 
 static int   command_build(Command *cmd);
 static int   command_run(Command *cmd);

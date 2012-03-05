@@ -21,7 +21,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <error.h>
 #include <limits.h>
 #include <assert.h>
 
@@ -30,6 +29,7 @@
 #include "op.h"
 #include "runtime.h"
 #include "vm.h"
+#include "error.h"
 
 #define DEBUG
 

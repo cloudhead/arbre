@@ -15,7 +15,6 @@
  */
 #include <string.h>
 #include <errno.h>
-#include <error.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -27,6 +26,7 @@
 #include "runtime.h"
 #include "vm.h"
 #include "generator.h"
+#include "error.h"
 
 size_t strnlen(const char *, size_t);
 char  *strndup(const char *, size_t);
