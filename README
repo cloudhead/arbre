@@ -18,9 +18,9 @@ SYNOPSIS
     arbre <command> [options]
 
 COMMANDS
-    build      compile modules and dependencies\n"
-    clean      remove .out files\n"
-    run        compile and run\n"
+    build      compile modules and dependencies
+    clean      remove .out files
+    run        compile and run
 
 OPTIONS
     -v         verbose
