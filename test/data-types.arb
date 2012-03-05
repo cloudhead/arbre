@@ -1,0 +1,47 @@
+--! arbre build $FILE --syntax
+
+----------------
+-- data-types --
+----------------
+
+- numbers:
+    42
+    42.0
+    -42
+    911.911
+    -0.01
+
+- atoms:
+    fnord
+    fnord_fnord
+    fnord.fnord
+
+- strings:
+    "fnord"
+    "fnord fnord"
+
+- tuples:
+    ()
+    (fnord)
+    ((fnord))
+    (fnord, fnord)
+    (fnord, (fnord, (fnord)))
+    ("fnord", fnord, (fnord))
+    ((fnord, fnord), (fnord, fnord))
+
+- lists:
+    []
+    [fnord]
+    [fnord, fnord]
+    [1]
+    [1..10]
+
+- records:
+    {}
+    {fnord:"fnord"}
+    {fnord:{fnord:42}}
+    {fnord:"fnord", bnord:"bnord"}
+
+- mixed:
+    ([], [([])])
+    [(fnord), (fnord, fnord), fnord, -42, "[]"]

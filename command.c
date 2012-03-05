@@ -1,0 +1,287 @@
+/*
+ * arbre
+ *
+ * (c) 2011, Alexis Sellier
+ *
+ * command.c
+ *
+ * CLI commands
+ *
+ */
+#include  <stdio.h>
+#include  <stdlib.h>
+#include  <string.h>
+#include  <inttypes.h>
+#include  <errno.h>
+#include  <error.h>
+
+#include  "arbre.h"
+#include  "scanner.h"
+#include  "parser.h"
+#include  "op.h"
+#include  "runtime.h"
+#include  "vm.h"
+#include  "generator.h"
+#include  "command.h"
+
+static int   command_build(Command *cmd);
+static int   command_run(Command *cmd);
+static int   command_test(Command *cmd);
+static void  command_parseopt(Command *cmd, char *arg);
+static void  command_parselopt(Command *cmd, char *arg);
+
+static uint8_t *readbin(const char *path);
+
+struct {
+    CommandOption  type;
+    const char    *name;
+} CMD_OPTIONS[] = {
+    {CMDOPT_SYNTAX,  "syntax"},
+    {CMDOPT_PRE,     "pre"},
+    {CMDOPT_V,       "verbose"},
+    {0, NULL}
+};
+
+struct {
+    CommandType  type;
+    const char  *name;
+    int        (*f)(Command *c);
+} CMD_MAP[] = {
+    {CMD_BUILD,    "build",   command_build},
+    {CMD_RUN,      "run",     command_run},
+    {CMD_TEST,     "test",    command_test},
+ // {CMD_VERSION,  "version", command_version},
+    {0, NULL, NULL}
+};
+
+const char *CMD_USAGE =
+    "usage: arbre <command> [options]\n"
+    "\n"
+    "commands:\n"
+    "    build      compile modules and dependencies\n"
+    "    clean      remove .out files\n"
+    "    run        compile and run\n"
+    "\n"
+    "options:\n"
+    "    -v         verbose\n"
+    "    --help     help\n"
+    "    --version  print version and exit\n"
+    "    --pre      only run the pre-processor phase\n"
+    "    --syntax   only run the syntax checking phase\n";
+
+/*
+ * Command allocator/initialzer
+ */
+Command *command(int argv, char *argc[])
+{
+    Command *c = malloc(sizeof(*c));
+             c->type    = 0;
+             c->options = 0;
+             c->inputs  = malloc(sizeof(char*) * argv);
+             c->inputc  = 0;
+             c->argv    = argv;
+             c->argc    = argc;
+    return   c;
+}
+
+/*
+ * Command de-allocator
+ */
+void command_free(Command *c)
+{
+    free(c->inputs);
+    free(c);
+}
+
+/*
+ * Execute a command.
+ */
+int command_exec(Command *cmd)
+{
+    /* No command passed, print usage */
+    if (cmd->argv == 1) {
+        puts(CMD_USAGE);
+        exit(0);
+    }
+
+    /* Retrieve command type */
+    for (int i = 0; CMD_MAP[i].type; i++) {
+        if (strcmp(cmd->argc[1], CMD_MAP[i].name) == 0) {
+            cmd->type = CMD_MAP[i].type;
+            cmd->f    = CMD_MAP[i].f;
+
+            /* Parse command options */
+            for (int i = 2; i < cmd->argv; i++) {
+                if (cmd->argc[i][0] == '-') {
+                    switch (cmd->argc[i][1]) {
+                        case '-':
+                            command_parselopt(cmd, &cmd->argc[i][2]);
+                            break;
+                        case '\0':
+                            // TODO: Read from STDIN
+                            break;
+                        default:
+                            command_parseopt(cmd, &cmd->argc[i][1]);
+                    }
+                } else {
+                    cmd->inputs[cmd->inputc++] = cmd->argc[i];
+                }
+            }
+            /* Run command */
+            return cmd->f(cmd);
+        }
+    }
+    error(1, 0, "unknown command `%s`", cmd->argc[1]);
+
+    return -1;
+}
+
+/*
+ * Parse short option. Example:
+ *
+ *     -a
+ */
+static void command_parseopt(Command *cmd, char *arg)
+{
+    char c;
+
+    while ((c = *arg++)) {
+        switch (c) {
+            default:
+                break;
+        }
+    }
+}
+
+/*
+ * Parse long option. Example:
+ *
+ *     --help
+ */
+static void command_parselopt(Command *cmd, char *arg)
+{
+    for (int i = 0; CMD_OPTIONS[i].type; i++) {
+        if (strcmp(CMD_OPTIONS[i].name, arg) == 0) {
+            cmd->options |= CMD_OPTIONS[i].type;
+        }
+    }
+}
+
+/*
+ * 'test' command
+ */
+static int command_test(Command *cmd)
+{
+    return 0;
+}
+
+/*
+ * 'run' command
+ */
+static int command_run(Command *c)
+{
+    if (c->inputc > 1)
+        error(1, 0, "more than one input file was given");
+
+    if (c->inputc == 0)
+        puts("usage: arbre run <module>"), exit(0);
+
+    const char *path = c->inputs[0];
+
+    char module[strlen(path)];
+    strcpy(module, path);
+
+    for (int i = 0; i < strlen(module); i++) {
+        if (module[i] == '.') module[i] = '\0';
+    }
+
+    uint8_t *code = readbin(path);
+
+    VM *v = vm();
+    vm_open(v, module, code);
+    vm_run(v, module, "main");
+
+    return 0;
+}
+
+#ifdef DEBUG
+static void ontoken(Token *t)
+{
+    char buff[128];
+    tokentos(t, buff, true);
+    puts(buff);
+}
+#endif
+
+/*
+ * 'build' command
+ */
+static int command_build(Command *c)
+{
+    if (c->inputc == 0)
+        puts("usage: arbre build <files...>"), exit(0);
+
+    for (int i = 0; i < c->inputc; i++) {
+        char *path = c->inputs[i];
+
+        Source  *src = source(path);
+        Parser  *p   = parser(src);
+
+        #ifdef DEBUG
+        p->ontoken = ontoken;
+        #endif
+
+        Tree *tree = parse(p);
+
+        #ifdef DEBUG
+        putchar('\n');
+        #endif
+
+        if (c->options & CMDOPT_AST)
+            pp_tree(tree), putchar('\n');
+
+        if (p->errors > 0)
+            return 1;
+
+        if (c->options & CMDOPT_SYNTAX)
+            break;
+
+        Generator *g = generator(tree, src);
+        FILE *fp;
+
+        char out[strlen(path) + 4 + 1];
+        sprintf(out, "%s.bin", path);
+
+        if (! (fp = fopen(out, "w"))) {
+            error(1, errno, "couldn't create file %s for writing", out);
+        }
+        generate(g, fp);
+    }
+    return 0;
+}
+
+/*
+ * Read an arb.bin file
+ */
+static uint8_t *readbin(const char *path)
+{
+    uint8_t    *buffer;
+    FILE       *fp;
+    size_t      size;
+
+    if (! (fp = fopen(path, "r")))
+        error(1, errno, "error reading %s\n", path);
+
+    fseek(fp, 0L, SEEK_END);
+
+    size = ftell(fp);
+    rewind(fp);
+
+    buffer = malloc(size);
+
+    fread(buffer, sizeof(uint8_t), size, fp);
+
+    fclose(fp);
+
+    return buffer;
+}

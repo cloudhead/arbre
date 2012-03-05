@@ -1,0 +1,11 @@
+--! arbre build $FILE --syntax
+
+-----------
+-- slots --
+-----------
+
+- hello: world
++ hello: world
+
+- hello : world
+

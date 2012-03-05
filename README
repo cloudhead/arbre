@@ -1,0 +1,43 @@
+
+
+
+        ;[[[;;      ;;;;;_     --__--      ;;;;;_      ;---;_  
+        ;[[ }}]]  [[[}#  ;$]  [[]; ;]}   [[[$#  ;$]  [[#{$  ;$]                     
+        {]]   ]]  ]]#;    ][  [|    ;;   ]][;'   ][  ]];     ][              
+        {]#][]#}  ;]]]#};];   [[[]#-:    |]]]#};];   ]]##;]]];               
+        [;    ;]  |;] ;#;     [|     }   ;;]  ;];     ;]]                  
+        [|    |]  |:$   ;];   [[;;}]]'   ||    ;];. .   ;[]};}                     
+         '                                                   '
+
+           ~ Distributed real-time programming environment ~
+
+NAME
+    arbre - A distributed real-time programming environment
+
+SYNOPSIS
+    arbre <command> [options]
+
+COMMANDS
+    build      compile modules and dependencies\n"
+    clean      remove .out files\n"
+    run        compile and run\n"
+
+OPTIONS
+    -v         verbose
+    --help     print help and exit
+    --version  print version and exit
+    --pre      only run the pre-processor phase
+    --syntax   only run the syntax checking phase
+
+BUILD
+    $ make
+
+RUN
+    $ bin/arbre build module.arb
+    $ bin/arbre run module.arb.bin
+
+AUTHOR
+    Alexis Sellier a.k.a cloudhead <alexis@cloudhead.io>
+
+COPYRIGHT
+    Copyright (c) 2011-2012 Alexis Sellier

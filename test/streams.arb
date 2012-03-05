@@ -1,0 +1,18 @@
+--! arbre build $FILE --syntax
+
+-------------
+-- streams --
+-------------
+
++ sending:
+    S <- fnord
+    S <- B
+    S <- (<-Fnord)
+
++ receiving:
+    <-S
+
++ piping:
+    S -> (\X: X) -> S1
+    S -> (\X: X) >> S1 >> S2
+    S -> (S1 -> S2)

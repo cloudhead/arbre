@@ -1,0 +1,21 @@
+--! arbre build $FILE --syntax
+
+------------
+-- select --
+------------
+
++ inline:
+    X ?   1 : 1 | 2 : 2 | 3 : 3
+    X ? | 1 : 1 | 2 : 2 | 3 : 3
+
++ multiline:
+    X ?
+      | 1 : 1
+      | 2 : 2
+      | 3 : 3
+
++ multilinemix: X ?
+                  | 1 : 1
+                  | 2 : 2
+                  | 3 : 3
+
