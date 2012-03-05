@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <stddef.h>
 
 #include "value.h"
 #include "op.h"
