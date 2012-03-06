@@ -56,7 +56,7 @@ main () {
 }
 
 arbre () {
-    ./arbre $@
+    bin/arbre $@
 }
 
 run_test () {
