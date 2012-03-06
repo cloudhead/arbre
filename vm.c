@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <limits.h>
 #include <assert.h>
 
