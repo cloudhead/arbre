@@ -37,6 +37,7 @@ struct {
     const char    *name;
 } CMD_OPTIONS[] = {
     {CMDOPT_SYNTAX,  "syntax"},
+    {CMDOPT_AST,     "ast"},
     {CMDOPT_PRE,     "pre"},
     {CMDOPT_V,       "verbose"},
     {0, NULL}
@@ -59,13 +60,14 @@ const char *CMD_USAGE =
     "\n"
     "commands:\n"
     "    build      compile modules and dependencies\n"
-    "    clean      remove .out files\n"
+    "    clean      remove .arb.bin files\n"
     "    run        compile and run\n"
     "\n"
     "options:\n"
     "    -v         verbose\n"
     "    --help     help\n"
     "    --version  print version and exit\n"
+    "    --ast      print the AST\n"
     "    --pre      only run the pre-processor phase\n"
     "    --syntax   only run the syntax checking phase\n";
 
