@@ -29,7 +29,8 @@ const char *OP_STRINGS[] = {
     [OIDENT]    =  "id",
     [OTYPE]     =  "type",
     [OADD]      =  "add",
-    [OSLOT]     =  "slot",
+    [OPATH]     =  "path",
+    [OMPATH]    =  "mpath",
     [OPIPE]     =  "pipe",
     [OSTRING]   =  "str",
     [OATOM]     =  "atom",
@@ -178,8 +179,13 @@ void pp_nodel(Node *n, int lvl)
                         break;
                 }
                 break;
-            case OSLOT:
-                pp_nodel(n->o.slot.clause, lvl);
+            case OPATH:
+                pp_nodel(n->o.path.name, lvl);
+                putchar(' ');
+                pp_nodel(n->o.path.clause, lvl);
+                break;
+            case OMPATH:
+                pp_nodel(n->o.mpath.clause, lvl);
                 break;
             case OMATCH:
                 pp_nodel(n->o.match.lval, lvl);

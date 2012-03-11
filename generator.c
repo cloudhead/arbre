@@ -44,7 +44,7 @@ static int    gen_tuple   (Generator *, Node *);
 static int    gen_add     (Generator *, Node *);
 static int    gen_num     (Generator *, Node *);
 static int    gen_atom    (Generator *, Node *);
-static int    gen_slot    (Generator *, Node *);
+static int    gen_path    (Generator *, Node *);
 static int    gen_select  (Generator *, Node *);
 static int    gen_apply   (Generator *, Node *);
 static int    gen_access  (Generator *, Node *);
@@ -58,13 +58,13 @@ int (*OP_GENERATORS[])(Generator*, Node*) = {
     [OMODULE]   =  NULL,       [OSELECT]   =  gen_select,
     [OWAIT]     =  NULL,       [OIDENT]    =  gen_ident,
     [OTYPE]     =  NULL,       [OADD]      =  gen_add,
-    [OSLOT]     =  gen_slot,   [OPIPE]     =  NULL,
+    [OPATH]     =  gen_path,   [OMPATH]    =  NULL,
     [OSTRING]   =  NULL,       [OATOM]     =  gen_atom,
     [OCHAR]     =  NULL,       [ONUMBER]   =  gen_num,
     [OTUPLE]    =  gen_tuple,  [OLIST]     =  NULL,
     [OACCESS]   =  gen_access, [OAPPLY]    =  gen_apply,
     [OSEND]     =  NULL,       [ORANGE]    =  NULL,
-    [OCLAUSE]   =  NULL
+    [OCLAUSE]   =  NULL,       [OPIPE]     =  NULL
 };
 
 /*
@@ -263,16 +263,16 @@ static int gen_add(Generator *g, Node *n)
     return reg;
 }
 
-static int gen_slot(Generator *g, Node *n)
+static int gen_path(Generator *g, Node *n)
 {
-    char *name = n->o.slot.clause->o.clause.lval->o.atom;
+    char *name = n->o.path.name->o.atom;
 
     g->path = g->paths[g->pathsn] = pathentry(name, n, g->pathsn);
     symtab_insert(g->tree->psymbols, name, psymbol(name, g->path));
 
     g->pathsn ++;
 
-    int reg = gen_clause(g, n->o.slot.clause);
+    int reg = gen_clause(g, n->o.path.clause);
 
     gen(g, 0); /* Terminator */
 

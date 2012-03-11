@@ -1,11 +1,17 @@
 --! arbre build $FILE --syntax
 
 -----------
--- slots --
+-- paths --
 -----------
 
-- hello: world
-+ hello: world
+hello: world
+hello : world
 
-- hello : world
+./hello : world
+./hello: world
+
+./hello X: world
+./hello X : world
+./hello (X) : world
+./hello(X) : world
 

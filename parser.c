@@ -709,39 +709,68 @@ static Node *parse_clause(Parser *p)
 {
     Node *n = node(p->token, OCLAUSE);
 
-    if ((n->o.bind.lval = parse_pattern(p))) {
-        if (expect(p, T_COLON)) {
-            n->o.bind.rval = parse_block(p);
-        }
+    if (p->tok == T_COLON) {
+        next(p);
+        n->o.clause.lval = node(p->token, OTUPLE);
+        n->o.clause.lval->o.tuple.arity = 0;
+    } else if ((n->o.bind.lval = parse_pattern(p))) {
+        expect(p, T_COLON);
     } else {
         error(p, "expected clause pattern");
     }
+    n->o.bind.rval = parse_block(p);
+    return n;
+}
+
+/*
+ * Parse message path. Example:
+ *
+ *     + (ping) : pong
+ */
+static Node *parse_msgpath(Parser *p)
+{
+    Node  *n = node(p->token, OMPATH);
+
+    next(p); // Consume `+`
+
+    n->o.mpath.type   = PATH_MSG;
+    n->o.mpath.clause = parse_clause(p);
+
     return n;
 }
 
 /*
  * Parse path. Example:
  *
- *     - ping : pong
+ *     ./ping : pong
  */
 static Node *parse_path(Parser *p)
 {
     Node  *n = NULL;
-    int    type;
+    PATH   type;
 
     switch (p->tok) {
-        case T_PLUS:
-        case T_MINUS:
-            type = 0;
+        case T_PERIOD:
+            next(p);
+            expect(p, T_SLASH);
+            type = PATH_PUB;
+            break;
+        case T_ATOM:
+            type = PATH_PRIV;
+            break;
         default:
+            error(p, ERR_DEFAULT);
             break;
     }
-    n = node(p->token, OSLOT);
+    n = node(p->token, OPATH);
 
-    next(p);
-
-    n->o.slot.type   = PATH_PUB;
-    n->o.slot.clause = parse_clause(p);
+    if (p->tok == T_ATOM) {
+        n->o.path.name = parse_atom(p);
+    } else {
+        error(p, "expected atom");
+    }
+    n->o.path.type   = type;
+    n->o.path.clause = parse_clause(p);
 
     return n;
 }
@@ -898,10 +927,12 @@ static Node *parse_toplevel(Parser *p)
     Node *node = NULL;
 
     switch (p->tok) {
-        case T_MINUS: case T_PLUS:
+        case T_PERIOD:
+        case T_ATOM:
             node = parse_path(p);
             break;
-        case T_PERIOD:
+        case T_PLUS:
+            node = parse_msgpath(p);
             break;
         case T_SLASH:
             node = parse_decl(p);

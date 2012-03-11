@@ -18,7 +18,7 @@ typedef enum {
 
     /* Stateful */
     ODECL, OBIND, OMATCH,
-    OMODULE, OSELECT, OSLOT,
+    OMODULE, OSELECT, OPATH, OMPATH,
 
     /* Operands */
     OIDENT, OTYPE, OSTRING, OCHAR,
@@ -101,8 +101,14 @@ struct Node {
 
         struct {
             PATH          type;
+            struct Node  *name;
             struct Node  *clause;
-        } slot;
+        } path;
+
+        struct {
+            PATH          type;
+            struct Node  *clause;
+        } mpath;
 
         struct {
             struct Node  *module;
