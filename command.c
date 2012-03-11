@@ -30,7 +30,7 @@ static int   command_test(Command *cmd);
 static void  command_parseopt(Command *cmd, char *arg);
 static void  command_parselopt(Command *cmd, char *arg);
 
-static uint8_t *readbin(const char *path);
+static uint8_t *freadbin(FILE *fp, const char *path);
 
 struct {
     CommandOption  type;
@@ -83,6 +83,7 @@ Command *command(int argv, char *argc[])
              c->inputc  = 0;
              c->argv    = argv;
              c->argc    = argc;
+             c->fp      = NULL;
     return   c;
 }
 
@@ -92,6 +93,7 @@ Command *command(int argv, char *argc[])
 void command_free(Command *c)
 {
     free(c->inputs);
+    fclose(c->fp);
     free(c);
 }
 
@@ -188,16 +190,20 @@ static int command_run(Command *c)
     if (c->inputc == 0)
         puts("usage: arbre run <module>"), exit(0);
 
+    command_build(c);
+
     const char *path = c->inputs[0];
 
-    char module[strlen(path)];
-    strcpy(module, path);
+    char *module = strdup(path);
 
     for (int i = 0; i < strlen(module); i++) {
-        if (module[i] == '.') module[i] = '\0';
+        if (module[i] == '.') {
+            module[i] = '\0';
+            break;
+        }
     }
 
-    uint8_t *code = readbin(path);
+    uint8_t *code = freadbin(c->fp, module);
 
     VM *v = vm();
     vm_open(v, module, code);
@@ -220,6 +226,8 @@ static void ontoken(Token *t)
  */
 static int command_build(Command *c)
 {
+    // TODO: If no files were specified, build all arbre
+    // files in the current dir.
     if (c->inputc == 0)
         puts("usage: arbre build <files...>"), exit(0);
 
@@ -249,15 +257,14 @@ static int command_build(Command *c)
             break;
 
         Generator *g = generator(tree, src);
-        FILE *fp;
 
         char out[strlen(path) + 4 + 1];
         sprintf(out, "%s.bin", path);
 
-        if (! (fp = fopen(out, "w"))) {
+        if (! (c->fp = fopen(out, "w+"))) {
             error(1, errno, "couldn't create file %s for writing", out);
         }
-        generate(g, fp);
+        generate(g, c->fp);
     }
     return 0;
 }
@@ -265,14 +272,10 @@ static int command_build(Command *c)
 /*
  * Read an arb.bin file
  */
-static uint8_t *readbin(const char *path)
+static uint8_t *freadbin(FILE *fp, const char *module)
 {
     uint8_t    *buffer;
-    FILE       *fp;
     size_t      size;
-
-    if (! (fp = fopen(path, "r")))
-        error(1, errno, "error reading %s\n", path);
 
     fseek(fp, 0L, SEEK_END);
 
@@ -282,8 +285,6 @@ static uint8_t *readbin(const char *path)
     buffer = malloc(size);
 
     fread(buffer, sizeof(uint8_t), size, fp);
-
-    fclose(fp);
 
     return buffer;
 }

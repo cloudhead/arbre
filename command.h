@@ -19,6 +19,7 @@ struct Command {
     int          argv;
     char       **argc;
     int        (*f)(struct Command *);
+    FILE        *fp;
 };
 
 typedef  struct Command  Command;
