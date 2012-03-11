@@ -22,7 +22,7 @@ main () {
         run_test $file
         case $? in
             0)
-                echo -ne "\e[$(expr $COLS - 2)G"
+                echo -ne "\033[$(expr $COLS - 2)G"
                 echo -e "$BOLD${GREEN}OK$CLEAR"
                 PASSED=$(expr $PASSED + 1)
                 ;;
