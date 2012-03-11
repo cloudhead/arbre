@@ -121,7 +121,8 @@ void pp_nodel(Node *n, int lvl)
     NodeList *ns;
     OP        op = n->op;
 
-    putchar('('), opprint(op), putchar(' ');
+    if (lvl > 0)
+        putchar('('), opprint(op), putchar(' ');
 
     if (op == OBLOCK) {
         ns = n->o.block.body;
@@ -199,7 +200,7 @@ void pp_nodel(Node *n, int lvl)
                 break;
             case OLIST:
                 if (n->o.list.length == 0) {
-                    puts("∅");
+                    printf("∅");
                     break;
                 }
                 for (ns = n->o.list.items ; ns ; ns = ns->tail) {
@@ -208,7 +209,7 @@ void pp_nodel(Node *n, int lvl)
                 break;
             case OTUPLE:
                 if (n->o.tuple.arity == 0) {
-                    puts("∅");
+                    printf("∅");
                     break;
                 }
                 for (ns = n->o.tuple.members ; ns ; ns = ns->tail) {
@@ -217,13 +218,13 @@ void pp_nodel(Node *n, int lvl)
                 }
                 break;
             case OIDENT:
-                puts(n->src);
+                printf("%s", n->src);
                 if (n->type != -1) {
                     printf(" : %d", n->type);
                 }
                 break;
             case OSTRING: case ONUMBER: case OATOM:
-                puts(n->src);
+                printf("%s", n->src);
                 break;
             default: break;
         }
