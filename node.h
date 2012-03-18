@@ -42,6 +42,8 @@ typedef enum {
     PATH_PUB
 } PATH;
 
+extern TYPE OP_TYPES[];
+
 /*
  * # `Node` and `NodeList` data-type definitions
  *

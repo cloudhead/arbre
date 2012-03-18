@@ -375,6 +375,42 @@ static int gen_node(Generator *g, Node *n)
     return OP_GENERATORS[n->op](g, n);
 }
 
+static void dump_atom(Node *n, FILE *out)
+{
+    fputc(strlen(n->o.atom), out);
+    fwrite(n->o.atom, strlen(n->o.atom) + 1, 1, out);
+}
+
+static void dump_node(Node *n, FILE *out)
+{
+    NodeList *ns;
+
+    fputc(OP_TYPES[n->op], out);
+
+    switch (n->op) {
+        case OTUPLE:
+            fputc(n->o.tuple.arity, out);
+            for (ns = n->o.tuple.members ; ns ; ns = ns->tail) {
+                dump_node(ns->head, out);
+            }
+            break;
+        case OIDENT:
+            /* The type is all that matters (TYPE_ANY) */
+            break;
+        case OATOM:
+            dump_atom(n, out);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}
+
+static void dump_pattern(Node *pattern, FILE *out)
+{
+    dump_node(pattern, out);
+}
+
 static void dump_path(PathEntry *p, FILE *out)
 {
     TValue *tval;
@@ -390,6 +426,9 @@ static void dump_path(PathEntry *p, FILE *out)
         fputc(len, out);
         fwrite(p->name, len, 1, out);
     }
+
+    /* Write path pattern */
+    dump_pattern(p->node->o.path.clause->o.clause.lval, out);
 
     /* Write table entry count */
     fputc(p->kindex, out);

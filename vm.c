@@ -31,6 +31,7 @@
 #include "runtime.h"
 #include "vm.h"
 #include "error.h"
+#include "bin.h"
 
 #define DEBUG
 
@@ -79,6 +80,9 @@ uint8_t *vm_readpath(VM *vm, uint8_t *b)
         name[namelen] = '\0';
         b += namelen;
     }
+
+    /* Pattern */
+    TValue pattern = bin_readnode(&b);
 
     /* Size of constants table */
     uint8_t ksize = *b ++;
@@ -170,8 +174,10 @@ void vm_load(VM *vm, const char *name, Path *paths[])
     }
 }
 
-void vm_call(VM *vm, Process *proc, Module *m, Path *p)
+void vm_call(VM *vm, Process *proc, Module *m, Path *p, TValue *arg)
 {
+    /* TODO: Perform pattern-match */
+
     Frame *f = frame(255);
 
     f->module = m;
@@ -184,10 +190,10 @@ void vm_call(VM *vm, Process *proc, Module *m, Path *p)
     debug("%s/%s:\n", m->name, p->name);
 }
 
-void vm_spawn(VM *vm, Module *m, Path *p)
+void vm_spawn(VM *vm, Module *m, Path *p, TValue *args)
 {
     Process *proc = process(m, p);
-    vm_call(vm, proc, proc->module, proc->path);
+    vm_call(vm, proc, proc->module, proc->path, args);
     vm_execute(vm, proc);
 }
 
@@ -217,7 +223,7 @@ reentry:
 
     while ((i = p->code[f->pc++])) {
         #ifdef DEBUG
-        printf("%3lu:\t", f->pc); op_pp(i); putchar('\n');
+        printf("%3llu:\t", f->pc); op_pp(i); putchar('\n');
         #endif
 
         OpCode op = OP(i);
@@ -257,7 +263,7 @@ reentry:
                 R[A].v.uri.path   = RK(C(i)).v.atom;
                 break;
             case OP_TAILCALL:
-                vm_call(vm, proc, m, p);
+                vm_call(vm, proc, m, p, NULL);
                 goto reentry;
             case OP_CALL: {
                 C = C(i); /* TODO: Pass argument to function */
@@ -273,7 +279,7 @@ reentry:
                 if (! (p = module_path(m, path)))
                     error(1, 0, "path `%s` not found in `%s` module", path, module);
 
-                vm_call(vm, proc, m, p); /* Create & push stack call-frame */
+                vm_call(vm, proc, m, p, &R[C]); /* Create & push stack call-frame */
                 (*s->frame)->result = A; /* Set return-value register */
 
                 goto reentry;
@@ -313,7 +319,7 @@ void vm_run(VM *vm, const char *module, const char *path)
     if (! p)
         error(2, 0, "couldn't find path '%s/%s'", module, path);
 
-    vm_spawn(vm, m, p);
+    vm_spawn(vm, m, p, NULL);
 }
 
 Module *vm_module(VM *vm, const char *name)

@@ -44,6 +44,15 @@ const char *OP_STRINGS[] = {
     [ORANGE]    =  "range"
 };
 
+TYPE OP_TYPES[] = {
+    [OSTRING]   =  TYPE_STRING,
+    [OATOM]     =  TYPE_ATOM,
+    [ONUMBER]   =  TYPE_NUMBER,
+    [OTUPLE]    =  TYPE_TUPLE,
+    [OLIST]     =  TYPE_LIST,
+    [OIDENT]    =  TYPE_ANY
+};
+
 /*
  * Node allocator/initializer
  */

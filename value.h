@@ -11,11 +11,13 @@
  * TValue data-types
  */
 typedef enum {
+    TYPE_ANY,
     TYPE_ATOM,
     TYPE_BIN,
     TYPE_TUPLE,
     TYPE_STRING,
     TYPE_NUMBER,
+    TYPE_LIST,
     TYPE_PATH
 } TYPE;
 
@@ -45,6 +47,7 @@ typedef union {
     int             number;
     const char     *atom;
     String         *string;
+    struct Tuple   *tuple;
     struct {
         const char *module;
         const char *path;
@@ -63,5 +66,11 @@ struct TValueList {
 
 typedef struct TValueList TValueList;
 typedef struct TValue     TValue;
+
+struct Tuple {
+    int     arity : 8;
+    TValue  members[];
+};
+typedef struct Tuple Tuple;
 
 TValue *tvalue(TYPE type, Value val);
