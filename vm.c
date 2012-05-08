@@ -22,7 +22,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <unistd.h>
 #include <limits.h>
+#include <assert.h>
 #include <assert.h>
 
 #include "hash.h"
@@ -36,7 +38,7 @@
 #define DEBUG
 
 #ifdef DEBUG
-#define debug(...) (printf(__VA_ARGS__))
+#define debug(...) (fprintf(stderr, __VA_ARGS__))
 #else
 #define debug(...) ;
 #endif
@@ -52,6 +54,10 @@ VM *vm(void)
     vm->path  = NULL;
     vm->pathc = 0;
     vm->paths = calloc(OPMAX_B, sizeof(Path*));
+
+    vm->nprocs = 0;
+    vm->procs  = malloc(sizeof(Process*) * 1024);
+    vm->proc   = NULL;
 
     memset(vm->modules, 0, msize);
 
@@ -237,6 +243,9 @@ void vm_call(VM *vm, Process *proc, Module *m, Path *p, TValue *arg)
 
     Frame *f = frame(locals, p->nlocals);
 
+    m = m ? m : proc->module;
+    p = p ? p : proc->path;
+
     f->module = m;
     f->path   = p;
     f->pc     = 0;
@@ -245,16 +254,44 @@ void vm_call(VM *vm, Process *proc, Module *m, Path *p, TValue *arg)
     stack_push(proc->stack, f);
 }
 
-void vm_spawn(VM *vm, Module *m, Path *p, TValue *args)
+Process *vm_spawn(VM *vm, Module *m, Path *p)
 {
     Process *proc = process(m, p);
-    vm_call(vm, proc, proc->module, proc->path, args);
-    vm_execute(vm, proc);
+
+    vm->procs[vm->nprocs++] = proc;
+
+    return proc;
+}
+
+Process *vm_select(VM *vm)
+{
+    Process *proc;
+
+    /* TODO: Don't start from 0, start from last proc */
+
+    for (int i = 0; i < vm->nprocs; i++) {
+        if ((proc = vm->procs[i])) {
+            if ((proc->credits > 0) && (proc->flags & PROC_READY)) {
+                return proc;
+            }
+        }
+    }
+    /* All proc credits exhausted, reset */
+    /* TODO: We don't need this step if we start from the last proc,
+     * and reset as we go */
+    for (int i = 0; i < vm->nprocs; i++) {
+        if ((proc = vm->procs[i])) {
+            proc->credits = 16;
+        }
+    }
+    return vm_select(vm);
 }
 
 #define RK(x) (ISK(x) ? K[INDEXK(x)] : R[x])
 TValue *vm_execute(VM *vm, Process *proc)
 {
+    vm->proc = proc;
+
     int A, B, C;
 
     Module *m;
@@ -280,6 +317,8 @@ reentry:
         #ifdef DEBUG
         printf("%3llu:\t", f->pc); op_pp(i); putchar('\n');
         #endif
+
+        proc->credits --;
 
         OpCode op = OP(i);
 
@@ -320,7 +359,7 @@ reentry:
                 R[A].v.uri.path   = RK(C(i)).v.atom;
                 break;
             case OP_TAILCALL:
-                vm_call(vm, proc, m, p, NULL);
+                (*(s->frame))->pc = 0;
                 goto reentry;
             case OP_CALL: {
                 C = C(i); /* TODO: Pass argument to function */
@@ -336,10 +375,10 @@ reentry:
                 if (! (p = module_path(m, path)))
                     error(1, 0, "path `%s` not found in `%s` module", path, module);
 
-                TValue arg = R[C];
+                TValue arg = RK(C);
 
                 vm_call(vm, proc, m, p, &arg); /* Create & push stack call-frame */
-                (*s->frame)->result = A; /* Set return-value register */
+                (*s->frame)->result = A;       /* Set return-value register */
 
                 goto reentry;
             }
@@ -362,11 +401,20 @@ reentry:
                 assert(0);
                 break;
         }
+        if (proc->credits == 0) {
+            Process *np;
+
+            if ((np = vm_select(vm))) {
+                return vm_execute(vm, np);
+            } else {
+                proc->credits = 16;
+            }
+        }
     }
     return NULL;
 }
 
-void vm_run(VM *vm, const char *module, const char *path)
+TValue *vm_run(VM *vm, const char *module, const char *path)
 {
     Module *m = vm_module(vm, module);
 
@@ -378,7 +426,11 @@ void vm_run(VM *vm, const char *module, const char *path)
     if (! p)
         error(2, 0, "couldn't find path '%s/%s'", module, path);
 
-    vm_spawn(vm, m, p, NULL);
+    Process *proc = vm_spawn(vm, m, p);
+
+    vm_call(vm, proc, NULL, NULL, NULL);
+
+    return vm_execute(vm, proc);
 }
 
 Module *vm_module(VM *vm, const char *name)

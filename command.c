@@ -14,6 +14,8 @@
 #include  <inttypes.h>
 #include  <errno.h>
 
+char *strdup(const char *);
+
 #include  "arbre.h"
 #include  "scanner.h"
 #include  "parser.h"
@@ -185,6 +187,8 @@ static int command_test(Command *cmd)
  */
 static int command_run(Command *c)
 {
+    TValue *ret;
+
     if (c->inputc > 1)
         error(1, 0, "more than one input file was given");
 
@@ -208,9 +212,11 @@ static int command_run(Command *c)
 
     VM *v = vm();
     vm_open(v, module, code);
-    vm_run(v, module, "main");
 
-    return 0;
+    ret = vm_run(v, module, "main");
+
+    // TODO: Check type
+    return ret->v.number;
 }
 
 #ifdef DEBUG

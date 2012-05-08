@@ -19,6 +19,7 @@ typedef enum {
     /* Stateful */
     ODECL, OBIND, OMATCH,
     OMODULE, OSELECT, OPATH, OMPATH,
+    OSPAWN,
 
     /* Operands */
     OIDENT, OTYPE, OSTRING, OCHAR,
@@ -100,6 +101,10 @@ struct Node {
         struct {
             struct Node  *proc;
         } wait;
+
+        struct {
+            struct Node  *apply;
+        } spawn;
 
         struct {
             PATH          type;
