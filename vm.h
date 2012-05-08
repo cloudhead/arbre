@@ -11,6 +11,9 @@ typedef struct {
     Path            *path;
     Path           **paths;
     unsigned         pathc; /* TODO: Rename to `npaths` */
+    Process        **procs;
+    Process         *proc;
+    unsigned        nprocs;
     ModuleList      *modules[];
 } VM;
 
@@ -20,7 +23,7 @@ struct version {
     uint8_t patch;
 };
 
-VM   *vm       (void);
-void  vm_load  (VM *vm, const char *module, Path *paths[]);
-void  vm_open  (VM *vm, const char *module, uint8_t *code);
-void  vm_run   (VM *vm,  const char *module, const char *path);
+VM     *vm       (void);
+void    vm_load  (VM *vm, const char *module, Path *paths[]);
+void    vm_open  (VM *vm, const char *module, uint8_t *code);
+TValue *vm_run   (VM *vm,  const char *module, const char *path);

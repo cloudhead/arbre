@@ -224,7 +224,11 @@ static int gen_apply(Generator *g, Node *n)
 
     int rr = nextreg(g);
 
-    gen(g, iABC(OP_CALL, rr, lval, rval));
+    if (n->src == g->path->name || !strcmp(n->src, g->path->name)) { /* Tail-call */
+        gen(g, iAD(OP_TAILCALL, rr, rval));
+    } else {
+        gen(g, iABC(OP_CALL, rr, lval, rval));
+    }
 
     return rr;
 }

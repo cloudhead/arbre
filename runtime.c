@@ -122,6 +122,7 @@ Process *process(Module *m, Path *path)
     p->stack = stack();
     p->module = m;
     p->path = path;
+    p->credits = 0;
     return p;
 }
 

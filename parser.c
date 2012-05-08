@@ -47,6 +47,7 @@ static  Node  *parse_bind(Parser *, Node *);
 static  Node  *parse_match(Parser *p, Node *lval);
 static  Node  *parse_send(Parser *, Node *);
 static  Node  *parse_clause(Parser *);
+static  Node  *parse_spawn(Parser *);
 
 /*
  * Parser allocator/initializer
@@ -508,6 +509,7 @@ static Node *parse_expression(Parser *p)
         case T_CHAR:     n = parse_char(p);     break;
         case T_INT:      n = parse_number(p);   break;
         case T_LARROW:   n = parse_wait(p);     break;
+        case T_PLUS:     n = parse_spawn(p);    goto question;
         default:         error(p, ERR_DEFAULT); return NULL;
     }
 
@@ -522,6 +524,8 @@ static Node *parse_expression(Parser *p)
         case T_PLUS:                      n = parse_add(p, n);     break;
         default:                                                   break;
     }
+
+question:
 
     switch (p->tok) {
         case T_QUESTION:   n = parse_apply(p, n); break;
@@ -717,6 +721,7 @@ static Node *parse_clause(Parser *p)
         expect(p, T_COLON);
     } else {
         error(p, "expected clause pattern");
+        return NULL;
     }
     n->o.bind.rval = parse_block(p);
     return n;
@@ -735,6 +740,30 @@ static Node *parse_msgpath(Parser *p)
 
     n->o.mpath.type   = PATH_MSG;
     n->o.mpath.clause = parse_clause(p);
+
+    return n;
+}
+
+/*
+ * Parse spawn. Example:
+ *
+ *     + ./start (8080)
+ */
+static Node *parse_spawn(Parser *p)
+{
+    Node  *n = node(p->token, OSPAWN);
+    Node  *a = NULL;
+
+    next(p); // Consume `+`
+
+    switch (p->tok) {
+        case T_PERIOD: case T_IDENT: case T_ATOM:
+            a = parse_access(p); break;
+        default:
+            // Error
+            error(p, "expected function call");
+    }
+    n->o.spawn.apply = parse_apply(p, a);
 
     return n;
 }

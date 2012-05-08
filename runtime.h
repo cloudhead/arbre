@@ -45,11 +45,16 @@ typedef struct {
     int       size;
 } Stack;
 
+#define PROC_WAITING 1
+#define PROC_READY   1 << 1
+
 typedef struct {
-    Stack *stack;
-    Path *path;
-    Module *module;
-    uint64_t pc;
+    Stack    *stack;
+    Path     *path;
+    Module   *module;
+    uint64_t  pc;
+    uint16_t  credits;
+    uint8_t   flags;
 } Process;
 
 Module     *module          (const char *name, Path *paths[], unsigned pathc);
