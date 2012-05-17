@@ -296,6 +296,7 @@ reentry:
                 break;
             case OP_ADD:
                 // TODO: Check operands
+                R[A].t        = TYPE_NUMBER;
                 R[A].v.number = RK(B(i)).v.number +
                                 RK(C(i)).v.number;
                 break;
