@@ -224,8 +224,8 @@ void vm_call(VM *vm, Process *proc, Module *m, Path *p, TValue *arg)
 
     debug("%s/%s (%d):\n", m->name, p->name, p->nlocals);
 
-    size_t size = sizeof(TValue) * (p->nlocals + 1);
-    TValue *locals = malloc(size * 4);
+    size_t size = sizeof(TValue) * p->nlocals;
+    TValue *locals = malloc(size);
 
     memset(locals, 0, size);
 

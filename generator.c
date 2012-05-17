@@ -466,7 +466,7 @@ static void dump_path(PathEntry *p, FILE *out)
     dump_pattern(p->node->o.path.clause->o.clause.lval, out);
 
     /* Write local variable count */
-    fputc(p->nlocals, out);
+    fputc(p->nreg, out);
 
     /* Write table entry count */
     fputc(p->kindex, out);
