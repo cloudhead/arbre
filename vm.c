@@ -274,6 +274,7 @@ reentry:
                 break;
             case OP_LOADK:
                 B = INDEXK(D(i));
+                assert(A < f->nlocals);
                 R[A] = K[B];
                 break;
             case OP_ADD:
