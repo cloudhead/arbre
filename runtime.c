@@ -127,10 +127,12 @@ Path *module_path(Module *m, const char *path)
     return NULL;
 }
 
-Path *path(const char *name, int clen)
+Path *path(const char *name, TValue pattern, int nlocals, int clen)
 {
     Path  *p = malloc(sizeof(*p));
            p->name = name;
+           p->pattern = pattern;
+           p->nlocals = nlocals;
            p->constants = malloc(sizeof(TValue) * clen);
            p->constantsn = clen;
            p->pc = -1;

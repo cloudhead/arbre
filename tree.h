@@ -36,7 +36,11 @@ struct PathEntry {
     TValue        **kheader;
     unsigned        kindex;
 
+    /* Locals */
+    int            nlocals;
+
     /* Code */
+    uint8_t        nreg;
     uint32_t       *code;
     unsigned long   codesize;
     unsigned long   pc;

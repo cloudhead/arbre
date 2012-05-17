@@ -93,6 +93,7 @@ PathEntry *pathentry(char *name, Node *n, uint8_t index)
                 p->kheader   = calloc(128,  sizeof(TValue*));
                 p->ktable    = symtab(128);
                 p->kindex    = 0;
+                p->nlocals   = 0;
                 p->pc        = 0;
                 p->code      = calloc(4096, sizeof(uint32_t));
                 p->codesize  = 4096;

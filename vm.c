@@ -84,10 +84,13 @@ uint8_t *vm_readpath(VM *vm, uint8_t *b)
     /* Pattern */
     TValue pattern = bin_readnode(&b);
 
+    /* Number of locals */
+    uint8_t nlocals = *b ++;
+
     /* Size of constants table */
     uint8_t ksize = *b ++;
 
-    Path *p = path(name, ksize);
+    Path *p = path(name, pattern, nlocals, ksize);
     Value v;
 
     debug("%s (%d):\n\n", name, attrs);

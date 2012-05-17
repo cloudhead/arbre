@@ -8,8 +8,10 @@
  */
 typedef struct {
     const char     *name;
+    TValue          pattern;
     Instruction    *code;
     unsigned long   codelen; /* TODO: Rename to ncode */
+    int            nlocals;
     TValue         *constants;
     int             constantsn; /* TODO: Rename to nconstants */
     int             pc;
@@ -62,7 +64,7 @@ void        stack_push      (Stack *s, Frame *f);
 Frame      *stack_pop       (Stack *s);
 void        stack_pp        (Stack *s);
 
-Path       *path            (const char *name, int clen);
+Path       *path            (const char *name, TValue pattern, int nlocals, int clen);
 Process    *process         (Module *m, Path *path);
 Frame      *frame           (TValue *locals, int nlocals);
 void        frame_pp        (Frame *);

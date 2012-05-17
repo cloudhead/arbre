@@ -150,7 +150,7 @@ static int gen_constant(Generator *g, const char *src, TValue *tval)
 static unsigned nextreg(Generator *g)
 {
     // TODO: Check limits
-    return g->slot++;
+    return g->path->nreg++;
 }
 
 static int gen_atom(Generator *g, Node *n)
@@ -270,9 +270,34 @@ static int gen_add(Generator *g, Node *n)
     return reg;
 }
 
+static void gen_locals(Generator *g, Node *n)
+{
+    switch (n->op) {
+        case OTUPLE:
+            for (NodeList *ns = n->o.tuple.members ; ns ; ns = ns->tail) {
+                gen_locals(g, ns->head);
+            }
+            break;
+        case OIDENT: {
+            Sym  *ident = tree_lookup(g->tree, n->src);
+
+            if (! ident) {
+                g->path->nlocals ++;
+                define(g, n->src, nextreg(g));
+            }
+            break;
+        }
+        default:
+            // Ignore
+            break;
+    }
+}
+
 static int gen_path(Generator *g, Node *n)
 {
     char *name = n->o.path.name->o.atom;
+
+    gen_locals(g, n);
 
     g->path = g->paths[g->pathsn] = pathentry(name, n, g->pathsn);
     symtab_insert(g->tree->psymbols, name, psymbol(name, g->path));
@@ -337,6 +362,8 @@ static int gen_bind(Generator *g, Node *n)
 
     if (lval->op == OIDENT) {
         Sym  *ident = tree_lookup(g->tree, lval->src);
+
+        g->path->nlocals ++;
 
         if (ident) {
             nreportf(REPORT_ERROR, n, ERR_REDEFINITION, lval->src);
@@ -429,6 +456,9 @@ static void dump_path(PathEntry *p, FILE *out)
 
     /* Write path pattern */
     dump_pattern(p->node->o.path.clause->o.clause.lval, out);
+
+    /* Write local variable count */
+    fputc(p->nlocals, out);
 
     /* Write table entry count */
     fputc(p->kindex, out);
