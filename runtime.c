@@ -32,6 +32,14 @@ Stack *stack(void)
     return s;
 }
 
+void stack_pp(Stack *s)
+{
+    for (int i = s->size - 1; i >= 0; i--) {
+        frame_pp(s->frames[i]);
+        putchar('\n');
+    }
+}
+
 /*
  * Push the given frame on the stack
  */

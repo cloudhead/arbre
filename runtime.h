@@ -60,6 +60,7 @@ ModuleList *modulelist      (Module *head);
 Stack      *stack           (void);
 void        stack_push      (Stack *s, Frame *f);
 Frame      *stack_pop       (Stack *s);
+void        stack_pp        (Stack *s);
 
 Path       *path            (const char *name, int clen);
 Process    *process         (Module *m, Path *path);
