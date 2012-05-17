@@ -11,16 +11,29 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "arbre.h"
 #include "op.h"
 #include "runtime.h"
 
-Frame *frame(int nlocals)
+void frame_pp(Frame *f);
+
+Frame *frame(TValue *locals, int nlocals)
 {
     Frame *f = malloc(sizeof(*f));
+           f->locals  =  locals;
            f->nlocals = nlocals;
     return f;
+}
+
+void frame_pp(Frame *f)
+{
+    for (int i = 0; i < f->nlocals; i++) {
+        printf("R[%d]: ", i);
+        tvalue_pp(f->locals + i);
+        putchar('\n');
+    }
 }
 
 Stack *stack(void)

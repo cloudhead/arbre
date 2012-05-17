@@ -35,8 +35,8 @@ typedef struct {
     uint8_t   result;
     Module   *module;
     Path     *path;
+    TValue   *locals;
     int      nlocals;
-    TValue    locals[OPMAX_A];
 } Frame;
 
 typedef struct {
@@ -64,5 +64,6 @@ void        stack_pp        (Stack *s);
 
 Path       *path            (const char *name, int clen);
 Process    *process         (Module *m, Path *path);
-Frame      *frame           (int nlocals);
+Frame      *frame           (TValue *locals, int nlocals);
+void        frame_pp        (Frame *);
 
