@@ -297,9 +297,8 @@ static int gen_path(Generator *g, Node *n)
 {
     char *name = n->o.path.name->o.atom;
 
-    gen_locals(g, n);
-
     g->path = g->paths[g->pathsn] = pathentry(name, n, g->pathsn);
+    gen_locals(g, n->o.path.clause->o.clause.lval);
     symtab_insert(g->tree->psymbols, name, psymbol(name, g->path));
 
     g->pathsn ++;
