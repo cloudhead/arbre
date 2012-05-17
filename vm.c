@@ -174,6 +174,44 @@ void vm_load(VM *vm, const char *name, Path *paths[])
     }
 }
 
+int match_tuple(TValue *pattern, TValue *v, TValue **matches)
+{
+    return 0;
+}
+
+int match(TValue *pattern, TValue *v, TValue **matches)
+{
+    assert(pattern);
+
+    if (v == NULL) {
+        if (pattern->t == TYPE_TUPLE &&
+            pattern->v.tuple->arity == 0) {
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+
+    if (pattern->t == TYPE_ANY) {
+        *matches[0] = *v;
+        return 1;
+    }
+
+    if (pattern->t != v->t) {
+        return -1;
+    }
+
+    switch (pattern->t) {
+        case TYPE_TUPLE:
+            return match_tuple(pattern, v, matches);
+        case TYPE_ATOM:
+            assert(0);
+        default:
+            assert(0);
+    }
+    return -1;
+}
+
 void vm_call(VM *vm, Process *proc, Module *m, Path *p, TValue *arg)
 {
     /* TODO: Perform pattern-match */
