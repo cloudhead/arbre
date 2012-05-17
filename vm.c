@@ -219,16 +219,30 @@ void vm_call(VM *vm, Process *proc, Module *m, Path *p, TValue *arg)
 {
     /* TODO: Perform pattern-match */
 
-    Frame *f = frame(255);
+    assert(p);
+    assert(m);
+
+    debug("%s/%s (%d):\n", m->name, p->name, p->nlocals);
+
+    size_t size = sizeof(TValue) * (p->nlocals + 1);
+    TValue *locals = malloc(size * 4);
+
+    memset(locals, 0, size);
+
+    int nlocals = match(&p->pattern, arg, &locals);
+
+    if (nlocals == -1) {
+        error(1, 0, "no matches for %s/%s", m->name, p->name);
+    }
+
+    Frame *f = frame(locals, p->nlocals);
 
     f->module = m;
-    f->path = p;
-    f->pc = 0;
-    f->prev = NULL;
+    f->path   = p;
+    f->pc     = 0;
+    f->prev   = NULL;
 
     stack_push(proc->stack, f);
-
-    debug("%s/%s:\n", m->name, p->name);
 }
 
 void vm_spawn(VM *vm, Module *m, Path *p, TValue *args)
@@ -321,7 +335,9 @@ reentry:
                 if (! (p = module_path(m, path)))
                     error(1, 0, "path `%s` not found in `%s` module", path, module);
 
-                vm_call(vm, proc, m, p, &R[C]); /* Create & push stack call-frame */
+                TValue arg = R[C];
+
+                vm_call(vm, proc, m, p, &arg); /* Create & push stack call-frame */
                 (*s->frame)->result = A; /* Set return-value register */
 
                 goto reentry;
