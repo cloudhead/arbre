@@ -32,6 +32,7 @@ TValue bin_readnode(uint8_t **bp)
             assert(0);
             break;
         case TYPE_ANY:
+            tv = (TValue){ .t = TYPE_ANY };
             break;
         default:
             assert(0);
