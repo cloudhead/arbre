@@ -67,6 +67,13 @@ int (*OP_GENERATORS[])(Generator*, Node*) = {
     [OCLAUSE]   =  NULL,       [OPIPE]     =  NULL
 };
 
+static int define(Generator *g, char *ident, int reg)
+{
+    symtab_insert(g->tree->symbols, ident, symbol(ident, var(ident, reg)));
+
+    return reg;
+}
+
 /*
  * Variable entry allocator
  */
@@ -305,13 +312,6 @@ static int gen_tuple(Generator *g, Node *n)
         gen(g, iABC(OP_SETTUPLE, reg, i, gen_node(g, ns->head)));
         ns = ns->tail;
     }
-    return reg;
-}
-
-static int define(Generator *g, char *ident, int reg)
-{
-    symtab_insert(g->tree->symbols, ident, symbol(ident, var(ident, reg)));
-
     return reg;
 }
 
