@@ -12,6 +12,17 @@
 
 #include "value.h"
 
+const char *TYPE_STRINGS[] = {
+    [TYPE_ANY] = "any",
+    [TYPE_ATOM] = "atom",
+    [TYPE_BIN] = "bin",
+    [TYPE_TUPLE] = "tuple",
+    [TYPE_STRING] = "string",
+    [TYPE_NUMBER] = "number",
+    [TYPE_LIST] = "list",
+    [TYPE_PATH] = "path"
+};
+
 TValue *tvalue(TYPE type, Value val)
 {
     TValue *tval = malloc(sizeof(*tval));
@@ -44,7 +55,7 @@ void tvalue_pp(TValue *tval)
             printf("%d", v.number);
             break;
         default:
-            printf("<unknown>");
+            printf("<%s>", TYPE_STRINGS[t]);
             break;
     }
 }
