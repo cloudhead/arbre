@@ -347,7 +347,7 @@ reentry:
                 Frame *old = stack_pop(s);
 
                 /* We reached the top of the stack,
-                 * exit loop. */
+                 * exit loop & return last register value. */
                 if (s->size == 0)
                     return &R[A];
 
