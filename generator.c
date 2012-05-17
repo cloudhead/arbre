@@ -407,6 +407,12 @@ static void dump_atom(Node *n, FILE *out)
     fwrite(n->o.atom, strlen(n->o.atom) + 1, 1, out);
 }
 
+static void dump_number(Node *n, FILE *out)
+{
+    int i = atoi(n->o.number);
+    fwrite(&i, sizeof(int), 1, out);
+}
+
 static void dump_node(Node *n, FILE *out)
 {
     NodeList *ns;
@@ -425,6 +431,9 @@ static void dump_node(Node *n, FILE *out)
             break;
         case OATOM:
             dump_atom(n, out);
+            break;
+        case ONUMBER:
+            dump_number(n, out);
             break;
         default:
             assert(0);

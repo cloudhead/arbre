@@ -28,6 +28,14 @@ TValue bin_readnode(uint8_t **bp)
         case TYPE_TUPLE:
             tv = bin_readtuple(bp);
             break;
+        case TYPE_NUMBER:
+            tv = (TValue){
+                .t = TYPE_NUMBER,
+                .v = (Value){
+                    .number = *(int *)bp
+                }
+            };
+            break;
         case TYPE_ATOM:
             assert(0);
             break;
