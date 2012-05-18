@@ -315,7 +315,7 @@ reentry:
 
     while ((i = p->code[f->pc++])) {
         #ifdef DEBUG
-        printf("%3llu:\t", f->pc); op_pp(i); putchar('\n');
+        printf("%3lu:\t", f->pc); op_pp(i); putchar('\n');
         #endif
 
         proc->credits --;
