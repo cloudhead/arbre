@@ -92,8 +92,9 @@ Command *command(int argv, char *argc[])
  */
 void command_free(Command *c)
 {
+    if (c->fp > 0)
+        fclose(c->fp);
     free(c->inputs);
-    fclose(c->fp);
     free(c);
 }
 
