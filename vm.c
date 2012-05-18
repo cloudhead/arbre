@@ -225,6 +225,9 @@ void vm_call(VM *vm, Process *proc, Module *m, Path *p, TValue *arg)
 {
     /* TODO: Perform pattern-match */
 
+    m = m ? m : proc->module;
+    p = p ? p : proc->path;
+
     assert(p);
     assert(m);
 
@@ -242,9 +245,6 @@ void vm_call(VM *vm, Process *proc, Module *m, Path *p, TValue *arg)
     }
 
     Frame *f = frame(locals, p->nlocals);
-
-    m = m ? m : proc->module;
-    p = p ? p : proc->path;
 
     f->module = m;
     f->path   = p;
