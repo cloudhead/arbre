@@ -72,23 +72,8 @@ void vm_free(VM *vm)
 }
 
 /* TODO: Paths should be per-module */
-uint8_t *vm_readpath(VM *vm, uint8_t *b)
+uint8_t *vm_readclause(VM *vm, uint8_t *b, int index)
 {
-    char *name;
-
-    /* Path attributes */
-    uint8_t attrs   = *b ++;
-    uint8_t namelen = *b ++;
-
-    /* TODO: check attributes instead */
-    /* TODO: clean this up.. maybe with strdup */
-    if (namelen > 0) {
-        name = malloc(namelen + 1);
-        memcpy(name, b, namelen);
-        name[namelen] = '\0';
-        b += namelen;
-    }
-
     /* Pattern */
     TValue pattern = bin_readnode(&b);
 
@@ -98,10 +83,11 @@ uint8_t *vm_readpath(VM *vm, uint8_t *b)
     /* Size of constants table */
     uint8_t ksize = *b ++;
 
-    Path *p = path(name, pattern, nlocals, ksize);
-    Value v;
+    debug("reading clause with %d constant(s) and %d local(s)..\n", ksize, nlocals);
 
-    debug("%s (%d):\n\n", name, attrs);
+    Clause *c = clause(pattern, nlocals, ksize);
+
+    Value v;
 
     for (int i = 0; i < ksize; i++) {
         TYPE t = *b ++;
@@ -130,21 +116,57 @@ uint8_t *vm_readpath(VM *vm, uint8_t *b)
         }
         debug("\n");
 
-        p->constants[i].t = t;
-        p->constants[i].v = v;
-
+        c->constants[i].t = t;
+        c->constants[i].v = v;
     }
     debug("\n");
 
-    p->codelen = *((unsigned long*)b);
-    b += sizeof(p->codelen);
+    c->codelen = *((unsigned long*)b);
+    b += sizeof(c->codelen);
 
-    p->code = (Instruction *)b;
+    c->code = (Instruction *)b;
 
     /* Skip all code */
-    b += p->codelen * sizeof(Instruction);
+    b += c->codelen * sizeof(Instruction);
+
+    Path *p = vm->paths[vm->pathc - 1];
+
+    p->clauses[index] = c;
+
+    return b;
+}
+
+uint8_t *vm_readpath(VM *vm, uint8_t *b)
+{
+    char *name;
+
+    /* Path attributes */
+    uint8_t attrs   = *b ++;
+    uint8_t namelen = *b ++;
+
+    assert(attrs);
+
+    /* TODO: check attributes instead */
+    /* TODO: clean this up.. maybe with strdup */
+    if (namelen > 0) {
+        name = malloc(namelen + 1);
+        memcpy(name, b, namelen);
+        name[namelen] = '\0';
+        b += namelen;
+    }
+
+    uint8_t nclauses = *b ++;
+
+    debug("reading path '%s'..\n", name);
+    debug("reading %d clause(s)..\n", nclauses);
+
+    Path *p = path(name, nclauses);
 
     vm->paths[vm->pathc++] = p;
+
+    for (int i = 0; i < nclauses; i++) {
+        b = vm_readclause(vm, b, i);
+    }
 
     return b;
 }
@@ -165,6 +187,8 @@ void vm_open(VM *vm, const char *name, uint8_t *buffer)
 
     int pathsn = *((int*)buffer);
     buffer += sizeof(int);
+
+    debug("reading %d paths..\n", pathsn);
 
     for (int i = 0; i < pathsn; i++) {
         buffer = vm_readpath(vm, buffer);
@@ -236,33 +260,37 @@ int match(TValue *pattern, TValue *v, TValue *local)
     return -1;
 }
 
-void vm_call(VM *vm, Process *proc, Module *m, Path *p, TValue *arg)
+void vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
 {
     /* TODO: Perform pattern-match */
 
     m = m ? m : proc->module;
     p = p ? p : proc->path;
+    c = c ? c : p->clauses[0];
 
     assert(p);
     assert(m);
+    assert(c);
 
-    debug("%s/%s (%d):\n", m->name, p->name, p->nlocals);
-
-    size_t size = sizeof(TValue) * p->nlocals;
-    TValue *locals = malloc(size);
+    size_t size = sizeof(TValue) * c->nlocals;
+    TValue *locals = malloc(size),
+           *local  = locals;
 
     memset(locals, 0, size);
 
-    int nlocals = match(&p->pattern, arg, locals);
+    int nlocals = match(&c->pattern, arg, local);
 
     if (nlocals == -1) {
         error(1, 0, "no matches for %s/%s", m->name, p->name);
     }
 
-    Frame *f = frame(locals, p->nlocals);
+    debug("%s/%s:\n", m->name, p->name);
+
+    Frame *f = frame(locals, c->nlocals);
 
     f->module = m;
     f->path   = p;
+    f->clause = c;
     f->pc     = 0;
     f->prev   = NULL;
 
@@ -311,6 +339,7 @@ TValue *vm_execute(VM *vm, Process *proc)
 
     Module *m;
     Path   *p;
+    Clause *c;
 
     Stack *s = proc->stack;
     Frame *f;
@@ -323,12 +352,13 @@ TValue *vm_execute(VM *vm, Process *proc)
 reentry:
 
     f = *(s->frame);    /* Current stack-frame */
+    c = f->clause;      /* Current clause */
     p = f->path;        /* Current path */
     m = f->module;      /* Current module */
     R = f->locals;      /* Registry (local vars) */
-    K = p->constants;   /* Constants */
+    K = c->constants;   /* Constants */
 
-    while ((i = p->code[f->pc++])) {
+    while ((i = c->code[f->pc++])) {
         #ifdef DEBUG
         printf("%3lu:\t", f->pc); op_pp(i); putchar('\n');
         #endif
@@ -380,7 +410,9 @@ reentry:
                 (*(s->frame))->pc = 0;
                 goto reentry;
             case OP_CALL: {
-                C = C(i); /* TODO: Pass argument to function */
+                /* TODO: Support lambda calls*/
+
+                C = C(i);
 
                 const char *module = RK(B(i)).v.uri.module;
                 const char *path   = RK(B(i)).v.uri.path;
@@ -393,10 +425,12 @@ reentry:
                 if (! (p = module_path(m, path)))
                     error(1, 0, "path `%s` not found in `%s` module", path, module);
 
+                c = p->clauses[0];
+
                 TValue arg = RK(C);
 
-                vm_call(vm, proc, m, p, &arg); /* Create & push stack call-frame */
-                (*s->frame)->result = A;       /* Set return-value register */
+                vm_call(vm, proc, m, p, c, &arg); /* Create & push stack call-frame */
+                (*s->frame)->result = A;          /* Set return-value register */
 
                 goto reentry;
             }
@@ -446,7 +480,7 @@ TValue *vm_run(VM *vm, const char *module, const char *path)
 
     Process *proc = vm_spawn(vm, m, p);
 
-    vm_call(vm, proc, NULL, NULL, NULL);
+    vm_call(vm, proc, NULL, NULL, NULL, NULL);
 
     return vm_execute(vm, proc);
 }

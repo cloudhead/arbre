@@ -127,16 +127,24 @@ Path *module_path(Module *m, const char *path)
     return NULL;
 }
 
-Path *path(const char *name, TValue pattern, int nlocals, int clen)
+Path *path(const char *name, int nclauses)
 {
     Path  *p = malloc(sizeof(*p));
            p->name = name;
-           p->pattern = pattern;
-           p->nlocals = nlocals;
-           p->constants = malloc(sizeof(TValue) * clen);
-           p->constantsn = clen;
-           p->pc = -1;
+           p->nclauses = nclauses;
+           p->clauses = calloc(nclauses, sizeof(Clause));
     return p;
+}
+
+Clause *clause(TValue pattern, int nlocals, int clen)
+{
+    Clause *c = malloc(sizeof(*c));
+            c->pattern = pattern;
+            c->nlocals = nlocals;
+            c->constants = malloc(sizeof(TValue) * clen);
+            c->constantsn = clen;
+            c->pc = -1;
+    return  c;
 }
 
 Process *process(Module *m, Path *path)

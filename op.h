@@ -86,6 +86,7 @@ enum             IMode {ABC, AD, AJ};   /* Instruction mode/format */
  * op-codes
  */
 typedef enum {
+    OP_INVALID,
     OP_MOVE,
     OP_LOADK,
     OP_ADD,

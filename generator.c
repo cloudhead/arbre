@@ -51,6 +51,7 @@ static int    gen_access  (Generator *, Node *);
 static int    gen         (Generator *, Instruction);
 
 static void dump_path(PathEntry *p, FILE *out);
+static void gen_locals(Generator *g, Node *n);
 
 int (*OP_GENERATORS[])(Generator*, Node*) = {
     [OBLOCK]    =  gen_block,  [ODECL]     =  NULL,
@@ -111,6 +112,8 @@ Generator *generator(Tree *tree, Source *source)
 
 void generate(Generator *g, FILE *out)
 {
+    printf("generating module '%s'..\n", g->module->name);
+
     gen_block(g, g->tree->root);
 
     if (out == NULL) return;
@@ -132,17 +135,17 @@ void generate(Generator *g, FILE *out)
 
 static int gen_constant(Generator *g, const char *src, TValue *tval)
 {
-    Sym *k = symtab_lookup(g->path->ktable, src);
+    Sym *k = symtab_lookup(g->path->clause->ktable, src);
 
     if (k)
         return k->e.tval->v.number;
 
-    int      index  = g->path->kindex++;
+    int      index  = g->path->clause->kindex++;
     Value    v      = (Value){ .number = index };
     TValue  *indexv = tvalue(-1, v);
 
-    g->path->kheader[index] = tval;
-    symtab_insert(g->path->ktable, src, tvsymbol(src, indexv));
+    g->path->clause->kheader[index] = tval;
+    symtab_insert(g->path->clause->ktable, src, tvsymbol(src, indexv));
 
     return index;
 }
@@ -150,7 +153,7 @@ static int gen_constant(Generator *g, const char *src, TValue *tval)
 static unsigned nextreg(Generator *g)
 {
     // TODO: Check limits
-    return g->path->nreg++;
+    return g->path->clause->nreg++;
 }
 
 static int gen_atom(Generator *g, Node *n)
@@ -165,25 +168,12 @@ static int gen_block(Generator *g, Node *n)
 {
     NodeList *ns  = n->o.block.body;
     int       reg = 0;
-    int       rega;
-
-    enterscope(g->tree);
 
     while (ns) {
         reg = gen_node(g, ns->head);
         ns  = ns->tail;
     }
-    exitscope(g->tree);
 
-    /* Don't return from top-level */
-    if (g->tree->symbols->parent) {
-        if (ISK(reg)) {
-            rega = nextreg(g);
-            gen(g, iAD(OP_LOADK, rega, reg));
-            reg = rega;
-        }
-        gen(g, iABC(OP_RETURN, reg, 0, 0));
-    }
     return reg;
 }
 
@@ -240,9 +230,31 @@ static int gen_apply(Generator *g, Node *n)
     return rr;
 }
 
-static int gen_clause(Generator *g, Node *n)
+static int gen_clause(Generator *g, Node *n, bool path)
 {
-    return gen_block(g, n->o.clause.rval);
+    int reg = -1;
+    int rega = 0;
+
+    g->path->clause = clauseentry(n, g->path->nclauses);
+    g->path->clauses[g->path->nclauses ++] = g->path->clause;
+
+    enterscope(g->tree);
+    gen_locals(g, n->o.clause.lval);
+    reg = gen_block(g, n->o.clause.rval);
+    exitscope(g->tree);
+
+    /* Don't return from top-level */
+    if (g->tree->symbols->parent || path) {
+        if (ISK(reg)) {
+            rega = nextreg(g);
+            gen(g, iAD(OP_LOADK, rega, reg));
+            reg = rega;
+        }
+        gen(g, iABC(OP_RETURN, reg, 0, 0));
+    }
+    gen(g, 0); /* Terminator */
+
+    return reg;
 }
 
 static int gen_ident(Generator *g, Node *n)
@@ -252,8 +264,7 @@ static int gen_ident(Generator *g, Node *n)
     if (ident) {
         return ident->e.var->reg;
     } else {
-        // TODO: Emit ERR_UNDEFINED
-        return 0;
+        assert(0);
     }
 }
 
@@ -286,11 +297,16 @@ static void gen_locals(Generator *g, Node *n)
             Sym  *ident = tree_lookup(g->tree, n->src);
 
             if (! ident) {
-                g->path->nlocals ++;
+                g->path->clause->nlocals ++;
                 define(g, n->src, nextreg(g));
             }
             break;
         }
+        case ONUMBER:
+        case OATOM:
+        case OSTRING:
+            gen_node(g, n);
+            break;
         default:
             // Ignore
             break;
@@ -301,21 +317,22 @@ static int gen_path(Generator *g, Node *n)
 {
     char *name = n->o.path.name->o.atom;
 
-    g->path = g->paths[g->pathsn] = pathentry(name, n, g->pathsn);
+    Sym *k = symtab_lookup(g->tree->psymbols, name);
 
-    enterscope(g->tree);
-    gen_locals(g, n->o.path.clause->o.clause.lval);
-    exitscope(g->tree);
+    if (k) {
+        nreportf(REPORT_ERROR, n, "path '%s' already defined.", name);
+        exit(1);
+    }
+
+    g->path = g->paths[g->pathsn] = pathentry(name, n, g->pathsn);
 
     symtab_insert(g->tree->psymbols, name, psymbol(name, g->path));
 
     g->pathsn ++;
 
-    int reg = gen_clause(g, n->o.path.clause);
+    printf("%s/%s:\n", g->module->name, name);
 
-    gen(g, 0); /* Terminator */
-
-    return reg;
+    return gen_clause(g, n->o.path.clause, true);
 }
 
 static int gen_num(Generator *g, Node *n)
@@ -370,7 +387,7 @@ static int gen_bind(Generator *g, Node *n)
     if (lval->op == OIDENT) {
         Sym  *ident = tree_lookup(g->tree, lval->src);
 
-        g->path->nlocals ++;
+        g->path->clause->nlocals ++;
 
         if (ident) {
             nreportf(REPORT_ERROR, n, ERR_REDEFINITION, lval->src);
@@ -454,34 +471,22 @@ static void dump_pattern(Node *pattern, FILE *out)
     dump_node(pattern, out);
 }
 
-static void dump_path(PathEntry *p, FILE *out)
+static void dump_clause(ClauseEntry *c, FILE *out)
 {
     TValue *tval;
 
-    /* Write path attributes */
-    fputc(0xff, out);
-
-    if (false) { /* TODO: Anonymous path */
-        fputc(0, out);
-    } else {
-        /* Write path name */
-        uint8_t len = (uint8_t)strnlen(p->name, UINT8_MAX);
-        fputc(len, out);
-        fwrite(p->name, len, 1, out);
-    }
-
-    /* Write path pattern */
-    dump_pattern(p->node->o.path.clause->o.clause.lval, out);
+    /* Write clause pattern */
+    dump_pattern(c->node->o.clause.lval, out);
 
     /* Write local variable count */
-    fputc(p->nreg, out);
+    fputc(c->nreg, out);
 
     /* Write table entry count */
-    fputc(p->kindex, out);
+    fputc(c->kindex, out);
 
     /* Write header */
-    for (int i = 0; i < p->kindex; i++) {
-        tval = p->kheader[i];
+    for (int i = 0; i < c->kindex; i++) {
+        tval = c->kheader[i];
 
         /* Write constant type */
         fputc(tval->t, out);
@@ -504,19 +509,46 @@ static void dump_path(PathEntry *p, FILE *out)
         }
     }
     /* Write byte-code length */
-    fwrite(&p->pc, sizeof(p->pc), 1, out);
+    fwrite(&c->pc, sizeof(c->pc), 1, out);
 
     /* Write byte-code */
-    fwrite(p->code, sizeof(Instruction), p->pc , out);
+    fwrite(c->code, sizeof(Instruction), c->pc , out);
+}
+
+static void dump_path(PathEntry *p, FILE *out)
+{
+    /* Write path attributes */
+    fputc(0xff, out);
+
+    if (false) { /* TODO: Anonymous path */
+        fputc(0, out);
+    } else {
+        /* Write path name */
+        uint8_t len = (uint8_t)strnlen(p->name, UINT8_MAX);
+        fputc(len, out);
+        fwrite(p->name, len, 1, out);
+    }
+
+    /* Write clause entry count */
+    fputc(p->nclauses, out);
+
+    for (int i = 0; i < p->nclauses; i++) {
+        dump_clause(p->clauses[i], out);
+    }
 }
 
 static int gen(Generator *g, Instruction i)
 {
-    if (g->path->pc == g->path->codesize - 1) {
-        g->path->codesize += 4096;
-        g->path->code      = realloc(g->path->code, g->path->codesize);
-    }
-    g->path->code[g->path->pc] = i;
+    ClauseEntry *clause = g->path->clause;
 
-    return g->path->pc++;
+    if (clause->pc == clause->codesize - 1) {
+        clause->codesize += 4096;
+        clause->code      = realloc(clause->code, clause->codesize);
+    }
+    clause->code[clause->pc] = i;
+
+    if (i)
+        printf("%3lu:\t", clause->pc), op_pp(i), putchar('\n');
+
+    return clause->pc++;
 }

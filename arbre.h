@@ -10,6 +10,7 @@
  */
 #include  <stdbool.h>
 #include  <stdint.h>
+#include  <stdarg.h>
 
 #include  "source.h"
 #include  "tokens.h"

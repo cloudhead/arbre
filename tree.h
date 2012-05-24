@@ -26,10 +26,8 @@ void        exitscope(Tree *t);
 
 void        pp_tree(Tree *);
 
-struct PathEntry {
-    char          *name;
+struct ClauseEntry {
     Node          *node;
-    uint8_t        index;
 
     /* Constants */
     SymTable       *ktable;
@@ -38,12 +36,25 @@ struct PathEntry {
 
     /* Locals */
     int            nlocals;
+    uint8_t        nreg;
 
     /* Code */
-    uint8_t        nreg;
     uint32_t       *code;
     unsigned long   codesize;
     unsigned long   pc;
+};
+
+typedef struct ClauseEntry ClauseEntry;
+
+struct PathEntry {
+    char          *name;
+    Node          *node;
+    uint8_t        index;
+
+    /* Clauses */
+    int            nclauses;
+    ClauseEntry    *clause;
+    ClauseEntry   **clauses;
 };
 
 typedef unsigned Register;
@@ -58,5 +69,6 @@ struct Variable {
 typedef struct Variable Variable;
 typedef struct PathEntry PathEntry;
 
-Variable   *var(char *, Register);
-PathEntry  *pathentry(char *, Node*, uint8_t);
+Variable     *var(char *, Register);
+PathEntry    *pathentry(char *, Node *, uint8_t);
+ClauseEntry  *clauseentry(Node *, uint8_t);

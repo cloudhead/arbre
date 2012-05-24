@@ -7,7 +7,6 @@
  *
  */
 typedef struct {
-    const char     *name;
     TValue          pattern;
     Instruction    *code;
     unsigned long   codelen; /* TODO: Rename to ncode */
@@ -15,6 +14,15 @@ typedef struct {
     TValue         *constants;
     int             constantsn; /* TODO: Rename to nconstants */
     int             pc;
+} Clause;
+
+typedef struct {
+    const char     *name;
+
+    /* Clauses */
+    int            nclauses;
+    Clause         *clause;
+    Clause        **clauses;
 } Path;
 
 struct Module {
@@ -37,6 +45,7 @@ typedef struct {
     uint8_t   result;
     Module   *module;
     Path     *path;
+    Clause   *clause;
     TValue   *locals;
     int      nlocals;
 } Frame;
@@ -54,6 +63,7 @@ typedef struct {
     Stack    *stack;
     Path     *path;
     Module   *module;
+    Clause   *clause;
     uint64_t  pc;
     uint16_t  credits;
     uint8_t   flags;
@@ -69,8 +79,9 @@ void        stack_push      (Stack *s, Frame *f);
 Frame      *stack_pop       (Stack *s);
 void        stack_pp        (Stack *s);
 
-Path       *path            (const char *name, TValue pattern, int nlocals, int clen);
+Path       *path            (const char *name, int nclauses);
 Process    *process         (Module *m, Path *path);
 Frame      *frame           (TValue *locals, int nlocals);
 void        frame_pp        (Frame *);
 
+Clause     *clause          (TValue pattern, int nlocals, int clen);

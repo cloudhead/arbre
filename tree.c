@@ -81,6 +81,20 @@ void pp_tree(Tree *t)
     pp_node(t->root);
 }
 
+ClauseEntry *clauseentry(Node *n, uint8_t index)
+{
+    ClauseEntry  *c = malloc(sizeof(*c));
+                  c->node      = n;
+                  c->kheader   = calloc(128,  sizeof(TValue*));
+                  c->ktable    = symtab(128);
+                  c->kindex    = 0;
+                  c->nlocals   = 0;
+                  c->pc        = 0;
+                  c->code      = calloc(4096, sizeof(uint32_t));
+                  c->codesize  = 4096;
+    return        c;
+}
+
 /*
  * Path-entry allocator
  */
@@ -90,13 +104,9 @@ PathEntry *pathentry(char *name, Node *n, uint8_t index)
                 p->name      = name;
                 p->node      = n;
                 p->index     = index;
-                p->kheader   = calloc(128,  sizeof(TValue*));
-                p->ktable    = symtab(128);
-                p->kindex    = 0;
-                p->nlocals   = 0;
-                p->pc        = 0;
-                p->code      = calloc(4096, sizeof(uint32_t));
-                p->codesize  = 4096;
+                p->clause    = NULL;
+                p->nclauses  = 0;
+                p->clauses   = calloc(255, sizeof(ClauseEntry *));
     return      p;
 }
 
