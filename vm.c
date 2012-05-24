@@ -46,6 +46,8 @@
 Module *vm_module  (VM *vm, const char *name);
 TValue *vm_execute (VM *vm, Process *proc);
 
+int match (TValue *pattern, TValue *v, TValue *local);
+
 VM *vm(void)
 {
     size_t msize = sizeof(ModuleList*) * 512;
@@ -183,12 +185,25 @@ void vm_load(VM *vm, const char *name, Path *paths[])
     }
 }
 
-int match_tuple(TValue *pattern, TValue *v, TValue **matches)
+int match_tuple(Value pattern, Value v, TValue *local)
 {
-    return 0;
+    int m = 0, nmatches = 0;
+
+    if (pattern.tuple->arity != v.tuple->arity)
+        return -1;
+
+    for (int i = 0; i < v.tuple->arity; i++) {
+        m = match(pattern.tuple->members + i, v.tuple->members + i, local + nmatches);
+
+        if (m == -1)
+            return -1;
+
+        nmatches += m;
+    }
+    return nmatches;
 }
 
-int match(TValue *pattern, TValue *v, TValue **matches)
+int match(TValue *pattern, TValue *v, TValue *local)
 {
     assert(pattern);
 
@@ -202,7 +217,7 @@ int match(TValue *pattern, TValue *v, TValue **matches)
     }
 
     if (pattern->t == TYPE_ANY) {
-        *matches[0] = *v;
+        *local = *v;
         return 1;
     }
 
@@ -212,7 +227,7 @@ int match(TValue *pattern, TValue *v, TValue **matches)
 
     switch (pattern->t) {
         case TYPE_TUPLE:
-            return match_tuple(pattern, v, matches);
+            return match_tuple(pattern->v, v->v, local);
         case TYPE_ATOM:
             assert(0);
         default:
@@ -238,7 +253,7 @@ void vm_call(VM *vm, Process *proc, Module *m, Path *p, TValue *arg)
 
     memset(locals, 0, size);
 
-    int nlocals = match(&p->pattern, arg, &locals);
+    int nlocals = match(&p->pattern, arg, locals);
 
     if (nlocals == -1) {
         error(1, 0, "no matches for %s/%s", m->name, p->name);
@@ -347,12 +362,15 @@ reentry:
                 assert(0);
                 break;
             case OP_TUPLE:
-                // TODO: Implement
-                assert(0);
+                R[A] = *tuple(B(i));
                 break;
             case OP_SETTUPLE:
-                // TODO: Implement
-                assert(0);
+                B = B(i);
+
+                assert(R[A].t == TYPE_TUPLE);
+                assert(B < R[A].v.tuple->arity);
+
+                R[A].v.tuple->members[B] = RK(C(i));
                 break;
             case OP_PATH:
                 R[A].v.uri.module = RK(B(i)).v.atom;

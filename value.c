@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "value.h"
 
@@ -69,5 +70,15 @@ void tvalues_pp(TValue *tval, int size)
             putchar(',');
     }
     putchar(']');
+}
+
+TValue *tuple(int arity)
+{
+    assert(arity <= 255);
+
+    Tuple *t = malloc(sizeof(*t) + sizeof(TValue) * arity);
+           t->arity = arity;
+
+    return tvalue(TYPE_TUPLE, (Value){ .tuple = t });
 }
 

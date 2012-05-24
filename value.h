@@ -76,3 +76,5 @@ typedef struct Tuple Tuple;
 TValue *tvalue(TYPE type, Value val);
 void    tvalue_pp(TValue *tval);
 void    tvalues_pp(TValue *tval, int size);
+
+TValue *tuple(int arity);
