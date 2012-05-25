@@ -18,7 +18,8 @@ typedef enum {
     TYPE_STRING,
     TYPE_NUMBER,
     TYPE_LIST,
-    TYPE_PATH
+    TYPE_PATH,
+    TYPE_CLAUSE
 } TYPE;
 
 /*
@@ -41,12 +42,15 @@ typedef struct {
     char value[];
 } String;
 
+struct Clause;
+
 typedef union {
     struct TValue  *tval;
     bool            boolean;
     int             number;
     const char     *atom;
     String         *string;
+    struct Clause  *clause;
     struct Tuple   *tuple;
     struct {
         const char *module;

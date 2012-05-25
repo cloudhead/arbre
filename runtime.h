@@ -6,7 +6,7 @@
  * runtime.h
  *
  */
-typedef struct {
+struct Clause {
     TValue          pattern;
     Instruction    *code;
     unsigned long   codelen; /* TODO: Rename to ncode */
@@ -14,7 +14,9 @@ typedef struct {
     TValue         *constants;
     int             constantsn; /* TODO: Rename to nconstants */
     int             pc;
-} Clause;
+};
+typedef struct Clause Clause;
+
 
 typedef struct {
     const char     *name;

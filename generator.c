@@ -48,6 +48,7 @@ static int    gen_path    (Generator *, Node *);
 static int    gen_select  (Generator *, Node *);
 static int    gen_apply   (Generator *, Node *);
 static int    gen_access  (Generator *, Node *);
+static int    gen_clause  (Generator *, Node *);
 static int    gen         (Generator *, Instruction);
 
 static void dump_path(PathEntry *p, FILE *out);
@@ -65,7 +66,7 @@ int (*OP_GENERATORS[])(Generator*, Node*) = {
     [OTUPLE]    =  gen_tuple,  [OLIST]     =  NULL,
     [OACCESS]   =  gen_access, [OAPPLY]    =  gen_apply,
     [OSEND]     =  NULL,       [ORANGE]    =  NULL,
-    [OCLAUSE]   =  NULL,       [OPIPE]     =  NULL
+    [OCLAUSE]   =  gen_clause, [OPIPE]     =  NULL
 };
 
 static int define(Generator *g, char *ident, int reg)
@@ -230,31 +231,37 @@ static int gen_apply(Generator *g, Node *n)
     return rr;
 }
 
-static int gen_clause(Generator *g, Node *n, bool path)
+static int gen_clause(Generator *g, Node *n)
 {
     int reg = -1;
     int rega = 0;
 
+    ClauseEntry *old = g->path->clause;
+
+    int index = g->path->nclauses;
+
     g->path->clause = clauseentry(n, g->path->nclauses);
-    g->path->clauses[g->path->nclauses ++] = g->path->clause;
+    g->path->clauses[index] = g->path->clause;
+
+    g->path->nclauses ++;
 
     enterscope(g->tree);
     gen_locals(g, n->o.clause.lval);
     reg = gen_block(g, n->o.clause.rval);
     exitscope(g->tree);
 
-    /* Don't return from top-level */
-    if (g->tree->symbols->parent || path) {
-        if (ISK(reg)) {
-            rega = nextreg(g);
-            gen(g, iAD(OP_LOADK, rega, reg));
-            reg = rega;
-        }
-        gen(g, iABC(OP_RETURN, reg, 0, 0));
+    if (ISK(reg)) {
+        rega = nextreg(g);
+        gen(g, iAD(OP_LOADK, rega, reg));
+        reg = rega;
     }
+    gen(g, iABC(OP_RETURN, reg, 0, 0));
     gen(g, 0); /* Terminator */
 
-    return reg;
+    if (old)
+        g->path->clause = old;
+
+    return index;
 }
 
 static int gen_ident(Generator *g, Node *n)
@@ -330,9 +337,7 @@ static int gen_path(Generator *g, Node *n)
 
     g->pathsn ++;
 
-    printf("%s/%s:\n", g->module->name, name);
-
-    return gen_clause(g, n->o.path.clause, true);
+    return gen_clause(g, n->o.path.clause);
 }
 
 static int gen_num(Generator *g, Node *n)

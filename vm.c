@@ -260,7 +260,7 @@ int match(TValue *pattern, TValue *v, TValue *local)
     return -1;
 }
 
-void vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
+int vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
 {
     /* TODO: Perform pattern-match */
 
@@ -281,10 +281,13 @@ void vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
     int nlocals = match(&c->pattern, arg, local);
 
     if (nlocals == -1) {
-        error(1, 0, "no matches for %s/%s", m->name, p->name);
+        return -1;
     }
 
     debug("%s/%s:\n", m->name, p->name);
+
+    if (! c)
+        return -1;
 
     Frame *f = frame(locals, c->nlocals);
 
@@ -295,6 +298,8 @@ void vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
     f->prev   = NULL;
 
     stack_push(proc->stack, f);
+
+    return nlocals;
 }
 
 Process *vm_spawn(VM *vm, Module *m, Path *p)
@@ -410,27 +415,43 @@ reentry:
                 (*(s->frame))->pc = 0;
                 goto reentry;
             case OP_CALL: {
-                /* TODO: Support lambda calls*/
+                int matches = -1;
+
+                TValue callee = RK(B(i));
 
                 C = C(i);
 
-                const char *module = RK(B(i)).v.uri.module;
-                const char *path   = RK(B(i)).v.uri.path;
-
-                /* TODO: Don't lookup if path is static */
-
-                if (! (m = vm_module(vm, module)))
-                    error(1, 0, "module `%s` not found", module);
-
-                if (! (p = module_path(m, path)))
-                    error(1, 0, "path `%s` not found in `%s` module", path, module);
-
-                c = p->clauses[0];
-
                 TValue arg = RK(C);
 
-                vm_call(vm, proc, m, p, c, &arg); /* Create & push stack call-frame */
-                (*s->frame)->result = A;          /* Set return-value register */
+                switch (callee.t) {
+                    case 0:
+                    case TYPE_PATH: {
+                        const char *module = callee.v.uri.module;
+                        const char *path   = callee.v.uri.path;
+
+                        /* TODO: Don't lookup if path is static */
+
+                        if (! (m = vm_module(vm, module)))
+                            error(1, 0, "module `%s` not found", module);
+
+                        if (! (p = module_path(m, path)))
+                            error(1, 0, "path `%s` not found in `%s` module", path, module);
+
+                        c = p->clauses[0];
+                        matches = vm_call(vm, proc, m, p, c, &arg); /* Create & push stack call-frame */
+
+                        break;
+                    }
+                    case TYPE_CLAUSE:
+                        c = callee.v.clause;
+                        break;
+                    default:
+                        assert(0);
+                }
+                if (matches < 0)
+                    error(1, 0, "no matches for %s/%s", m->name, p->name);
+
+                (*s->frame)->result = A;                    /* Set return-value register */
 
                 goto reentry;
             }
