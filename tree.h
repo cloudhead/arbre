@@ -27,7 +27,7 @@ void        exitscope(Tree *t);
 void        pp_tree(Tree *);
 
 struct ClauseEntry {
-    Node          *node;
+    Node           *node;
 
     /* Constants */
     SymTable       *ktable;
