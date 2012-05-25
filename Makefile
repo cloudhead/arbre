@@ -5,7 +5,7 @@ SRC = arbre.c  scanner.c  token.c     source.c  tokens.c\
 	  io.c     node.c     runtime.c   value.c   hash.c\
 	  vm.c     op.c       symtab.c    command.c error.c bin.c
 HEADERS = *.h
-CFLAGS = -Wall -pedantic -std=c99 -O0
+CFLAGS = -Wall -pedantic -std=c99 -O0 -g
 TARGET = bin/arbre
 
 $(TARGET): $(SRC) $(HEADERS)
