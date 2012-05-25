@@ -451,7 +451,7 @@ static void dump_atom(Node *n, FILE *out)
 static void dump_number(Node *n, FILE *out)
 {
     int i = atoi(n->o.number);
-    fwrite(&i, sizeof(int), 1, out);
+    fwrite(&i, sizeof(i), 1, out);
 }
 
 static void dump_node(Node *n, FILE *out)
@@ -521,6 +521,7 @@ static void dump_clause(ClauseEntry *c, FILE *out)
                 fwrite(&tval->v, sizeof(int), 1, out);
                 break;
             default:
+                assert(0);
                 break;
         }
     }
@@ -528,7 +529,11 @@ static void dump_clause(ClauseEntry *c, FILE *out)
     fwrite(&c->pc, sizeof(c->pc), 1, out);
 
     /* Write byte-code */
-    fwrite(c->code, sizeof(Instruction), c->pc , out);
+    fwrite(c->code, sizeof(Instruction), c->pc, out);
+
+    for (int i = 0; i < c->pc; i++) {
+        printf("%3d:\t", i), op_pp(c->code[i]), putchar('\n');
+    }
 }
 
 static void dump_path(PathEntry *p, FILE *out)
@@ -548,8 +553,11 @@ static void dump_path(PathEntry *p, FILE *out)
     /* Write clause entry count */
     fputc(p->nclauses, out);
 
+    printf("/%s:\n", p->name);
+
     for (int i = 0; i < p->nclauses; i++) {
         dump_clause(p->clauses[i], out);
+        puts("-");
     }
 }
 
@@ -562,9 +570,6 @@ static int gen(Generator *g, Instruction i)
         clause->code      = realloc(clause->code, clause->codesize);
     }
     clause->code[clause->pc] = i;
-
-    if (i)
-        printf("%3lu:\t", clause->pc), op_pp(i), putchar('\n');
 
     return clause->pc++;
 }
