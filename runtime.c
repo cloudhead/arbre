@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "arbre.h"
 #include "op.h"
@@ -145,6 +146,16 @@ Clause *clause(TValue pattern, int nlocals, int clen)
             c->constantsn = clen;
             c->pc = -1;
     return  c;
+}
+
+TValue *select(int nclauses)
+{
+    assert(nclauses <= 255);
+
+    Select *s = malloc(sizeof(*s) + sizeof(TValue *) * nclauses);
+            s->nclauses = nclauses;
+
+    return tvalue(TYPE_SELECT, (Value){ .select = s });
 }
 
 Process *process(Module *m, Path *path)

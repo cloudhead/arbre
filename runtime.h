@@ -17,6 +17,11 @@ struct Clause {
 };
 typedef struct Clause Clause;
 
+struct Select {
+    int     nclauses : 8;
+    Clause  *clauses[];
+};
+typedef struct Select Select;
 
 typedef struct {
     const char     *name;
@@ -87,3 +92,4 @@ Frame      *frame           (TValue *locals, int nlocals);
 void        frame_pp        (Frame *);
 
 Clause     *clause          (TValue pattern, int nlocals, int clen);
+TValue     *select          (int nclauses);

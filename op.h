@@ -99,7 +99,9 @@ typedef enum {
     OP_TAILCALL,
     OP_SEND,
     OP_LAMBDA,
-    OP_PATH
+    OP_PATH,
+    OP_SELECT,
+    OP_SETSELECT
 } OpCode;
 
 /*

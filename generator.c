@@ -277,7 +277,18 @@ static int gen_ident(Generator *g, Node *n)
 
 static int gen_select(Generator *g, Node *n)
 {
-    return 0;
+    NodeList *ns;
+
+    unsigned reg = nextreg(g);
+
+    gen(g, iABC(OP_SELECT, reg, n->o.select.nclauses, 0));
+
+    ns = n->o.select.clauses;
+    for (int i = 0; i < n->o.select.nclauses; i++) {
+        gen(g, iABC(OP_SETSELECT, reg, i, gen_node(g, ns->head)));
+        ns = ns->tail;
+    }
+    return reg;
 }
 
 static int gen_add(Generator *g, Node *n)

@@ -856,6 +856,7 @@ static Node *parse_select(Parser *p)
         else
             break;
     }
+    select->o.select.nclauses = len;
     select->o.select.clauses = ns;
 
     return select;

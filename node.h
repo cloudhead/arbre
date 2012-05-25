@@ -129,6 +129,7 @@ struct Node {
         } module;
 
         struct {
+            unsigned        nclauses;
             struct NodeList *clauses;
         } select;
 

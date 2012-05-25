@@ -19,6 +19,7 @@ typedef enum {
     TYPE_NUMBER,
     TYPE_LIST,
     TYPE_PATH,
+    TYPE_SELECT,
     TYPE_CLAUSE
 } TYPE;
 
@@ -42,6 +43,7 @@ typedef struct {
     char value[];
 } String;
 
+struct Select;
 struct Clause;
 
 typedef union {
@@ -52,6 +54,7 @@ typedef union {
     String         *string;
     struct Clause  *clause;
     struct Tuple   *tuple;
+    struct Select  *select;
     struct {
         const char *module;
         const char *path;

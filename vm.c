@@ -396,6 +396,19 @@ reentry:
                 // TODO: Implement
                 assert(0);
                 break;
+            case OP_SELECT:
+                R[A] = *select(B(i));
+                break;
+            case OP_SETSELECT:
+                B = B(i);
+                C = C(i);
+
+                assert(R[A].t == TYPE_SELECT);
+                assert(B < R[A].v.select->nclauses);
+                assert(C < p->nclauses);
+
+                R[A].v.select->clauses[B] = p->clauses[C];
+                break;
             case OP_TUPLE:
                 R[A] = *tuple(B(i));
                 break;
@@ -445,6 +458,15 @@ reentry:
                     case TYPE_CLAUSE:
                         c = callee.v.clause;
                         break;
+                    case TYPE_SELECT: {
+                        for (int i = 0; i < callee.v.select->nclauses; i++) {
+                            Clause *c = callee.v.select->clauses[i];
+                            matches = vm_call(vm, proc, m, p, c, &arg);
+                            if (matches >= 0)
+                                break;
+                        }
+                        break;
+                    }
                     default:
                         assert(0);
                 }
