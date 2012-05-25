@@ -32,9 +32,10 @@ TValue bin_readnode(uint8_t **bp)
             tv = (TValue){
                 .t = TYPE_NUMBER,
                 .v = (Value){
-                    .number = *(int *)bp
+                    .number = *(int *)*bp
                 }
             };
+            *bp += sizeof(int);
             break;
         case TYPE_ATOM:
             assert(0);
