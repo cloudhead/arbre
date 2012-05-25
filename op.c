@@ -64,23 +64,20 @@ void op_pp(Instruction i)
 
     printf("%-9s\t", OPCODE_STRINGS[o]);
 
+    oparg_pp(a, -1, AMODE(o));
+    putchar('\t');
+
     switch (OPMODE(o)) {
         case ABC:
-            oparg_pp(a, -1, AMODE(o));
-            putchar('\t');
             oparg_pp(b, BMODE(o), 0);
             putchar('\t');
             oparg_pp(c, CMODE(o), 0);
             break;
         case AD:
-            oparg_pp(a, -1, AMODE(o));
-            putchar('\t');
             oparg_pp(d, BMODE(o), 0);
             putchar('\t');
             break;
         case AJ:
-            oparg_pp(a, -1, AMODE(o));
-            putchar('\t');
             oparg_pp(j, BMODE(o), 0);
             putchar('\t');
             break;

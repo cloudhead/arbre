@@ -88,6 +88,7 @@ ClauseEntry *clauseentry(Node *n, uint8_t index)
                   c->kheader   = calloc(128,  sizeof(TValue*));
                   c->ktable    = symtab(128);
                   c->kindex    = 0;
+                  c->nreg      = 0;
                   c->nlocals   = 0;
                   c->pc        = 0;
                   c->code      = calloc(4096, sizeof(uint32_t));

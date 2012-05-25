@@ -86,6 +86,7 @@ Command *command(int argv, char *argc[])
              c->argv    = argv;
              c->argc    = argc;
              c->fp      = NULL;
+             c->f       = NULL;
     return   c;
 }
 
@@ -207,6 +208,9 @@ static int command_run(Command *c)
             break;
         }
     }
+
+    if (c->options & CMDOPT_SYNTAX)
+        return 0;
 
     uint8_t *code = freadbin(c->fp, module);
 
