@@ -254,6 +254,12 @@ int match(TValue *pattern, TValue *v, TValue *local)
             return match_tuple(pattern->v, v->v, local);
         case TYPE_ATOM:
             assert(0);
+        case TYPE_NUMBER:
+            if (pattern->v.number == v->v.number) {
+                local->v.number = v->v.number;
+                return 1;
+            }
+            break;
         default:
             assert(0);
     }
