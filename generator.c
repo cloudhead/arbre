@@ -444,8 +444,9 @@ static int gen_node(Generator *g, Node *n)
 
 static void dump_atom(Node *n, FILE *out)
 {
-    fputc(strlen(n->o.atom), out);
-    fwrite(n->o.atom, strlen(n->o.atom) + 1, 1, out);
+    fputc(strlen(n->o.atom) + 1, out);
+    fwrite(n->o.atom, strlen(n->o.atom), 1, out);
+    fputc('\0', out);
 }
 
 static void dump_number(Node *n, FILE *out)

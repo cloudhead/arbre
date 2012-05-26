@@ -37,9 +37,19 @@ TValue bin_readnode(uint8_t **bp)
             };
             *bp += sizeof(int);
             break;
-        case TYPE_ATOM:
-            assert(0);
+        case TYPE_ATOM: {
+            uint8_t len = *(*bp)++;
+
+            tv = (TValue){
+                .t = TYPE_ATOM,
+                .v = (Value){
+                     // Alternatively `strndup(*bp, len)`
+                    .atom = *bp
+                }
+            };
+            *bp += len;
             break;
+        }
         case TYPE_ANY:
             tv = (TValue){ .t = TYPE_ANY };
             break;

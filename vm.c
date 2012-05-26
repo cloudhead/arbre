@@ -209,6 +209,16 @@ void vm_load(VM *vm, const char *name, Path *paths[])
     }
 }
 
+int match_atom(Value pattern, Value v, TValue *local)
+{
+    // TODO: If we keep a global store of atoms, we only
+    // need a pointer comparison here.
+    if (! strcmp(pattern.atom, v.atom))
+        return 0;
+
+    return -1;
+}
+
 int match_tuple(Value pattern, Value v, TValue *local)
 {
     int m = 0, nmatches = 0;
@@ -253,7 +263,7 @@ int match(TValue *pattern, TValue *v, TValue *local)
         case TYPE_TUPLE:
             return match_tuple(pattern->v, v->v, local);
         case TYPE_ATOM:
-            assert(0);
+            return match_atom(pattern->v, v->v, local);
         case TYPE_NUMBER:
             if (pattern->v.number == v->v.number) {
                 local->v.number = v->v.number;
