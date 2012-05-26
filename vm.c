@@ -265,10 +265,8 @@ int match(TValue *pattern, TValue *v, TValue *local)
         case TYPE_ATOM:
             return match_atom(pattern->v, v->v, local);
         case TYPE_NUMBER:
-            if (pattern->v.number == v->v.number) {
-                local->v.number = v->v.number;
-                return 1;
-            }
+            if (pattern->v.number == v->v.number)
+                return 0;
             break;
         default:
             assert(0);
