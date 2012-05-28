@@ -9,6 +9,7 @@
 typedef struct {
     Tree       *tree;      /* AST */
     Node       *root;      /* tree->root */
+    Node       *block;     /* Current block */
     Token      *token;     /* Current token */
     TOKEN       tok;       /* token->tok */
     size_t      pos;       /* token->pos */

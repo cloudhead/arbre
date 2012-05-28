@@ -152,6 +152,7 @@ struct Node {
         struct { struct NodeList *items; } map;
 
         struct {
+            struct Node      *parent;
             struct NodeList  *body;
         } block;
     } o;

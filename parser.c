@@ -64,6 +64,7 @@ Parser *parser(Source *src)
     p->src     = NULL;
     p->tok     = p->token->tok;
     p->errors  = 0;
+    p->block   = NULL;
 
     return p;
 }
@@ -173,8 +174,9 @@ static void end(Parser *p)
  */
 static Node *block(Parser *p)
 {
-    Node *b = node(p->token, OBLOCK);
-    b->o.block.body  = nodelist(NULL);
+    Node  *b = node(p->token, OBLOCK);
+           b->o.block.parent = p->block;
+           b->o.block.body   = nodelist(NULL);
     return b;
 }
 
@@ -552,6 +554,8 @@ static Node *parse_block(Parser *p)
 {
     Node *n = block(p);
 
+    p->block = n;
+
     if (p->tok == T_LF) { /* Multi-line block */
         next(p);
         expect(p, T_INDENT);
@@ -567,6 +571,8 @@ static Node *parse_block(Parser *p)
     } else {              /* Inline block */
         append(n->o.block.body, parse_primary(p));
     }
+    p->block = n;
+
     return n;
 }
 
