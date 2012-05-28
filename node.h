@@ -131,6 +131,7 @@ struct Node {
         struct {
             unsigned        nclauses;
             struct NodeList *clauses;
+            struct Node     *arg;
         } select;
 
         struct {

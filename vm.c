@@ -406,23 +406,15 @@ reentry:
             case OP_JUMP:
                 f->pc += J(i);
                 break;
-            case OP_MATCH:
-                // TODO: Implement
-                assert(0);
-                break;
-            case OP_SELECT:
-                R[A] = *select(B(i));
-                break;
-            case OP_SETSELECT:
-                B = B(i);
-                C = C(i);
+            case OP_MATCH: {
+                TValue b = RK(B(i)),
+                       c = RK(C(i)),
+                       a = R[A];
 
-                assert(R[A].t == TYPE_SELECT);
-                assert(B < R[A].v.select->nclauses);
-                assert(C < p->nclauses);
-
-                R[A].v.select->clauses[B] = p->clauses[C];
+                if (match(&b, &c, &a) >= 0)
+                    f->pc ++;
                 break;
+            }
             case OP_TUPLE:
                 R[A] = *tuple(B(i));
                 break;

@@ -48,6 +48,7 @@ static  Node  *parse_match(Parser *p, Node *lval);
 static  Node  *parse_send(Parser *, Node *);
 static  Node  *parse_clause(Parser *);
 static  Node  *parse_spawn(Parser *);
+static  Node  *parse_select(Parser *p, Node *arg);
 
 /*
  * Parser allocator/initializer
@@ -513,6 +514,11 @@ static Node *parse_expression(Parser *p)
         default:         error(p, ERR_DEFAULT); return NULL;
     }
 
+    switch (p->tok) {
+        case T_QUESTION:   n = parse_select(p, n); break;
+        default:                                   break;
+    }
+
     switch (p->tok) { // Parse rval
         case T_IDENT:  case T_LPAREN:
         case T_STRING: case T_INT:
@@ -833,11 +839,13 @@ static Node *parse_send(Parser *p, Node *t)
  *
  *     A | B | (X : X + 1) | C
  */
-static Node *parse_select(Parser *p)
+static Node *_parse_select(Parser *p, Node *arg)
 {
     NodeList *ns = nodelist(NULL);
     Node     *n  = NULL,
              *select = node(p->token, OSELECT);
+
+    select->o.select.arg = arg;
 
     // The first `|` is optional
     if (p->tok == T_PIPE) next(p);
@@ -861,6 +869,22 @@ static Node *parse_select(Parser *p)
 
     return select;
 }
+static Node *parse_select(Parser *p, Node *arg)
+{
+    Node *n;
+
+    expect(p, T_QUESTION);
+
+    if (p->tok == T_LF) {
+        next(p);
+        expect(p, T_INDENT);
+        n = _parse_select(p, arg);
+        expect(p, T_DEDENT);
+    } else {
+        n = _parse_select(p, arg);
+    }
+    return n;
+}
 
 /*
  * Parse a function application. Example:
@@ -872,26 +896,10 @@ static Node *parse_apply(Parser *p, Node *t)
 {
     Node *n = node(p->token, OAPPLY), *e = NULL;
 
-    if (p->tok == T_QUESTION) {
-        next(p); // `?`
+    e = parse_expression(p);
 
-        if (p->tok == T_LF) {
-            next(p);
-            expect(p, T_INDENT);
-            e = parse_select(p);
-            expect(p, T_DEDENT);
-        } else {
-            e = parse_select(p);
-        }
-
-        n->o.apply.lval = e;
-        n->o.apply.rval = t;
-    } else {
-        e = parse_expression(p);
-
-        n->o.apply.lval = t;
-        n->o.apply.rval = e;
-    }
+    n->o.apply.lval = t;
+    n->o.apply.rval = e;
 
     return n;
 }

@@ -278,17 +278,52 @@ static int gen_ident(Generator *g, Node *n)
 static int gen_select(Generator *g, Node *n)
 {
     NodeList *ns;
+    Node     *arg = n->o.select.arg;
 
-    unsigned reg = nextreg(g);
+    unsigned result = nextreg(g), ret;
+    unsigned long savedpc, offset;
 
-    gen(g, iABC(OP_SELECT, reg, n->o.select.nclauses, 0));
+    int nclauses = n->o.select.nclauses;
+    int patches[nclauses];
+
+    ClauseEntry *clause = g->path->clause;
 
     ns = n->o.select.clauses;
-    for (int i = 0; i < n->o.select.nclauses; i++) {
-        gen(g, iABC(OP_SETSELECT, reg, i, gen_node(g, ns->head)));
+
+    for (int i = 0; i < nclauses; i++) {
+        Node *c = ns->head;
+
+        gen(g, iABC(OP_MATCH, nextreg(g), gen_node(g, c->o.clause.lval),
+                                          gen_node(g, arg)));
+        /* TODO: gen an OP_JUMP, set offset later */
+        savedpc = g->path->clause->pc;
+        gen(g, 0); /* Patched in [1] */
+
+        enterscope(g->tree);
+        gen_locals(g, c->o.clause.lval);
+        ret = gen_block(g, c->o.clause.rval);
+        exitscope(g->tree);
+
+        if (ISK(ret))
+            gen(g, iAD(OP_LOADK, result, ret));
+        else
+            gen(g, iABC(OP_MOVE, result, ret, 0));
+
+        if (i < nclauses - 1) {
+            patches[i] = clause->pc;
+            /* TODO: gen an OP_JUMP, set offset later */
+            gen(g, 0); /* Patched in [2] */
+        }
+        offset = clause->pc - savedpc - 1;
+        clause->code[savedpc] = iAJ(OP_JUMP, 0, offset); /* 1 */
+
         ns = ns->tail;
     }
-    return reg;
+    for (int i = 0; i < nclauses - 1; i++) {
+        clause->code[patches[i]] = /* 2 */
+            iAJ(OP_JUMP, 0, clause->pc - patches[i] - 1);
+    }
+    return result;
 }
 
 static int gen_add(Generator *g, Node *n)
