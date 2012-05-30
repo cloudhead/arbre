@@ -14,6 +14,7 @@ typedef enum {
 struct Command {
     CommandType  type;
     int          options;
+    char        *output; // TODO: This doesn't belong here
     char       **inputs;
     int          inputc;
     int          argv;

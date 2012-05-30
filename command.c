@@ -13,6 +13,7 @@
 #include  <string.h>
 #include  <inttypes.h>
 #include  <errno.h>
+#include  <sys/stat.h>
 
 char *strdup(const char *);
 
@@ -29,7 +30,7 @@ char *strdup(const char *);
 static int   command_build(Command *cmd);
 static int   command_run(Command *cmd);
 static int   command_test(Command *cmd);
-static void  command_parseopt(Command *cmd, char *arg);
+static bool  command_parseopt(Command *cmd, char opt, char *arg);
 static void  command_parselopt(Command *cmd, char *arg);
 
 static uint8_t *freadbin(FILE *fp, const char *path);
@@ -85,6 +86,7 @@ Command *command(int argv, char *argc[])
              c->inputc  = 0;
              c->argv    = argv;
              c->argc    = argc;
+             c->output  = NULL;
              c->fp      = NULL;
              c->f       = NULL;
     return   c;
@@ -128,8 +130,15 @@ int command_exec(Command *cmd)
                         case '\0':
                             // TODO: Read from STDIN
                             break;
-                        default:
-                            command_parseopt(cmd, &cmd->argc[i][1]);
+                        default: {
+                            char opt = cmd->argc[i][1],
+                                *arg = NULL;
+
+                            if (i < cmd->argv - 1 && cmd->argc[i + 1][0] != '-') {
+                                arg = cmd->argc[++i];
+                            }
+                            command_parseopt(cmd, opt, arg);
+                        }
                     }
                 } else {
                     cmd->inputs[cmd->inputc++] = cmd->argc[i];
@@ -149,16 +158,16 @@ int command_exec(Command *cmd)
  *
  *     -a
  */
-static void command_parseopt(Command *cmd, char *arg)
+static bool command_parseopt(Command *cmd, char opt, char *arg)
 {
-    char c;
-
-    while ((c = *arg++)) {
-        switch (c) {
-            default:
-                break;
-        }
+    switch (opt) {
+        case 'o':
+            cmd->output = arg;
+            return true;
+        default:
+            break;
     }
+    return false;
 }
 
 /*
@@ -195,6 +204,9 @@ static int command_run(Command *c)
 
     if (c->inputc == 0)
         puts("usage: arbre run <module>"), exit(0);
+
+    // TODO: Use unique path
+    c->output = "/tmp/arbre-build.bin";
 
     command_build(c);
 
@@ -269,10 +281,13 @@ static int command_build(Command *c)
 
         Generator *g = generator(tree, src);
 
-        char out[strlen(path) + 4 + 1];
-        sprintf(out, "%s.bin", path);
+        mkdir(".arbre",     0755);
+        mkdir(".arbre/bin", 0755);
 
-        if (! (c->fp = fopen(out, "w+"))) {
+        char out[strlen(path) + 4 + 1];
+        sprintf(out, ".arbre/bin/%s.bin", path);
+
+        if (! (c->fp = fopen(c->output ? c->output : out, "w+"))) {
             error(1, errno, "couldn't create file %s for writing", out);
         }
         generate(g, c->fp);
