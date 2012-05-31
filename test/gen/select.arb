@@ -1,0 +1,28 @@
+--! arbre run $FILE
+
+tuples:
+    (0, 0) ? (0)    : 1
+           | (0, 1) : 1
+           | (0, 0) : 0
+
+atoms:
+    fnord ? fnor  : 1
+          | nord  : 1
+          | fnord : 0
+
+numbers:
+    42 ? 0   : 1
+       | 420 : 1
+       | -1  : 1
+       | 42  : 0
+
+strings:
+    -- TODO
+    0
+
+main:
+    Tuples  := ./tuples ()
+    Atoms   := ./atoms ()
+    Numbers := ./numbers ()
+    Strings := ./strings ()
+    Tuples + Atoms + Numbers + Strings

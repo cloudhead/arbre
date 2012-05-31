@@ -16,6 +16,6 @@ clean:
 	[ -f $(TARGET) ] && rm $(TARGET)
 
 test: $(TARGET)
-	test/test-runner.sh test/*.arb
+	test/test-runner.sh test/*.arb test/gen/*.arb
 
 .PHONY: test
