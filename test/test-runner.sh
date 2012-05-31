@@ -27,17 +27,21 @@ main () {
                 PASSED=$(expr $PASSED + 1)
                 ;;
             1)
-                echo
+                echo -ne "\033[$(expr $COLS - 6)G"
+                echo -e "$BOLD${RED}FAILED$CLEAR"
                 cat $TMP.result.expected   | sed 's/^/'`echo -e "$BOLD$RED-$CLEAR"`' /'
                 cat $TMP.result.unexpected | sed 's/^/'`echo -e "$BOLD$RED+$CLEAR"`' /'
                 FAILED=$(expr $FAILED + 1)
                 ;;
             139)
+                echo -ne "\033[$(expr $COLS - 8)G"
                 echo -e "$BOLD${RED}SEGFAULT$CLEAR"
                 FAILED=$(expr $FAILED + 1)
                 ;;
             *)
+                echo -ne "\033[$(expr $COLS - 6)G"
                 echo -e "$BOLD${RED}FAILED$CLEAR"
+                FAILED=$(expr $FAILED + 1)
                 ;;
         esac
     done
