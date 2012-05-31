@@ -274,7 +274,53 @@ static int gen_ident(Generator *g, Node *n)
         return ident->e.var->reg;
     } else {
         assert(0);
+
+/* TODO: Implement a node2tval function */
+static TValue *_gen_pattern(Generator *g, Node *n)
+{
+    TValue *pattern;
+
+    switch (n->op) {
+        case OTUPLE: {
+            int i = 0;
+            pattern = tuple(n->o.tuple.arity);
+
+            for (NodeList *ns = n->o.tuple.members ; ns ; ns = ns->tail) {
+                pattern->v.tuple->members[i++] = *_gen_pattern(g, ns->head);
+            }
+            break;
+        }
+        case OIDENT: {
+            int reg = gen_ident(g, n);
+
+            if (reg >= 0) {
+                pattern = tvalue(TYPE_IDENT, (Value){ .ident = reg });
+            } else {
+                g->path->clause->nlocals ++;
+                reg = define(g, n->src, nextreg(g));
+                pattern = tvalue(TYPE_ANY, (Value){ .ident = reg });
+            }
+            break;
+        }
+        case OATOM:
+            pattern = atom(n->src);
+            break;
+        case ONUMBER:
+            pattern = number(n->src);
+            break;
+        case OSTRING:
+            assert(0);
+            break;
+        default:
+            assert(0);
+            break;
     }
+    return pattern;
+}
+
+static int gen_pattern(Generator *g, Node *n)
+{
+    return gen_constant(g, NULL, _gen_pattern(g, n));
 }
 
 static int gen_select(Generator *g, Node *n)
@@ -554,26 +600,8 @@ static void dump_clause(ClauseEntry *c, FILE *out)
     for (int i = 0; i < c->kindex; i++) {
         tval = c->kheader[i];
 
-        /* Write constant type */
-        fputc(tval->t, out);
-
-        /* Write constant value */
-        switch (tval->t) {
-            case TYPE_BIN:
-            case TYPE_TUPLE:
-            case TYPE_STRING:
-                assert(0);
-                break;
-            case TYPE_ATOM:
-                fwrite(tval->v.atom, strlen(tval->v.atom) + 1, 1, out);
-                break;
-            case TYPE_NUMBER:
-                fwrite(&tval->v, sizeof(int), 1, out);
-                break;
-            default:
-                assert(0);
-                break;
-        }
+        /* Write constant */
+        dump_constant(tval, out);
     }
     /* Write byte-code length */
     fwrite(&c->pc, sizeof(c->pc), 1, out);
