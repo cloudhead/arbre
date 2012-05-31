@@ -12,6 +12,7 @@
  */
 typedef enum {
     TYPE_ANY,
+    TYPE_IDENT,
     TYPE_ATOM,
     TYPE_BIN,
     TYPE_TUPLE,
@@ -48,6 +49,7 @@ struct Clause;
 
 typedef union {
     struct TValue  *tval;
+    unsigned char   ident;
     bool            boolean;
     int             number;
     const char     *atom;

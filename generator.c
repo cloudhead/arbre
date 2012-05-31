@@ -139,17 +139,21 @@ void generate(Generator *g, FILE *out)
 
 static int gen_constant(Generator *g, const char *src, TValue *tval)
 {
-    Sym *k = symtab_lookup(g->path->clause->ktable, src);
+    if (src) {
+        Sym *k = symtab_lookup(g->path->clause->ktable, src);
 
-    if (k)
-        return k->e.tval->v.number;
+        if (k)
+            return k->e.tval->v.number;
+    }
 
     int      index  = g->path->clause->kindex++;
     Value    v      = (Value){ .number = index };
     TValue  *indexv = tvalue(-1, v);
 
     g->path->clause->kheader[index] = tval;
-    symtab_insert(g->path->clause->ktable, src, tvsymbol(src, indexv));
+
+    if (src)
+        symtab_insert(g->path->clause->ktable, src, tvsymbol(src, indexv));
 
     return index;
 }
@@ -358,14 +362,16 @@ static int gen_select(Generator *g, Node *n)
     for (int i = 0; i < nclauses; i++) {
         Node *c = ns->head;
 
-        gen(g, iABC(OP_MATCH, nextreg(g), gen_node(g, c->o.clause.lval),
-                                          gen_node(g, arg)));
+        TValue *pat = _gen_pattern(g, c->o.clause.lval);
+        unsigned reg = pat->t == TYPE_ANY ? pat->v.ident : nextreg(g);
+
+        gen(g, iABC(OP_MATCH, reg, RKASK(gen_constant(g, NULL, pat)), gen_node(g, arg)));
+
         /* TODO: gen an OP_JUMP, set offset later */
         savedpc = g->path->clause->pc;
         gen(g, 0); /* Patched in [1] */
 
         enterscope(g->tree);
-        gen_locals(g, c->o.clause.lval);
         ret = gen_block(g, c->o.clause.rval);
         exitscope(g->tree);
 

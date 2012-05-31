@@ -255,6 +255,10 @@ int match(TValue *pattern, TValue *v, TValue *local)
         return 1;
     }
 
+    if (pattern->t == TYPE_IDENT) {
+        assert(0);
+    }
+
     if (pattern->t != v->t) {
         return -1;
     }
@@ -457,14 +461,14 @@ reentry:
             }
             case OP_JUMP:
                 f->pc += J(i);
-                break;
+                continue;
             case OP_MATCH: {
                 TValue b = RK(B(i)),
-                       c = RK(C(i)),
-                       a = R[A];
+                       c = RK(C(i));
 
-                if (match(&b, &c, &a) >= 0)
+                if (match(&b, &c, &R[A]) >= 0)
                     f->pc ++;
+
                 break;
             }
             case OP_TUPLE:

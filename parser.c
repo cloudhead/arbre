@@ -883,6 +883,9 @@ static Node *_parse_select(Parser *p, Node *arg)
         if (p->tok == T_LF)
             next(p);
 
+        if (p->tok == T_INDENT)
+            next(p);
+
         if (p->tok == T_PIPE)
             next(p);
         else
