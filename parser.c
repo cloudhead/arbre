@@ -560,6 +560,16 @@ question:
     return n;
 }
 
+static void parse_comments(Parser *p)
+{
+    while (p->tok == T_COMMENT) {
+        next(p);
+
+        if (p->tok == T_LF)
+            next(p);
+    }
+}
+
 /*
  * Parse a code block. It is essentially a
  * scoped list of primary expressions.
@@ -576,6 +586,9 @@ static Node *parse_block(Parser *p)
 
     if (p->tok == T_LF) { /* Multi-line block */
         next(p);
+
+        parse_comments(p);
+
         expect(p, T_INDENT);
 
         while (p->tok != T_DEDENT) {
