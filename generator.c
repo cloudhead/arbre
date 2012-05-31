@@ -294,7 +294,7 @@ static int gen_ident(Generator *g, Node *n)
     if (ident) {
         return ident->e.var->reg;
     } else {
-        assert(0);
+        return -1;
     }
 }
 
