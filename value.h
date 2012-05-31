@@ -87,3 +87,5 @@ void    tvalue_pp(TValue *tval);
 void    tvalues_pp(TValue *tval, int size);
 
 TValue *tuple(int arity);
+TValue *atom(const char *);
+TValue *number(const char *);

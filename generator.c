@@ -471,6 +471,8 @@ static int gen_path(Generator *g, Node *n)
 
 static int gen_num(Generator *g, Node *n)
 {
+    // TODO: Use number(const char *)
+
     int number = atoi(n->src);
 
     Value v = (Value){ .number = number };

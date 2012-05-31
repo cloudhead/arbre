@@ -82,3 +82,18 @@ TValue *tuple(int arity)
     return tvalue(TYPE_TUPLE, (Value){ .tuple = t });
 }
 
+TValue *atom(const char *name)
+{
+    assert(name);
+
+    return tvalue(TYPE_ATOM, (Value){ .atom = name });
+}
+
+TValue *number(const char *src)
+{
+    int number = atoi(src);
+
+    Value v = (Value){ .number = number };
+
+    return tvalue(TYPE_NUMBER, v);
+}
