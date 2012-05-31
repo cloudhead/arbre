@@ -479,8 +479,10 @@ reentry:
                 assert(A < f->nlocals);
                 R[A] = K[B];
                 break;
-            case OP_ADD:
-                // TODO: Check operands
+            case OP_ADD: {
+                assert(RK(B(i)).t == TYPE_NUMBER);
+                assert(RK(C(i)).t == TYPE_NUMBER);
+
                 R[A].t        = TYPE_NUMBER;
                 R[A].v.number = RK(B(i)).v.number +
                                 RK(C(i)).v.number;
