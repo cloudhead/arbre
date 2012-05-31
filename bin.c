@@ -44,7 +44,7 @@ TValue bin_readnode(uint8_t **bp)
                 .t = TYPE_ATOM,
                 .v = (Value){
                      // Alternatively `strndup(*bp, len)`
-                    .atom = *bp
+                    .atom = (const char *)*bp
                 }
             };
             *bp += len;
