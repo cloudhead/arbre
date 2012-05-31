@@ -493,6 +493,23 @@ static Node *parse_add(Parser *p, Node *lval)
 }
 
 /*
+ * Parse subtraction. Example:
+ *
+ *     A - B
+ */
+static Node *parse_sub(Parser *p, Node *lval)
+{
+    Node *n = node(p->token, OSUB);
+
+    next(p); // '-'
+
+    n->o.sub.lval = lval;
+    n->o.sub.rval = parse_expression(p);
+
+    return n;
+}
+
+/*
  * Parse an expression. This can be almost
  * anything which returns a value.
  */
@@ -530,6 +547,7 @@ static Node *parse_expression(Parser *p)
         case T_DEFINE:                    n = parse_bind(p, n);    break;
         case T_EQ:                        n = parse_match(p, n);   break;
         case T_PLUS:                      n = parse_add(p, n);     break;
+        case T_MINUS:                     n = parse_sub(p, n);     break;
         default:                                                   break;
     }
 

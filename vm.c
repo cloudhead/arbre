@@ -403,6 +403,16 @@ reentry:
                 R[A].v.number = RK(B(i)).v.number +
                                 RK(C(i)).v.number;
                 break;
+            }
+            case OP_SUB: {
+                assert(RK(B(i)).t == TYPE_NUMBER);
+                assert(RK(C(i)).t == TYPE_NUMBER);
+
+                R[A].t        = TYPE_NUMBER;
+                R[A].v.number = RK(B(i)).v.number -
+                                RK(C(i)).v.number;
+                break;
+            }
             case OP_JUMP:
                 f->pc += J(i);
                 break;

@@ -42,6 +42,7 @@ static int    gen_node    (Generator *, Node *);
 static int    gen_ident   (Generator *, Node *);
 static int    gen_tuple   (Generator *, Node *);
 static int    gen_add     (Generator *, Node *);
+static int    gen_sub     (Generator *, Node *);
 static int    gen_num     (Generator *, Node *);
 static int    gen_atom    (Generator *, Node *);
 static int    gen_path    (Generator *, Node *);
@@ -66,7 +67,8 @@ int (*OP_GENERATORS[])(Generator*, Node*) = {
     [OTUPLE]    =  gen_tuple,  [OLIST]     =  NULL,
     [OACCESS]   =  gen_access, [OAPPLY]    =  gen_apply,
     [OSEND]     =  NULL,       [ORANGE]    =  NULL,
-    [OCLAUSE]   =  gen_clause, [OPIPE]     =  NULL
+    [OCLAUSE]   =  gen_clause, [OPIPE]     =  NULL,
+    [OSUB]      =  gen_sub
 };
 
 static int define(Generator *g, char *ident, int reg)
@@ -334,6 +336,18 @@ static int gen_add(Generator *g, Node *n)
     int reg = nextreg(g);
 
     gen(g, iABC(OP_ADD, reg, lval, rval));
+
+    return reg;
+}
+
+static int gen_sub(Generator *g, Node *n)
+{
+    int lval = gen_node(g, n->o.add.lval),
+        rval = gen_node(g, n->o.add.rval);
+
+    int reg = nextreg(g);
+
+    gen(g, iABC(OP_SUB, reg, lval, rval));
 
     return reg;
 }

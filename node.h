@@ -28,7 +28,7 @@ typedef enum {
 
     /* Operators */
     OSELECTOR, OACCESS, OAPPLY, OSEND,
-    ORANGE, OADD, OWAIT, OPIPE
+    ORANGE, OADD, OSUB, OWAIT, OPIPE
 } OP;
 
 typedef enum {
@@ -95,6 +95,7 @@ struct Node {
         struct { struct Node  *lval;  struct Node  *rval; } clause;
         struct { struct Node  *lval;  struct Node  *rval; } pipe;
         struct { struct Node  *lval;  struct Node  *rval; } add;
+        struct { struct Node  *lval;  struct Node  *rval; } sub;
         struct { struct Node  *lval;  struct Node  *rval; } match;
         struct { struct Node  *lval;  struct Node  *rval; } bind;
 
