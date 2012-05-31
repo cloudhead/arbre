@@ -386,6 +386,8 @@ Process *vm_spawn(VM *vm, Module *m, Path *p)
 {
     Process *proc = process(m, p);
 
+    proc->flags |= PROC_READY;
+
     vm->procs[vm->nprocs++] = proc;
 
     return proc;

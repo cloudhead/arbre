@@ -165,6 +165,7 @@ Process *process(Module *m, Path *path)
     p->module = m;
     p->path = path;
     p->credits = 0;
+    p->flags = 0;
     return p;
 }
 
