@@ -295,6 +295,8 @@ static int gen_ident(Generator *g, Node *n)
         return ident->e.var->reg;
     } else {
         assert(0);
+    }
+}
 
 /* TODO: Implement a node2tval function */
 static TValue *_gen_pattern(Generator *g, Node *n)
