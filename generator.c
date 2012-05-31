@@ -670,7 +670,8 @@ static void dump_clause(ClauseEntry *c, FILE *out)
     fwrite(c->code, sizeof(Instruction), c->pc, out);
 
     for (int i = 0; i < c->pc; i++) {
-        printf("%3d:\t", i), op_pp(c->code[i]), putchar('\n');
+        if (c->code[i])
+            printf("%3d:\t", i), op_pp(c->code[i]), putchar('\n');
     }
 }
 

@@ -37,7 +37,7 @@ TValue *tvalue(TYPE type, Value val)
 void tvalue_pp(TValue *tval)
 {
     if (tval == NULL) {
-        printf("(null)");
+        printf("()");
         return;
     }
 

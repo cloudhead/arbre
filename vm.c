@@ -364,7 +364,15 @@ int vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
         return -1;
     }
 
-    debug("%s/%s:\n", m->name, p->name);
+    for (int i = 0; i < proc->stack->size; i++)
+        debug("\t");
+
+#ifdef DEBUG
+    //debug("%s/%s:\n", m->name, p->name);
+    printf("%s/%s (", m->name, p->name);
+    if (arg) tvalue_pp(arg);
+    printf("):\n");
+#endif
 
     if (! c)
         return -1;
@@ -451,6 +459,8 @@ reentry:
 
     while ((i = c->code[f->pc++])) {
         #ifdef DEBUG
+        for (int i = 0; i < proc->stack->size; i++)
+            debug("\t");
         printf("%3lu:\t", f->pc); op_pp(i); putchar('\n');
         #endif
 
@@ -573,6 +583,8 @@ reentry:
 
                 (*s->frame)->locals[old->result] = RK(A);
 
+                for (int i = 0; i < proc->stack->size; i++)
+                    debug("\t");
                 debug("%s/%s:\n", (*s->frame)->module->name,
                                   (*s->frame)->path->name);
                 free(old);
