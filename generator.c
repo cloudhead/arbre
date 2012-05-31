@@ -105,6 +105,7 @@ Generator *generator(Tree *tree, Source *source)
     g->tree      = tree;
     g->source    = source;
     g->module    = source_module(source);
+    g->block     = NULL;
     g->slot      = 1;
     g->path      = NULL;
     g->paths     = calloc(256, sizeof(PathEntry*));
@@ -172,10 +173,13 @@ static int gen_block(Generator *g, Node *n)
     NodeList *ns  = n->o.block.body;
     int       reg = 0;
 
+    g->block = n;
+
     while (ns) {
         reg = gen_node(g, ns->head);
         ns  = ns->tail;
     }
+    g->block = n;
 
     return reg;
 }
@@ -224,8 +228,19 @@ static int gen_apply(Generator *g, Node *n)
 
     int rr = nextreg(g);
 
-    if (n->src == g->path->name || !strcmp(n->src, g->path->name)) { /* Tail-call */
-        gen(g, iAD(OP_TAILCALL, rr, rval));
+    bool tailcall = false;
+
+    char *name = n->o.apply.lval->o.path.name->o.atom;
+
+    for (Node *b = g->block; n == b->o.block.body->end->head; b = b->o.block.parent) {
+        if (name == g->path->name || !strcmp(name, g->path->name)) { /* Tail-call */
+            tailcall = true;
+            break;
+        }
+    }
+
+    if (tailcall) { /* Tail-call */
+        gen(g, iABC(OP_TAILCALL, rr, 0, rval));
     } else {
         gen(g, iABC(OP_CALL, rr, lval, rval));
     }
@@ -252,12 +267,14 @@ static int gen_clause(Generator *g, Node *n)
     reg = gen_block(g, n->o.clause.rval);
     exitscope(g->tree);
 
-    if (ISK(reg)) {
-        rega = nextreg(g);
-        gen(g, iAD(OP_LOADK, rega, reg));
-        reg = rega;
+    if (OP(g->path->clause->code[g->path->clause->pc - 1]) != OP_TAILCALL) {
+        if (ISK(reg)) {
+            rega = nextreg(g);
+            gen(g, iAD(OP_LOADK, rega, reg));
+            reg = rega;
+        }
+        gen(g, iABC(OP_RETURN, reg, 0, 0));
     }
-    gen(g, iABC(OP_RETURN, reg, 0, 0));
     gen(g, 0); /* Terminator */
 
     if (old)

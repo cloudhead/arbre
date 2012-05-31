@@ -274,6 +274,42 @@ int match(TValue *pattern, TValue *v, TValue *local)
     return -1;
 }
 
+int vm_tailcall(VM *vm, Process *proc, /*Module *m, Path *p, */Clause *c, TValue *arg)
+{
+    Module *m = proc->module;
+    Path *p = vm->path;
+
+    Frame *frame = *(proc->stack->frame);
+
+    size_t size = sizeof(TValue) * c->nlocals;
+    TValue *local  = frame->locals;
+
+    memset(frame->locals, 0, size);
+
+    int nlocals = match(&c->pattern, arg, local);
+
+    if (nlocals == -1)
+        return -1;
+
+    #ifdef DEBUG
+        for (int i = 0; i < proc->stack->size; i++)
+            printf("\t");
+
+        printf("%s/%s (", m->name, p->name);
+        if (arg) tvalue_pp(arg);
+        printf("):\n");
+    #endif
+
+    if (! c)
+        return -1;
+
+    frame->clause = c;
+    frame->pc     = 0;
+    frame->prev   = NULL;
+
+    return nlocals;
+}
+
 int vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
 {
     /* TODO: Perform pattern-match */
@@ -281,6 +317,8 @@ int vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
     m = m ? m : proc->module;
     p = p ? p : proc->path;
     c = c ? c : p->clauses[0];
+
+    vm->path = p;
 
     assert(p);
     assert(m);
@@ -331,36 +369,37 @@ Process *vm_select(VM *vm)
 
     /* TODO: Don't start from 0, start from last proc */
 
-    for (int i = 0; i < vm->nprocs; i++) {
-        if ((proc = vm->procs[i])) {
-            if ((proc->credits > 0) && (proc->flags & PROC_READY)) {
-                return proc;
+    for (;;) {
+        for (int i = 0; i < vm->nprocs; i++) {
+            if ((proc = vm->procs[i])) {
+                if ((proc->credits > 0) && (proc->flags & PROC_READY)) {
+                    return proc;
+                }
+            }
+        }
+        /* All proc credits exhausted, reset */
+        /* TODO: We don't need this step if we start from the last proc,
+         * and reset as we go */
+        for (int i = 0; i < vm->nprocs; i++) {
+            if ((proc = vm->procs[i])) {
+                proc->credits = 16;
             }
         }
     }
-    /* All proc credits exhausted, reset */
-    /* TODO: We don't need this step if we start from the last proc,
-     * and reset as we go */
-    for (int i = 0; i < vm->nprocs; i++) {
-        if ((proc = vm->procs[i])) {
-            proc->credits = 16;
-        }
-    }
-    return vm_select(vm);
+    assert(0);
+    return NULL;
 }
 
 #define RK(x) (ISK(x) ? K[INDEXK(x)] : R[x])
 TValue *vm_execute(VM *vm, Process *proc)
 {
-    vm->proc = proc;
-
     int A, B, C;
 
     Module *m;
     Path   *p;
     Clause *c;
 
-    Stack *s = proc->stack;
+    Stack *s;
     Frame *f;
 
     Instruction i;
@@ -370,6 +409,9 @@ TValue *vm_execute(VM *vm, Process *proc)
 
 reentry:
 
+    vm->proc = proc;
+
+    s = proc->stack;    /* Current stack */
     f = *(s->frame);    /* Current stack-frame */
     c = f->clause;      /* Current clause */
     p = f->path;        /* Current path */
@@ -440,9 +482,16 @@ reentry:
                 R[A].v.uri.module = RK(B(i)).v.atom;
                 R[A].v.uri.path   = RK(C(i)).v.atom;
                 break;
-            case OP_TAILCALL:
-                (*(s->frame))->pc = 0;
+            case OP_TAILCALL: {
+                int      matches = -1;
+                TValue   arg     = R[C(i)];
+
+                c = p->clauses[B(i)];
+
+                if ((matches = vm_tailcall(vm, proc, c, &arg)) < 0) /* Replace stack call-frame */
+                    error(1, 0, "no matches for %s/%s", m->name, p->name);
                 goto reentry;
+            }
             case OP_CALL: {
                 int matches = -1;
 
@@ -474,15 +523,6 @@ reentry:
                     case TYPE_CLAUSE:
                         c = callee.v.clause;
                         break;
-                    case TYPE_SELECT: {
-                        for (int i = 0; i < callee.v.select->nclauses; i++) {
-                            Clause *c = callee.v.select->clauses[i];
-                            matches = vm_call(vm, proc, m, p, c, &arg);
-                            if (matches >= 0)
-                                break;
-                        }
-                        break;
-                    }
                     default:
                         assert(0);
                 }
