@@ -600,7 +600,8 @@ reentry:
             Process *np;
 
             if ((np = vm_select(vm))) {
-                return vm_execute(vm, np);
+                proc = np;
+                goto reentry;
             } else {
                 proc->credits = 16;
             }
