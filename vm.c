@@ -71,6 +71,57 @@ void vm_free(VM *vm)
     // TODO: Implement
 }
 
+uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k)
+{
+    TYPE t = *b ++;
+    Value v;
+
+    switch (t) {
+        case TYPE_BIN:
+        case TYPE_ATOM:
+            v.atom = (char *)b;
+            b += strlen(v.atom) + 1;
+            debug("%s", v.atom);
+            break;
+        case TYPE_STRING:
+            assert(0);
+            break;
+        case TYPE_NUMBER:
+            v.number = *(int *)b;
+            b += sizeof(int);
+            debug("%d", v.number);
+            break;
+        case TYPE_ANY:
+            v.ident = *b ++;
+            debug("<any>");
+            break;
+        case TYPE_IDENT:
+            v.ident = *b ++;
+            debug("r%d", v.ident);
+            break;
+        case TYPE_TUPLE: {
+            uint8_t arity = *b ++;
+
+            debug("<tuple>");
+
+            v.tuple = malloc(sizeof(*v.tuple) + sizeof(TValue) * arity);
+            v.tuple->arity = arity;
+
+            for (int i = 0; i < arity; i++) {
+                b = vm_readk(vm, b, v.tuple->members + i);
+            }
+            break;
+        }
+        default:
+            assert(0);
+            break;
+    }
+    k->t = t;
+    k->v = v;
+
+    return b;
+}
+
 /* TODO: Paths should be per-module */
 uint8_t *vm_readclause(VM *vm, uint8_t *b, int index)
 {
@@ -87,37 +138,10 @@ uint8_t *vm_readclause(VM *vm, uint8_t *b, int index)
 
     Clause *c = clause(pattern, nlocals, ksize);
 
-    Value v;
-
     for (int i = 0; i < ksize; i++) {
-        TYPE t = *b ++;
-
         debug("\tk%d = ", i);
-
-        switch (t) {
-            case TYPE_BIN:
-            case TYPE_TUPLE:
-            case TYPE_ATOM:
-                v.atom = (char *)b;
-                b += strlen(v.atom) + 1;
-                debug("%s", v.atom);
-                break;
-            case TYPE_STRING:
-                assert(0);
-                break;
-            case TYPE_NUMBER:
-                v.number = (int)*b;
-                b += sizeof(int);
-                debug("%d", v.number);
-                break;
-            default:
-                assert(0);
-                break;
-        }
+        b = vm_readk(vm, b, &c->constants[i]);
         debug("\n");
-
-        c->constants[i].t = t;
-        c->constants[i].v = v;
     }
     debug("\n");
 

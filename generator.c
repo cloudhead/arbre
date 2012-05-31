@@ -606,6 +606,41 @@ static void dump_pattern(Node *pattern, FILE *out)
     dump_node(pattern, out);
 }
 
+static void dump_constant(TValue *tval, FILE *out)
+{
+    /* Write constant type */
+    fputc(tval->t, out);
+
+    /* Write constant value */
+    switch (tval->t) {
+        case TYPE_BIN:
+        case TYPE_STRING:
+            assert(0);
+            break;
+        case TYPE_TUPLE: {
+            uint8_t arity = tval->v.tuple->arity;
+            fputc(arity, out);
+            for (int i = 0; i < arity; i++) {
+                dump_constant(&tval->v.tuple->members[i], out);
+            }
+            break;
+        }
+        case TYPE_ATOM:
+            fwrite(tval->v.atom, strlen(tval->v.atom) + 1, 1, out);
+            break;
+        case TYPE_NUMBER:
+            fwrite(&tval->v.number, sizeof(int), 1, out);
+            break;
+        case TYPE_IDENT:
+        case TYPE_ANY:
+            fwrite(&tval->v.ident, sizeof(tval->v.ident), 1, out);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}
+
 static void dump_clause(ClauseEntry *c, FILE *out)
 {
     TValue *tval;
