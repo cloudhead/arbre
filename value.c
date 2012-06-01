@@ -13,6 +13,8 @@
 
 #include "value.h"
 
+void tuple_pp (Value v);
+
 const char *TYPE_STRINGS[] = {
     [TYPE_ANY] = "any",
     [TYPE_ATOM] = "atom",
@@ -45,12 +47,17 @@ void tvalue_pp(TValue *tval)
     Value v = tval->v;
 
     switch (t) {
-        case TYPE_BIN:
         case TYPE_TUPLE:
+            tuple_pp(v);
+            break;
+        case TYPE_BIN:
+            printf("<bin>");
+            break;
         case TYPE_ATOM:
             printf("%s", v.atom);
             break;
         case TYPE_STRING:
+            printf("<string>");
             break;
         case TYPE_NUMBER:
             printf("%d", v.number);
@@ -59,6 +66,18 @@ void tvalue_pp(TValue *tval)
             printf("<%s>", TYPE_STRINGS[t]);
             break;
     }
+}
+
+void tuple_pp(Value v)
+{
+    putchar('(');
+    for (int i = 0; i < v.tuple->arity; i++) {
+        tvalue_pp(&v.tuple->members[i]);
+
+        if (i < v.tuple->arity - 1)
+            printf(", ");
+    }
+    putchar(')');
 }
 
 void tvalues_pp(TValue *tval, int size)

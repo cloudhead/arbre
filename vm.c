@@ -368,10 +368,9 @@ int vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
         debug("\t");
 
 #ifdef DEBUG
-    //debug("%s/%s:\n", m->name, p->name);
-    printf("%s/%s (", m->name, p->name);
-    if (arg) tvalue_pp(arg);
-    printf("):\n");
+    printf("%s/%s ", m->name, p->name);
+    tvalue_pp(arg);
+    printf("\n");
 #endif
 
     if (! c)
