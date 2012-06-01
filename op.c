@@ -30,9 +30,7 @@ const char *OPCODE_STRINGS[] = {
     [OP_CALL]     = "call",
     [OP_TAILCALL] = "tcall",
     [OP_LAMBDA]   = "lambda",
-    [OP_PATH]     = "path",
-    [OP_SELECT]   = "select",
-    [OP_SETSELECT]= "setselect"
+    [OP_PATH]     = "path"
 };
 
 #define MODE(t, a, b, c, m) (((t) << 7) | ((a) << 6) | ((b) << 4) | ((c) << 2) | (m))
@@ -53,9 +51,7 @@ const unsigned char OPCODE_MODES[] = {
     [OP_TAILCALL] = MODE(0,  1, OPARG_U, OPARG_R, ABC), // TODO: Don't use C
     [OP_SEND]     = MODE(0,  0, OPARG_R, OPARG_K, ABC),
     [OP_LAMBDA]   = MODE(0,  1, OPARG_U,       0, AD ),
-    [OP_PATH]     = MODE(0,  1, OPARG_K, OPARG_K, ABC),
-    [OP_SELECT]   = MODE(0,  1, OPARG_U,       0, ABC),
-    [OP_SETSELECT]= MODE(0,  1, OPARG_U, OPARG_U, ABC)
+    [OP_PATH]     = MODE(0,  1, OPARG_K, OPARG_K, ABC)
 };
 
 #undef MODE
