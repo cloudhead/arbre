@@ -304,6 +304,7 @@ Token *scan(Scanner *s)
             case  '@' :  tok = T_AT;                        break;
             case  '_' :  tok = T_UNDER;                     break;
             case  '?' :  tok = T_QUESTION;                  break;
+            case  '&' :  tok = T_AND;                       break;
             case  '|' :  tok = T_PIPE;                      break;
             case  '(' :  tok = T_LPAREN;                    break;
             case  ')' :  tok = T_RPAREN;                    break;

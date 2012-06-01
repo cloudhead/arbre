@@ -14,6 +14,8 @@
  *
  *   Transforms a source file into an abstract syntax tree.
  *
+ * TODO: Use `isnext` where appropriate
+ *
  */
 #include  <ctype.h>
 #include  <stdio.h>
@@ -152,6 +154,19 @@ static bool expect(Parser *p, TOKEN t)
 {
     if (p->tok != t) {
         error(p, "expected %s got `%s`", TOKEN_STRINGS[t], escape(p->src));
+        return false;
+    }
+    next(p);
+    return true;
+}
+
+/*
+ * Try to consume a token, return false if it's
+ * not there.
+ */
+static bool isnext(Parser *p, TOKEN t)
+{
+    if (p->tok != t) {
         return false;
     }
     next(p);
@@ -520,16 +535,17 @@ static Node *parse_expression(Parser *p)
     switch (p->tok) { // Parse lval
         case T_ATOM:
         case T_IDENT:
-        case T_PERIOD:   n = parse_access(p);   break;
-        case T_BSLASH:   n = parse_lambda(p);   break;
-        case T_LPAREN:   n = parse_tuple(p);    break;
-        case T_LBRACK:   n = parse_list(p);     break;
-        case T_LBRACE:   n = parse_map(p);      break;
-        case T_STRING:   n = parse_string(p);   break;
-        case T_CHAR:     n = parse_char(p);     break;
-        case T_INT:      n = parse_number(p);   break;
-        case T_LARROW:   n = parse_wait(p);     break;
-        case T_PLUS:     n = parse_spawn(p);    goto question;
+        case T_PERIOD:   n = parse_access(p);       break;
+        case T_BSLASH:   n = parse_lambda(p);       break;
+        case T_LPAREN:   n = parse_tuple(p);        break;
+        case T_LBRACK:   n = parse_list(p);         break;
+        case T_LBRACE:   n = parse_map(p);          break;
+        case T_STRING:   n = parse_string(p);       break;
+        case T_CHAR:     n = parse_char(p);         break;
+        case T_INT:      n = parse_number(p);       break;
+        case T_LARROW:   n = parse_wait(p);         break;
+        case T_PLUS:     n = parse_spawn(p);        goto question;
+        case T_QUESTION: n = parse_select(p, NULL); break;
         default:         error(p, ERR_DEFAULT); return NULL;
     }
 
@@ -871,6 +887,24 @@ static Node *parse_send(Parser *p, Node *t)
     return n;
 }
 
+static Node *parse_guard(Parser *p)
+{
+    return parse_expression(p);
+}
+
+static NodeList *parse_guards(Parser *p)
+{
+    Node     *n;
+    NodeList *ns = nodelist(NULL);
+
+    do {
+        n = parse_guard(p);
+        append(ns, n);
+    } while (isnext(p, T_COMMA));
+
+    return ns;
+}
+
 /*
  * Parse select. Example:
  *
@@ -878,9 +912,12 @@ static Node *parse_send(Parser *p, Node *t)
  */
 static Node *_parse_select(Parser *p, Node *arg)
 {
-    NodeList *ns = nodelist(NULL);
-    Node     *n  = NULL,
-             *select = node(p->token, OSELECT);
+    NodeList *ns     = nodelist(NULL),
+             *guards = NULL;
+
+    Node     *clause  = NULL,
+             *select  = node(p->token, OSELECT),
+             *pattern = NULL;
 
     select->o.select.arg = arg;
 
@@ -889,8 +926,25 @@ static Node *_parse_select(Parser *p, Node *arg)
 
     int len = 0;
 
-    while ((n = parse_clause(p))) {
-        append(ns, n);
+    do {
+        clause = node(p->token, OCLAUSE);
+
+        if (arg) {
+            pattern = parse_pattern(p);
+
+            if (isnext(p, T_AND))
+                guards = parse_guards(p);
+
+        } else {
+            guards = parse_guards(p);
+        }
+        expect(p, T_COLON);
+
+        clause->o.clause.guards = guards;
+        clause->o.clause.lval   = pattern;
+        clause->o.clause.rval   = parse_block(p);
+
+        append(ns, clause);
         len ++;
 
         if (p->tok == T_LF)
@@ -899,11 +953,8 @@ static Node *_parse_select(Parser *p, Node *arg)
         if (p->tok == T_INDENT)
             next(p);
 
-        if (p->tok == T_PIPE)
-            next(p);
-        else
-            break;
-    }
+    } while (isnext(p, T_PIPE));
+
     select->o.select.nclauses = len;
     select->o.select.clauses = ns;
 

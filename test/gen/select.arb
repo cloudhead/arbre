@@ -20,9 +20,16 @@ strings:
     -- TODO
     0
 
+mixed:
+    42 ? 0         : 1
+       | (42, 42)  : 1
+       | fnord     : 1
+       | 42        : 0
+
 main:
     Tuples  := ./tuples ()
     Atoms   := ./atoms ()
     Numbers := ./numbers ()
     Strings := ./strings ()
-    Tuples + Atoms + Numbers + Strings
+    Mixed   := ./mixed ()
+    Tuples + Atoms + Numbers + Strings + Mixed

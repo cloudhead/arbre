@@ -29,3 +29,10 @@
       | 2 : 2
       | 3 : 3
 
++ guards:
+    ? true  : 1
+    | false : 0
+
++ guards:
+    X ? 1 & true  : 1
+      | 0 & false : 0

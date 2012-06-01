@@ -149,9 +149,21 @@ void pp_nodel(Node *n, int lvl)
     } else {
         switch (op) {
             case OACCESS: case OAPPLY: case ORANGE:
-            case OCLAUSE: case OSEND: case OPIPE:
-            case OADD:
+            case OSEND: case OPIPE: case OADD:
                 pp_nodel(n->o.access.lval, lvl);
+                putchar(' ');
+                pp_nodel(n->o.access.rval, lvl);
+                break;
+            case OCLAUSE:
+                pp_nodel(n->o.access.lval, lvl);
+                putchar(' ');
+                if (n->o.clause.guards) {
+                    for (ns = n->o.clause.guards ; ns ; ns = ns->tail) {
+                        pp_nodel(ns->head, lvl);
+                    }
+                } else {
+                    printf("∅");
+                }
                 putchar(' ');
                 pp_nodel(n->o.access.rval, lvl);
                 break;
