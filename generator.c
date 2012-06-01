@@ -728,6 +728,8 @@ static void dump_clause(ClauseEntry *c, FILE *out)
     for (int i = 0; i < c->pc; i++) {
         if (c->code[i])
             printf("%3d:\t", i), op_pp(c->code[i]), putchar('\n');
+        else
+            printf("%3d:\n", i);
     }
 }
 
