@@ -370,6 +370,9 @@ static int gen_select(Generator *g, Node *n)
     for (int i = 0; i < nclauses; i++) {
         Node *c = ns->head;
 
+        int nguards = c->o.clause.nguards;
+        int gpatches[nguards];
+
         /* If we have a pattern and an argument to match
          * against it. */
         if (c->o.clause.lval && arg) {
@@ -383,17 +386,17 @@ static int gen_select(Generator *g, Node *n)
         }
 
         { /* Guards */
-            int savedpc = g->path->clause->pc;
+            NodeList *ns = c->o.clause.guards;
 
-            for (NodeList *ns = c->o.clause.guards ; ns ; ns = ns->tail) {
+            for (int i = 0; i < nguards; i++) {
                 gen_node(g, ns->head);
+                gpatches[i] = clause->pc;
                 gen(g, 0); /* Patched in [0] */
-            }
-            for (int i = savedpc + 1; i < c->o.clause.nguards; i += 2) {
-                clause->code[i] = /* 0 */
-                    iAJ(OP_JUMP, 0, clause->pc - (savedpc + i - 1));
+                ns = ns->tail;
             }
         }
+
+        /* Gen clause */
 
         enterscope(g->tree);
         ret = gen_block(g, c->o.clause.rval);
@@ -404,10 +407,10 @@ static int gen_select(Generator *g, Node *n)
         else
             gen(g, iABC(OP_MOVE, result, ret, 0));
 
+        /* Create patch for [2] */
         if (i < nclauses - 1) {
             patches[i] = clause->pc;
-            /* TODO: gen an OP_JUMP, set offset later */
-            gen(g, 0); /* Patched in [2] */
+            gen(g, 0);
         }
 
         if (c->o.clause.lval && arg) {
@@ -415,10 +418,16 @@ static int gen_select(Generator *g, Node *n)
             clause->code[savedpc] = iAJ(OP_JUMP, 0, offset); /* 1 */
         }
 
+        for (int i = 0; i < nguards; i++) {
+            clause->code[gpatches[i]] = /* 2 */
+                iAJ(OP_JUMP, 0, clause->pc - gpatches[i] - 1);
+        }
+
         ns = ns->tail;
     }
+    /* [2] Patch clauses to jump over following clauses */
     for (int i = 0; i < nclauses - 1; i++) {
-        clause->code[patches[i]] = /* 2 */
+        clause->code[patches[i]] =
             iAJ(OP_JUMP, 0, clause->pc - patches[i] - 1);
     }
     return result;
