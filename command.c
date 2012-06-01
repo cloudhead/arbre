@@ -12,6 +12,7 @@
 #include  <stdlib.h>
 #include  <string.h>
 #include  <inttypes.h>
+#include  <assert.h>
 #include  <errno.h>
 #include  <sys/stat.h>
 
@@ -231,7 +232,7 @@ static int command_run(Command *c)
 
     ret = vm_run(v, module, "main");
 
-    // TODO: Check type
+    assert(ret->t == TYPE_NUMBER);
     return ret->v.number;
 }
 
