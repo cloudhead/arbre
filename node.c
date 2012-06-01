@@ -41,7 +41,10 @@ const char *OP_STRINGS[] = {
     [OACCESS]   =  "access",
     [OAPPLY]    =  "apply",
     [OSEND]     =  "send",
-    [ORANGE]    =  "range"
+    [ORANGE]    =  "range",
+    [OGT]       =  "gt",
+    [OLT]       =  "lt",
+    [OEQ]       =  "eq"
 };
 
 TYPE OP_TYPES[] = {
@@ -150,6 +153,7 @@ void pp_nodel(Node *n, int lvl)
         switch (op) {
             case OACCESS: case OAPPLY: case ORANGE:
             case OSEND: case OPIPE: case OADD:
+            case OGT: case OLT: case OEQ:
                 pp_nodel(n->o.access.lval, lvl);
                 putchar(' ');
                 pp_nodel(n->o.access.rval, lvl);

@@ -43,6 +43,8 @@ static int    gen_ident   (Generator *, Node *);
 static int    gen_tuple   (Generator *, Node *);
 static int    gen_add     (Generator *, Node *);
 static int    gen_sub     (Generator *, Node *);
+static int    gen_gt      (Generator *, Node *);
+static int    gen_lt      (Generator *, Node *);
 static int    gen_num     (Generator *, Node *);
 static int    gen_atom    (Generator *, Node *);
 static int    gen_path    (Generator *, Node *);
@@ -68,7 +70,8 @@ int (*OP_GENERATORS[])(Generator*, Node*) = {
     [OACCESS]   =  gen_access, [OAPPLY]    =  gen_apply,
     [OSEND]     =  NULL,       [ORANGE]    =  NULL,
     [OCLAUSE]   =  gen_clause, [OPIPE]     =  NULL,
-    [OSUB]      =  gen_sub
+    [OSUB]      =  gen_sub,    [OLT]       =  gen_lt,
+    [OGT]       =  gen_gt
 };
 
 static int define(Generator *g, char *ident, int reg)
@@ -303,6 +306,9 @@ static TValue *_gen_pattern(Generator *g, Node *n)
 {
     TValue *pattern;
 
+    if (! n)
+        return NULL;
+
     switch (n->op) {
         case OTUPLE: {
             int i = 0;
@@ -364,14 +370,30 @@ static int gen_select(Generator *g, Node *n)
     for (int i = 0; i < nclauses; i++) {
         Node *c = ns->head;
 
-        TValue *pat = _gen_pattern(g, c->o.clause.lval);
-        unsigned reg = pat->t == TYPE_ANY ? pat->v.ident : nextreg(g);
+        /* If we have a pattern and an argument to match
+         * against it. */
+        if (c->o.clause.lval && arg) {
+            TValue *pat = _gen_pattern(g, c->o.clause.lval);
+            unsigned reg = pat->t == TYPE_ANY ? pat->v.ident : nextreg(g);
 
-        gen(g, iABC(OP_MATCH, reg, RKASK(gen_constant(g, NULL, pat)), gen_node(g, arg)));
+            gen(g, iABC(OP_MATCH, reg, RKASK(gen_constant(g, NULL, pat)), gen_node(g, arg)));
 
-        /* TODO: gen an OP_JUMP, set offset later */
-        savedpc = g->path->clause->pc;
-        gen(g, 0); /* Patched in [1] */
+            savedpc = g->path->clause->pc;
+            gen(g, 0); /* Patched in [1] */
+        }
+
+        { /* Guards */
+            int savedpc = g->path->clause->pc;
+
+            for (NodeList *ns = c->o.clause.guards ; ns ; ns = ns->tail) {
+                gen_node(g, ns->head);
+                gen(g, 0); /* Patched in [0] */
+            }
+            for (int i = savedpc + 1; i < c->o.clause.nguards; i += 2) {
+                clause->code[i] = /* 0 */
+                    iAJ(OP_JUMP, 0, clause->pc - (savedpc + i - 1));
+            }
+        }
 
         enterscope(g->tree);
         ret = gen_block(g, c->o.clause.rval);
@@ -387,8 +409,11 @@ static int gen_select(Generator *g, Node *n)
             /* TODO: gen an OP_JUMP, set offset later */
             gen(g, 0); /* Patched in [2] */
         }
-        offset = clause->pc - savedpc - 1;
-        clause->code[savedpc] = iAJ(OP_JUMP, 0, offset); /* 1 */
+
+        if (c->o.clause.lval && arg) {
+            offset = clause->pc - savedpc - 1;
+            clause->code[savedpc] = iAJ(OP_JUMP, 0, offset); /* 1 */
+        }
 
         ns = ns->tail;
     }
@@ -421,6 +446,26 @@ static int gen_sub(Generator *g, Node *n)
     gen(g, iABC(OP_SUB, reg, lval, rval));
 
     return reg;
+}
+
+static int gen_gt(Generator *g, Node *n)
+{
+    int lval = gen_node(g, n->o.cmp.lval),
+        rval = gen_node(g, n->o.cmp.rval);
+
+    gen(g, iABC(OP_GT, 0, lval, rval));
+
+    return -1;
+}
+
+static int gen_lt(Generator *g, Node *n)
+{
+    int lval = gen_node(g, n->o.cmp.lval),
+        rval = gen_node(g, n->o.cmp.rval);
+
+    gen(g, iABC(OP_GT, 0, rval, lval));
+
+    return -1;
 }
 
 static void gen_locals(Generator *g, Node *n)

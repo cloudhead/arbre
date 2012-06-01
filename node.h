@@ -28,8 +28,16 @@ typedef enum {
 
     /* Operators */
     OSELECTOR, OACCESS, OAPPLY, OSEND,
-    ORANGE, OADD, OSUB, OWAIT, OPIPE
+    ORANGE, OADD, OSUB, OWAIT, OPIPE,
+
+    /* Comparison */
+    OLT, OGT, OEQ
 } OP;
+
+typedef enum {
+    CMP_GT,
+    CMP_LT
+} CMP;
 
 typedef enum {
     MODULE_ROOT = 1,
@@ -97,6 +105,7 @@ struct Node {
         struct { struct Node  *lval;  struct Node  *rval; } sub;
         struct { struct Node  *lval;  struct Node  *rval; } match;
         struct { struct Node  *lval;  struct Node  *rval; } bind;
+        struct { struct Node  *lval;  struct Node  *rval; } cmp;
 
         struct {
             struct Node  *proc;
@@ -116,6 +125,7 @@ struct Node {
             struct Node     *lval;
             struct Node     *rval;
             struct NodeList *guards;
+            int             nguards;
         } clause;
 
         struct {

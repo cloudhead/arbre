@@ -525,6 +525,40 @@ static Node *parse_sub(Parser *p, Node *lval)
 }
 
 /*
+ * Parse lesser-than comparison. Example:
+ *
+ *     A < B
+ */
+static Node *parse_lt(Parser *p, Node *lval)
+{
+    Node *n = node(p->token, OLT);
+
+    next(p); // '<'
+
+    n->o.cmp.lval = lval;
+    n->o.cmp.rval = parse_expression(p);
+
+    return n;
+}
+
+/*
+ * Parse greater-than comparison. Example:
+ *
+ *     A > B
+ */
+static Node *parse_gt(Parser *p, Node *lval)
+{
+    Node *n = node(p->token, OGT);
+
+    next(p); // '>'
+
+    n->o.cmp.lval = lval;
+    n->o.cmp.rval = parse_expression(p);
+
+    return n;
+}
+
+/*
  * Parse an expression. This can be almost
  * anything which returns a value.
  */
@@ -564,6 +598,8 @@ static Node *parse_expression(Parser *p)
         case T_EQ:                        n = parse_match(p, n);   break;
         case T_PLUS:                      n = parse_add(p, n);     break;
         case T_MINUS:                     n = parse_sub(p, n);     break;
+        case T_GT:                        n = parse_gt(p, n);      break;
+        case T_LT:                        n = parse_lt(p, n);      break;
         default:                                                   break;
     }
 
@@ -892,7 +928,7 @@ static Node *parse_guard(Parser *p)
     return parse_expression(p);
 }
 
-static NodeList *parse_guards(Parser *p)
+static NodeList *parse_guards(Parser *p, int *len)
 {
     Node     *n;
     NodeList *ns = nodelist(NULL);
@@ -900,6 +936,7 @@ static NodeList *parse_guards(Parser *p)
     do {
         n = parse_guard(p);
         append(ns, n);
+        (*len) ++;
     } while (isnext(p, T_COMMA));
 
     return ns;
@@ -928,15 +965,16 @@ static Node *_parse_select(Parser *p, Node *arg)
 
     do {
         clause = node(p->token, OCLAUSE);
+        clause->o.clause.nguards = 0;
 
         if (arg) {
             pattern = parse_pattern(p);
 
             if (isnext(p, T_AND))
-                guards = parse_guards(p);
+                guards = parse_guards(p, &clause->o.clause.nguards);
 
         } else {
-            guards = parse_guards(p);
+            guards = parse_guards(p, &clause->o.clause.nguards);
         }
         expect(p, T_COLON);
 

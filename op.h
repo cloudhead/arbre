@@ -91,6 +91,7 @@ typedef enum {
     OP_LOADK,
     OP_ADD,
     OP_SUB,
+    OP_GT,
     OP_JUMP,
     OP_RETURN,
     OP_MATCH,

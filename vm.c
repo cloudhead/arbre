@@ -508,6 +508,18 @@ reentry:
 
                 break;
             }
+            case OP_GT: {
+                TValue b = RK(B(i)),
+                       c = RK(C(i));
+
+                assert(b.t == TYPE_NUMBER);
+                assert(c.t == TYPE_NUMBER);
+
+                if (b.v.number > c.v.number)
+                    f->pc ++;
+
+                break;
+            }
             case OP_TUPLE:
                 R[A] = *tuple(B(i));
                 break;
