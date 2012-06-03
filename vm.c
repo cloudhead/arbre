@@ -46,7 +46,7 @@
 Module *vm_module  (VM *vm, const char *name);
 TValue *vm_execute (VM *vm, Process *proc);
 
-int match (TValue *pattern, TValue *v, TValue *local);
+int match (TValue *locals, TValue *pattern, TValue *v, TValue *local);
 
 VM *vm(void)
 {
@@ -243,7 +243,7 @@ int match_atom(Value pattern, Value v, TValue *local)
     return -1;
 }
 
-int match_tuple(Value pattern, Value v, TValue *local)
+int match_tuple(TValue *locals, Value pattern, Value v, TValue *local)
 {
     int m = 0, nmatches = 0;
 
@@ -251,7 +251,7 @@ int match_tuple(Value pattern, Value v, TValue *local)
         return -1;
 
     for (int i = 0; i < v.tuple->arity; i++) {
-        m = match(pattern.tuple->members + i, v.tuple->members + i, local + nmatches);
+        m = match(locals, pattern.tuple->members + i, v.tuple->members + i, local + nmatches);
 
         if (m == -1)
             return -1;
@@ -261,7 +261,7 @@ int match_tuple(Value pattern, Value v, TValue *local)
     return nmatches;
 }
 
-int match(TValue *pattern, TValue *v, TValue *local)
+int match(TValue *locals, TValue *pattern, TValue *v, TValue *local)
 {
     assert(pattern);
 
@@ -280,7 +280,7 @@ int match(TValue *pattern, TValue *v, TValue *local)
     }
 
     if (pattern->t == TYPE_IDENT) {
-        assert(0);
+        return match(locals, &locals[pattern->v.ident], v, local);
     }
 
     if (pattern->t != v->t) {
@@ -289,7 +289,7 @@ int match(TValue *pattern, TValue *v, TValue *local)
 
     switch (pattern->t) {
         case TYPE_TUPLE:
-            return match_tuple(pattern->v, v->v, local);
+            return match_tuple(locals, pattern->v, v->v, local);
         case TYPE_ATOM:
             return match_atom(pattern->v, v->v, local);
         case TYPE_NUMBER:
@@ -314,7 +314,7 @@ int vm_tailcall(VM *vm, Process *proc, /*Module *m, Path *p, */Clause *c, TValue
 
     memset(frame->locals, 0, size);
 
-    int nlocals = match(&c->pattern, arg, local);
+    int nlocals = match(NULL, &c->pattern, arg, local);
 
     if (nlocals == -1)
         return -1;
@@ -358,7 +358,7 @@ int vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
 
     memset(locals, 0, size);
 
-    int nlocals = match(&c->pattern, arg, local);
+    int nlocals = match(NULL, &c->pattern, arg, local);
 
     if (nlocals == -1) {
         return -1;
@@ -503,7 +503,7 @@ reentry:
                 TValue b = RK(B(i)),
                        c = RK(C(i));
 
-                if (match(&b, &c, &R[A]) >= 0)
+                if (match(R, &b, &c, &R[A]) >= 0)
                     f->pc ++;
 
                 break;
