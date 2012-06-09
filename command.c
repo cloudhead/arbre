@@ -27,6 +27,7 @@ char *strdup(const char *);
 #include  "generator.h"
 #include  "command.h"
 #include  "error.h"
+#include  "reduce.h"
 
 static int   command_build(Command *cmd);
 static int   command_run(Command *cmd);
@@ -276,6 +277,8 @@ static int command_build(Command *c)
 
         if (p->errors > 0)
             return 1;
+
+        reduce(tree);
 
         if (c->options & CMDOPT_SYNTAX)
             break;

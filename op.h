@@ -97,6 +97,8 @@ typedef enum {
     OP_MATCH,
     OP_TUPLE,
     OP_SETTUPLE,
+    OP_LIST,
+    OP_CONS,
     OP_CALL,
     OP_TAILCALL,
     OP_SEND,

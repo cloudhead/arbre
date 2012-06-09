@@ -38,6 +38,7 @@ const char *OP_STRINGS[] = {
     [ONUMBER]   =  "num",
     [OTUPLE]    =  "tuple",
     [OLIST]     =  "list",
+    [OCONS]     =  "cons",
     [OACCESS]   =  "access",
     [OAPPLY]    =  "apply",
     [OSEND]     =  "send",
@@ -88,6 +89,7 @@ NodeList *nodelist(Node *head)
     list->head = head;
     list->tail = NULL;
     list->end  = list;
+    list->prev = NULL;
     return list;
 }
 
@@ -100,6 +102,7 @@ void append(NodeList *list, Node *n)
 
     if (list->head) {
         end = nodelist(n);
+        end->prev = list->end;
         list->end->tail = end;
         list->end       = end;
     } else {
@@ -153,7 +156,7 @@ void pp_nodel(Node *n, int lvl)
         switch (op) {
             case OACCESS: case OAPPLY: case ORANGE:
             case OSEND: case OPIPE: case OADD:
-            case OGT: case OLT: case OEQ:
+            case OGT: case OLT: case OEQ: case OCONS:
                 pp_nodel(n->o.access.lval, lvl);
                 putchar(' ');
                 pp_nodel(n->o.access.rval, lvl);

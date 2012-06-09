@@ -29,6 +29,7 @@ typedef enum {
     /* Operators */
     OSELECTOR, OACCESS, OAPPLY, OSEND,
     ORANGE, OADD, OSUB, OWAIT, OPIPE,
+    OCONS,
 
     /* Comparison */
     OLT, OGT, OEQ
@@ -70,6 +71,8 @@ extern TYPE OP_TYPES[];
  *      .tail --------'    .tail --------'   .tail -> NULL    |
  *      .end -------------------------------------------------'
  *
+ *   Additionally, the `prev` attribute points to the previous NodeList.
+ *
  *   An empty NodeList looks like this:
  *
  *       NodeList <-----.
@@ -106,6 +109,7 @@ struct Node {
         struct { struct Node  *lval;  struct Node  *rval; } match;
         struct { struct Node  *lval;  struct Node  *rval; } bind;
         struct { struct Node  *lval;  struct Node  *rval; } cmp;
+        struct { struct Node  *lval;  struct Node  *rval; } cons;
 
         struct {
             struct Node  *proc;
@@ -178,6 +182,7 @@ struct NodeList {
     struct Node     *head;
     struct NodeList *tail;
     struct NodeList *end;
+    struct NodeList *prev;
 };
 
 typedef  struct Node      Node;

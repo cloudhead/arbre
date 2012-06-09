@@ -41,6 +41,8 @@ static int    gen_bind    (Generator *, Node *);
 static int    gen_node    (Generator *, Node *);
 static int    gen_ident   (Generator *, Node *);
 static int    gen_tuple   (Generator *, Node *);
+static int    gen_list    (Generator *, Node *);
+static int    gen_cons    (Generator *, Node *);
 static int    gen_add     (Generator *, Node *);
 static int    gen_sub     (Generator *, Node *);
 static int    gen_gt      (Generator *, Node *);
@@ -66,12 +68,12 @@ int (*OP_GENERATORS[])(Generator*, Node*) = {
     [OPATH]     =  gen_path,   [OMPATH]    =  NULL,
     [OSTRING]   =  NULL,       [OATOM]     =  gen_atom,
     [OCHAR]     =  NULL,       [ONUMBER]   =  gen_num,
-    [OTUPLE]    =  gen_tuple,  [OLIST]     =  NULL,
+    [OTUPLE]    =  gen_tuple,  [OLIST]     =  gen_list,
     [OACCESS]   =  gen_access, [OAPPLY]    =  gen_apply,
     [OSEND]     =  NULL,       [ORANGE]    =  NULL,
     [OCLAUSE]   =  gen_clause, [OPIPE]     =  NULL,
     [OSUB]      =  gen_sub,    [OLT]       =  gen_lt,
-    [OGT]       =  gen_gt
+    [OGT]       =  gen_gt,     [OCONS]     =  gen_cons
 };
 
 static int define(Generator *g, char *ident, int reg)
@@ -319,11 +321,24 @@ static TValue *_gen_pattern(Generator *g, Node *n)
             }
             break;
         }
+        case ORANGE: {
+            n = n->o.range.lval;
+            int reg = gen_ident(g, n);
+
+            if (reg >= 0) {
+                pattern = tvalue(TYPE_VAR | Q_RANGE, (Value){ .ident = reg });
+            } else {
+                g->path->clause->nlocals ++;
+                reg = define(g, n->src, nextreg(g));
+                pattern = tvalue(TYPE_ANY | Q_RANGE, (Value){ .ident = reg });
+            }
+            break;
+        }
         case OIDENT: {
             int reg = gen_ident(g, n);
 
             if (reg >= 0) {
-                pattern = tvalue(TYPE_IDENT, (Value){ .ident = reg });
+                pattern = tvalue(TYPE_VAR, (Value){ .ident = reg });
             } else {
                 g->path->clause->nlocals ++;
                 reg = define(g, n->src, nextreg(g));
@@ -339,8 +354,29 @@ static TValue *_gen_pattern(Generator *g, Node *n)
             break;
         case OSTRING:
             assert(0);
+        case OCONS:
+            assert(0);
+        case OLIST: {
+            /*
+             * []         = <list>
+             * [X]        = <list> <any>
+             * [X, XS..]  = <list> <any> <any..>
+             *
+             */
+            List *l = list_cons(NULL, NULL);
+
+            if (n->o.list.length > 0) {
+                assert(n->o.list.items->end);
+
+                for (NodeList *ns = n->o.list.items ; ns ; ns = ns->tail) {
+                    l = list_cons(l, _gen_pattern(g, ns->head));
+                }
+            }
+            pattern = tvalue(TYPE_LIST, (Value){ .list = l });
             break;
+        }
         default:
+            pp_node(n);
             assert(0);
             break;
     }
@@ -556,6 +592,37 @@ static int gen_tuple(Generator *g, Node *n)
     return reg;
 }
 
+static int gen_list(Generator *g, Node *n)
+{
+    NodeList *ns;
+
+    unsigned reg = nextreg(g);
+
+    gen(g, iABC(OP_LIST, reg, 0, 0));
+
+    return reg;
+}
+
+static int gen_cons(Generator *g, Node *n)
+{
+    Node *lval = n->o.cons.lval,
+         *rval = n->o.cons.rval;
+
+    unsigned reg = -1;
+
+    if (rval == NULL) {
+        reg = nextreg(g);
+        gen(g, iABC(OP_LIST, reg, 0, 0));
+    } else {
+        reg = gen_cons(g, rval);
+    }
+
+    if (lval)
+        gen(g, iABC(OP_CONS, reg, reg, gen_node(g, lval)));
+
+    return reg;
+}
+
 static int gen_bind(Generator *g, Node *n)
 {
     Node *lval = n->o.match.lval,
@@ -646,6 +713,14 @@ static void dump_node(Node *n, FILE *out)
             break;
         case OIDENT:
             /* The type is all that matters (TYPE_ANY) */
+
+            /* TODO: May not be the case with:
+             *
+             *     fnord (X, X): ...
+             *
+             * Then should probably use TYPE_VAR. But
+             * if reduced to OSELECT, should be ok.
+             */
             break;
         case OATOM:
             dump_atom(n, out);
@@ -670,7 +745,7 @@ static void dump_constant(TValue *tval, FILE *out)
     fputc(tval->t, out);
 
     /* Write constant value */
-    switch (tval->t) {
+    switch (tval->t & TYPE_MASK) {
         case TYPE_BIN:
         case TYPE_STRING:
             assert(0);
@@ -683,13 +758,30 @@ static void dump_constant(TValue *tval, FILE *out)
             }
             break;
         }
+        case TYPE_LIST: {
+            size_t len = 0;
+
+            for (List *l = tval->v.list; l; l = l->tail)
+                len ++;
+
+            len --; // Account for empty list
+
+            fwrite(&len, sizeof(len), 1, out);
+
+            List *l = tval->v.list;
+            for (int i = 0; i < len; i++) {
+                dump_constant(l->head, out);
+                l = l->tail;
+            }
+            break;
+        }
         case TYPE_ATOM:
             fwrite(tval->v.atom, strlen(tval->v.atom) + 1, 1, out);
             break;
         case TYPE_NUMBER:
             fwrite(&tval->v.number, sizeof(int), 1, out);
             break;
-        case TYPE_IDENT:
+        case TYPE_VAR:
         case TYPE_ANY:
             fwrite(&tval->v.ident, sizeof(tval->v.ident), 1, out);
             break;

@@ -583,12 +583,8 @@ static Node *parse_expression(Parser *p)
         default:         error(p, ERR_DEFAULT); return NULL;
     }
 
-    switch (p->tok) {
-        case T_QUESTION:   n = parse_select(p, n); break;
-        default:                                   break;
-    }
-
     switch (p->tok) { // Parse rval
+        case T_QUESTION:   n = parse_select(p, n); break;
         case T_IDENT:  case T_LPAREN:
         case T_STRING: case T_INT:
         case T_LBRACK: case T_ATOM:       n = parse_apply(p, n);   break;
@@ -606,8 +602,8 @@ static Node *parse_expression(Parser *p)
 question:
 
     switch (p->tok) {
-        case T_QUESTION:   n = parse_apply(p, n); break;
-        default:                                  break;
+        case T_QUESTION:   n = parse_select(p, n); break;
+        default:                                   break;
     }
     return n;
 }
@@ -711,6 +707,7 @@ static Node *parse_pattern(Parser *p)
         case T_IDENT   : n = parse_ident(p);    break;
         case T_LPAREN  : n = parse_tuple(p);    break;
         case T_LBRACE  : n = parse_map(p);      break;
+        case T_LBRACK  : n = parse_list(p);     break;
         case T_ATOM    : n = parse_atom(p);     break;
         case T_STRING  : n = parse_string(p);   break;
         case T_INT     : n = parse_number(p);   break;

@@ -35,6 +35,8 @@
 #include "error.h"
 #include "bin.h"
 
+#define INDENT "    "
+
 #define DEBUG
 
 #ifdef DEBUG
@@ -71,13 +73,42 @@ void vm_free(VM *vm)
     // TODO: Implement
 }
 
+uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k);
+
+uint8_t *vm_readlist(VM *vm, uint8_t *b, Value *v)
+{
+    size_t length = *(size_t *)b;
+
+    b += sizeof(length);
+
+    List *l = list_cons(NULL, NULL);
+
+    for (size_t i = 0; i < length; i++) {
+        TValue *val = malloc(sizeof(*val));
+
+        b = vm_readk(vm, b, val);
+        l = list_cons(l, val);
+
+        if (i < length - 1)
+            debug(", ");
+    }
+    (*v).list = l;
+
+    return b;
+}
+
 uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k)
 {
     TYPE t = *b ++;
     Value v;
 
-    switch (t) {
-        case TYPE_BIN:
+    switch (t & TYPE_MASK) {
+        case TYPE_LIST: {
+            debug("[");
+            b = vm_readlist(vm, b, &v);
+            debug("]");
+            break;
+        }
         case TYPE_ATOM:
             v.atom = (char *)b;
             b += strlen(v.atom) + 1;
@@ -94,22 +125,27 @@ uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k)
         case TYPE_ANY:
             v.ident = *b ++;
             debug("<any>");
+            if (t & Q_RANGE) {
+                debug("..");
+            }
             break;
-        case TYPE_IDENT:
+        case TYPE_VAR:
             v.ident = *b ++;
             debug("r%d", v.ident);
             break;
         case TYPE_TUPLE: {
             uint8_t arity = *b ++;
 
-            debug("<tuple>");
+            debug("(");
 
+            // TODO: Use `tuple` function
             v.tuple = malloc(sizeof(*v.tuple) + sizeof(TValue) * arity);
             v.tuple->arity = arity;
 
             for (int i = 0; i < arity; i++) {
                 b = vm_readk(vm, b, v.tuple->members + i);
             }
+            debug(")");
             break;
         }
         default:
@@ -261,12 +297,51 @@ int match_tuple(TValue *locals, Value pattern, Value v, TValue *local)
     return nmatches;
 }
 
+int match_list(TValue *locals, Value pattern, Value v, TValue *local)
+{
+    int m = 0, nmatches = 0;
+
+    List *pat = pattern.list;
+    List *val = v.list;
+
+    while (val) {
+        if (!val->head && !pat->head) { /* Reached end of both lists (match) */
+            break;
+        }
+
+        if (val->head && !pat->head) { /* pattern is shorter than value */
+            return -1;
+        }
+
+        if (pat->head->t & Q_RANGE) {
+            TValue *t = tvalue(TYPE_LIST, (Value){ .list = val });
+            m = match(locals, pat->head, t, local + nmatches);
+            return nmatches + m;
+        } else {
+            m = match(locals, pat->head, val->head, local + nmatches);
+        }
+
+        if (!val->head && pat->head) { /* value is shorter than pattern */
+            return -1;
+        }
+
+        if (m == -1)
+            return -1;
+
+        nmatches += m;
+
+        pat = pat->tail;
+        val = val->tail;
+    }
+    return nmatches;
+}
+
 int match(TValue *locals, TValue *pattern, TValue *v, TValue *local)
 {
     assert(pattern);
 
     if (v == NULL) {
-        if (pattern->t == TYPE_TUPLE &&
+        if ((pattern->t & TYPE_MASK) == TYPE_TUPLE &&
             pattern->v.tuple->arity == 0) {
             return 0;
         } else {
@@ -274,22 +349,24 @@ int match(TValue *locals, TValue *pattern, TValue *v, TValue *local)
         }
     }
 
-    if (pattern->t == TYPE_ANY) {
+    if ((pattern->t & TYPE_MASK) == TYPE_ANY) {
         *local = *v;
         return 1;
     }
 
-    if (pattern->t == TYPE_IDENT) {
+    if ((pattern->t & TYPE_MASK) == TYPE_VAR) {
         return match(locals, &locals[pattern->v.ident], v, local);
     }
 
-    if (pattern->t != v->t) {
+    if ((pattern->t & TYPE_MASK) != (v->t & TYPE_MASK)) {
         return -1;
     }
 
     switch (pattern->t) {
         case TYPE_TUPLE:
             return match_tuple(locals, pattern->v, v->v, local);
+        case TYPE_LIST:
+            return match_list(locals, pattern->v, v->v, local);
         case TYPE_ATOM:
             return match_atom(pattern->v, v->v, local);
         case TYPE_NUMBER:
@@ -321,11 +398,11 @@ int vm_tailcall(VM *vm, Process *proc, /*Module *m, Path *p, */Clause *c, TValue
 
     #ifdef DEBUG
         for (int i = 0; i < proc->stack->size; i++)
-            printf("\t");
+            debug(INDENT);
 
-        printf("%s/%s (", m->name, p->name);
-        if (arg) tvalue_pp(arg);
-        printf("):\n");
+        printf("%s/%s ", m->name, p->name);
+        tvalue_pp(arg);
+        printf("\n");
     #endif
 
     if (! c)
@@ -365,7 +442,7 @@ int vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
     }
 
     for (int i = 0; i < proc->stack->size; i++)
-        debug("\t");
+        debug(INDENT);
 
 #ifdef DEBUG
     printf("%s/%s ", m->name, p->name);
@@ -503,7 +580,7 @@ reentry:
                 TValue b = RK(B(i)),
                        c = RK(C(i));
 
-                if (match(R, &b, &c, &R[A]) >= 0)
+                if (match(R, &b, &c, &R[A + 1]) >= 0)
                     f->pc ++;
 
                 break;
@@ -531,6 +608,18 @@ reentry:
 
                 R[A].v.tuple->members[B] = RK(C(i));
                 break;
+            case OP_LIST:
+                R[A] = *list(0);
+                break;
+            case OP_CONS: {
+                assert(R[B(i)].t == TYPE_LIST);
+
+                TValue *t = ISK(C(i)) ? &K[INDEXK(C(i))] : &R[C(i)];
+
+                List *l = list_cons(R[B(i)].v.list, t);
+                R[A] = *tvalue(TYPE_LIST, (Value){ .list = l });
+                break;
+            }
             case OP_PATH:
                 R[A].v.uri.module = RK(B(i)).v.atom;
                 R[A].v.uri.path   = RK(C(i)).v.atom;
@@ -597,9 +686,9 @@ reentry:
                 (*s->frame)->locals[old->result] = RK(A);
 
                 for (int i = 0; i < proc->stack->size; i++)
-                    debug("\t");
-                debug("%s/%s:\n", (*s->frame)->module->name,
-                                  (*s->frame)->path->name);
+                    debug(INDENT);
+                debug("%s/%s\n", (*s->frame)->module->name,
+                                 (*s->frame)->path->name);
                 free(old);
                 goto reentry;
             }

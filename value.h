@@ -11,8 +11,10 @@
  * TValue data-types
  */
 typedef enum {
+    TYPE_INVALID,
+    TYPE_NONE,
     TYPE_ANY,
-    TYPE_IDENT,
+    TYPE_VAR,
     TYPE_ATOM,
     TYPE_BIN,
     TYPE_TUPLE,
@@ -25,15 +27,20 @@ typedef enum {
 } TYPE;
 
 /*
+ * Assuming only `Y` is bound
+ *
+ * `_`     -- TYPE_NONE
+ * `X`     -- TYPE_ANY
+ * `Y`     -- TYPE_VAR
+ * `XS..`  -- TYPE_ANY | QUAL_RANGE
+ */
+
+/*
  * TValue data-type qualifiers
  */
 typedef enum {
-    Q_NIL      =  0,
-    Q_PTR      =  1 << 4,                  /* Pointer           0001 0000 */
-    Q_ARY      =  1 << 5,                  /* Array             0010 0000 */
-    Q_RSTREAM  =  1 << 6,                  /* Read Stream       0100 0000 */
-    Q_WSTREAM  =  1 << 7,                  /* Write Stream      1000 0000 */
-    Q_RWSTREAM =  Q_RSTREAM | Q_WSTREAM,   /* Read/Write Stream 1100 0000 */
+    Q_NONE     = 0,
+    Q_RANGE    = 1 << 4 /* Bind ident 0001 0000 */
 } QUAL;
 
 #define  TYPE_QUAL_MASK  0xf0
@@ -56,6 +63,7 @@ typedef union {
     String         *string;
     struct Clause  *clause;
     struct Tuple   *tuple;
+    struct List    *list;
     struct Select  *select;
     struct {
         const char *module;
@@ -82,10 +90,18 @@ struct Tuple {
 };
 typedef struct Tuple Tuple;
 
+struct List {
+    TValue        *head;
+    struct List   *tail;
+};
+typedef struct List List;
+
 TValue *tvalue(TYPE type, Value val);
 void    tvalue_pp(TValue *tval);
 void    tvalues_pp(TValue *tval, int size);
 
 TValue *tuple(int arity);
+TValue *list(TValue *);
 TValue *atom(const char *);
 TValue *number(const char *);
+List   *list_cons(List *list, TValue *e);

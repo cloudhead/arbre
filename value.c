@@ -16,7 +16,10 @@
 void tuple_pp (Value v);
 
 const char *TYPE_STRINGS[] = {
+    [TYPE_INVALID] = "INVALID",
+    [TYPE_NONE] = "_",
     [TYPE_ANY] = "any",
+    [TYPE_VAR] = "var",
     [TYPE_ATOM] = "atom",
     [TYPE_BIN] = "bin",
     [TYPE_TUPLE] = "tuple",
@@ -46,7 +49,7 @@ void tvalue_pp(TValue *tval)
     TYPE t = tval->t;
     Value v = tval->v;
 
-    switch (t) {
+    switch (t & TYPE_MASK) {
         case TYPE_TUPLE:
             tuple_pp(v);
             break;
@@ -62,8 +65,19 @@ void tvalue_pp(TValue *tval)
         case TYPE_NUMBER:
             printf("%d", v.number);
             break;
+        case TYPE_LIST: {
+            List *l = v.list;
+            printf("[");
+            while (l->head) {
+                tvalue_pp(l->head);
+                if ((l = l->tail)->head)
+                    printf(", ");
+            }
+            printf("]");
+            break;
+        }
         default:
-            printf("<%s>", TYPE_STRINGS[t]);
+            printf(t & Q_RANGE ? "<%s..>" : "<%s>", TYPE_STRINGS[t]);
             break;
     }
 }
@@ -99,6 +113,24 @@ TValue *tuple(int arity)
            t->arity = arity;
 
     return tvalue(TYPE_TUPLE, (Value){ .tuple = t });
+}
+
+TValue *list(TValue *head)
+{
+    List *l = malloc(sizeof(*l));
+          l->head = head;
+          l->tail = NULL;
+
+    return tvalue(TYPE_LIST, (Value){ .list = l });
+}
+
+List *list_cons(List *list, TValue *head)
+{
+    List *l = malloc(sizeof(*l));
+          l->head = head;
+          l->tail = list;
+
+    return l;
 }
 
 TValue *atom(const char *name)
