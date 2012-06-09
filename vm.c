@@ -536,7 +536,7 @@ reentry:
     while ((i = c->code[f->pc++])) {
         #ifdef DEBUG
         for (int i = 0; i < proc->stack->size; i++)
-            debug("\t");
+            debug(INDENT);
         printf("%3lu:\t", f->pc); op_pp(i); putchar('\n');
         #endif
 
