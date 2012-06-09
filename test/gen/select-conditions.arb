@@ -1,0 +1,33 @@
+--! arbre run $FILE
+
+select.a (X, Y):
+    ? X > Y, X < Y : 1
+    | X < Y        : 1
+    | X > Y        : 0
+
+select.b (X, Y):
+    ? X > Y, X < Y : 1 + 1 - 1
+    | X < Y        : 1
+    | X < Y        : 1 + 9 - 9
+    | X > Y        : 0
+
+select.c (X, Y):
+    ? X > Y, X < Y, 1 > 0 : 1 + 1 - 1
+    | X > Y, 1 > 0        : 0
+    | X < Y               : 1 + 9 - 9
+
+select.d (X, Y):
+    ? X > Y, X < Y, 1 > 0 : 1 + 1 - 1
+    | X > Y, 1 < 0        : 1
+    | X < Y               : 1 + 9 - 9
+    | X > Y, Y < X, 1 > 0 : 0
+    | X > Y, 1 < 0        : 1
+    | X > Y, 1 < 0        : 1
+
+main:
+    A := ./select.a (9, 6)
+    B := ./select.b (9, 5)
+    C := ./select.b (9, 4)
+    D := ./select.d (9, 3)
+    A + B + C + D
+

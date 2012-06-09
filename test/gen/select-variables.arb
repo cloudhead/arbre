@@ -1,0 +1,25 @@
+--! arbre run $FILE
+
+idents.a (X):
+    X ? 8 : 1
+      | Y : Y - X
+
+idents.b (X):
+    X ? 8 : 1
+      | X : X - X
+
+idents.c (X):
+    X ? 8 : 1
+      | _ : 0
+
+idents.d (X, Y, Z):
+    X ? 8 : 1
+      | Y : 1
+      | Z : 0
+
+main:
+    A := ./idents.a (9)
+    B := ./idents.b (9)
+    C := ./idents.c (9)
+    D := ./idents.d (9, 0, 9)
+    A + B + C + D
