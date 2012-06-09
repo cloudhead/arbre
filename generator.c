@@ -304,7 +304,7 @@ static int gen_ident(Generator *g, Node *n)
 }
 
 /* TODO: Implement a node2tval function */
-static TValue *_gen_pattern(Generator *g, Node *n)
+static TValue *gen_pattern(Generator *g, Node *n)
 {
     TValue *pattern;
 
@@ -317,7 +317,7 @@ static TValue *_gen_pattern(Generator *g, Node *n)
             pattern = tuple(n->o.tuple.arity);
 
             for (NodeList *ns = n->o.tuple.members ; ns ; ns = ns->tail) {
-                pattern->v.tuple->members[i++] = *_gen_pattern(g, ns->head);
+                pattern->v.tuple->members[i++] = *gen_pattern(g, ns->head);
             }
             break;
         }
@@ -369,7 +369,7 @@ static TValue *_gen_pattern(Generator *g, Node *n)
                 assert(n->o.list.items->end);
 
                 for (NodeList *ns = n->o.list.items ; ns ; ns = ns->tail) {
-                    l = list_cons(l, _gen_pattern(g, ns->head));
+                    l = list_cons(l, gen_pattern(g, ns->head));
                 }
             }
             pattern = tvalue(TYPE_LIST, (Value){ .list = l });
@@ -381,11 +381,6 @@ static TValue *_gen_pattern(Generator *g, Node *n)
             break;
     }
     return pattern;
-}
-
-static int gen_pattern(Generator *g, Node *n)
-{
-    return gen_constant(g, NULL, _gen_pattern(g, n));
 }
 
 static int gen_select(Generator *g, Node *n)
@@ -416,7 +411,7 @@ static int gen_select(Generator *g, Node *n)
         if (c->o.clause.lval && arg) {
             unsigned reg = nextreg(g);
 
-            TValue *pat = _gen_pattern(g, c->o.clause.lval);
+            TValue *pat = gen_pattern(g, c->o.clause.lval);
 
             gen(g, iABC(OP_MATCH, reg, RKASK(gen_constant(g, NULL, pat)), gen_node(g, arg)));
 
@@ -598,8 +593,6 @@ static int gen_tuple(Generator *g, Node *n)
 
 static int gen_list(Generator *g, Node *n)
 {
-    NodeList *ns;
-
     unsigned reg = nextreg(g);
 
     gen(g, iABC(OP_LIST, reg, 0, 0));
