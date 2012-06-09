@@ -409,11 +409,14 @@ static int gen_select(Generator *g, Node *n)
         int nguards = c->o.clause.nguards;
         int gpatches[nguards];
 
+        enterscope(g->tree);
+
         /* If we have a pattern and an argument to match
          * against it. */
         if (c->o.clause.lval && arg) {
+            unsigned reg = nextreg(g);
+
             TValue *pat = _gen_pattern(g, c->o.clause.lval);
-            unsigned reg = pat->t == TYPE_ANY ? pat->v.ident : nextreg(g);
 
             gen(g, iABC(OP_MATCH, reg, RKASK(gen_constant(g, NULL, pat)), gen_node(g, arg)));
 
@@ -458,6 +461,7 @@ static int gen_select(Generator *g, Node *n)
             clause->code[gpatches[i]] = /* 2 */
                 iAJ(OP_JUMP, 0, clause->pc - gpatches[i] - 1);
         }
+        exitscope(g->tree);
 
         ns = ns->tail;
     }
