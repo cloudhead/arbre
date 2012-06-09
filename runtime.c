@@ -41,6 +41,7 @@ Stack *stack(void)
 {
     Stack *s = malloc(sizeof(*s));
            s->size = 0;
+           s->capacity = 0;
            s->frames = NULL;
            s->frame = NULL;
     return s;
@@ -55,12 +56,23 @@ void stack_pp(Stack *s)
 }
 
 /*
+ *
+ */
+void stack_grow(Stack *s)
+{
+    if (s->size == s->capacity) {
+        s->capacity = (s->size + 1) * 2;
+        s->frames = realloc(s->frames, s->capacity * sizeof(Frame *));
+    }
+}
+
+/*
  * Push the given frame on the stack
  */
 void stack_push(Stack *s, Frame *f)
 {
     s->size ++;
-    s->frames = realloc(s->frames, s->size * sizeof(Frame*));
+    s->frames = realloc(s->frames, s->size * sizeof(Frame *));
     s->frame  = s->frames + s->size - 1;
   *(s->frame) = f;
 }

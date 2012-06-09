@@ -61,6 +61,7 @@ typedef struct {
     Frame   **frames;
     Frame   **frame; /* Frame pointer */
     int       size;
+    int       capacity;
 } Stack;
 
 #define PROC_WAITING 1
