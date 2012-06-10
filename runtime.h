@@ -23,14 +23,15 @@ struct Select {
 };
 typedef struct Select Select;
 
-typedef struct {
+struct Path {
     const char     *name;
 
     /* Clauses */
     int            nclauses;
     Clause         *clause;
     Clause        **clauses;
-} Path;
+};
+typedef struct Path Path;
 
 struct Module {
     const char  *name;

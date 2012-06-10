@@ -103,6 +103,13 @@ uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k)
     Value v;
 
     switch (t & TYPE_MASK) {
+        case TYPE_PATHID:
+            v.pathid = malloc(sizeof(*v.pathid));
+            v.pathid->module = (char *)b;
+            b += strlen(v.pathid->module) + 1;
+            v.pathid->path = (char *)b;
+            b += strlen(v.pathid->path) + 1;
+            break;
         case TYPE_LIST: {
             debug("[");
             b = vm_readlist(vm, b, &v);
@@ -621,8 +628,8 @@ reentry:
                 break;
             }
             case OP_PATH:
-                R[A].v.uri.module = RK(B(i)).v.atom;
-                R[A].v.uri.path   = RK(C(i)).v.atom;
+                R[A].v.pathid->module = RK(B(i)).v.atom;
+                R[A].v.pathid->path   = RK(C(i)).v.atom;
                 break;
             case OP_TAILCALL: {
                 int      matches = -1;
@@ -637,25 +644,29 @@ reentry:
             case OP_CALL: {
                 int matches = -1;
 
-                TValue callee = RK(B(i));
-
+                B = B(i);
                 C = C(i);
 
+                TValue callee = RK(B);
                 TValue arg = RK(C);
 
                 switch (callee.t) {
+                    case TYPE_PATH:
+                        c = p->clauses[0];
+                        matches = vm_call(vm, proc, m, p, c, &arg); /* Create & push stack call-frame */
+                        break;
                     case 0:
-                    case TYPE_PATH: {
-                        const char *module = callee.v.uri.module;
-                        const char *path   = callee.v.uri.path;
-
-                        /* TODO: Don't lookup if path is static */
+                    case TYPE_PATHID: {
+                        const char *module = callee.v.pathid->module;
+                        const char *path   = callee.v.pathid->path;
 
                         if (! (m = vm_module(vm, module)))
                             error(1, 0, "module `%s` not found", module);
 
                         if (! (p = module_path(m, path)))
                             error(1, 0, "path `%s` not found in `%s` module", path, module);
+
+                        K[INDEXK(B)] = *tvalue(TYPE_PATH, (Value){ .path = p });
 
                         c = p->clauses[0];
                         matches = vm_call(vm, proc, m, p, c, &arg); /* Create & push stack call-frame */

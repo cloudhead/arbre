@@ -198,6 +198,7 @@ static int gen_access(Generator *g, Node *n)
     Node *lval = n->o.access.lval,
          *rval = n->o.access.rval;
 
+    /* TODO: This isn't used in all cases, move it. */
     int reg = nextreg(g),
         rk = gen_node(g, rval);
 
@@ -209,11 +210,14 @@ static int gen_access(Generator *g, Node *n)
 
             switch (rval->op) {
                 case OATOM: {
-                    /* TODO: Use module index here when possible */
-                    gen(g, iABC(OP_PATH, reg, RKASK(current), RKASK(rk)));
-                    break;
+                    struct PathID *pid = malloc(sizeof(*pid));
+                    pid->module = g->module->name;
+                    pid->path = rval->o.atom;
+                    Value v = (Value){ .pathid = pid };
+                    return RKASK(gen_constant(g, NULL, tvalue(TYPE_PATHID, v)));
                 }
                 case OIDENT:
+                    gen(g, iABC(OP_PATH, reg, RKASK(current), RKASK(rk)));
                     break;
                 default:
                     assert(0);
@@ -743,6 +747,12 @@ static void dump_constant(TValue *tval, FILE *out)
 
     /* Write constant value */
     switch (tval->t & TYPE_MASK) {
+        case TYPE_PATHID:
+            fwrite(tval->v.pathid->module, strlen(tval->v.pathid->module), 1, out);
+            fputc('\0', out);
+            fwrite(tval->v.pathid->path,   strlen(tval->v.pathid->path), 1, out);
+            fputc('\0', out);
+            break;
         case TYPE_BIN:
         case TYPE_STRING:
             assert(0);
