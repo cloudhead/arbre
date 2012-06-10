@@ -9,8 +9,6 @@
 typedef struct {
     unsigned long    pc;
     Path            *path;
-    Path           **paths;
-    unsigned         pathc; /* TODO: Rename to `npaths` */
     Process        **procs;
     Process         *proc;
     unsigned        nprocs;

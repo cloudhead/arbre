@@ -7,6 +7,7 @@
  *
  */
 struct Clause {
+    struct Path    *path;
     TValue          pattern;
     Instruction    *code;
     unsigned long   codelen; /* TODO: Rename to ncode */
@@ -25,6 +26,7 @@ typedef struct Select Select;
 
 struct Path {
     const char     *name;
+    struct Module  *module;
 
     /* Clauses */
     int            nclauses;
@@ -34,9 +36,9 @@ struct Path {
 typedef struct Path Path;
 
 struct Module {
-    const char  *name;
-    Path       **paths;
-    unsigned     pathc;
+    const char   *name;
+    struct Path **paths;
+    unsigned      pathc;
 };
 
 struct ModuleList {
@@ -78,7 +80,7 @@ typedef struct {
     uint8_t   flags;
 } Process;
 
-Module     *module          (const char *name, Path *paths[], unsigned pathc);
+Module     *module          (const char *name, unsigned pathc);
 Path       *module_path     (Module *m, const char *path);
 void        module_prepend  (ModuleList *list, Module *m);
 ModuleList *modulelist      (Module *head);

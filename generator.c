@@ -100,7 +100,7 @@ Module *source_module(Source *src)
     char *sep  = strrchr(src->path, '.'),
          *name = strndup(src->path, sep - src->path);
 
-    return module(name, NULL, 0);
+    return module(name, 0);
 }
 
 Generator *generator(Tree *tree, Source *source)

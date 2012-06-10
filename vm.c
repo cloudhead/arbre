@@ -56,9 +56,6 @@ VM *vm(void)
     VM    *vm    = malloc(sizeof(*vm) + msize);
 
     vm->path  = NULL;
-    vm->pathc = 0;
-    vm->paths = calloc(OPMAX_B, sizeof(Path*));
-
     vm->nprocs = 0;
     vm->procs  = malloc(sizeof(Process*) * 1024);
     vm->proc   = NULL;
@@ -166,7 +163,7 @@ uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k)
 }
 
 /* TODO: Paths should be per-module */
-uint8_t *vm_readclause(VM *vm, uint8_t *b, int index)
+uint8_t *vm_readclause(VM *vm, Path *p, int index, uint8_t *b)
 {
     /* Pattern */
     TValue pattern = bin_readnode(&b);
@@ -180,6 +177,7 @@ uint8_t *vm_readclause(VM *vm, uint8_t *b, int index)
     debug("reading clause with %d constant(s) and %d local(s)..\n", ksize, nlocals);
 
     Clause *c = clause(pattern, nlocals, ksize);
+    c->path = p;
 
     for (int i = 0; i < ksize; i++) {
         debug("\tk%d = ", i);
@@ -196,14 +194,12 @@ uint8_t *vm_readclause(VM *vm, uint8_t *b, int index)
     /* Skip all code */
     b += c->codelen * sizeof(Instruction);
 
-    Path *p = vm->paths[vm->pathc - 1];
-
     p->clauses[index] = c;
 
     return b;
 }
 
-uint8_t *vm_readpath(VM *vm, uint8_t *b)
+uint8_t *vm_readpath(VM *vm, Module *m, int index, uint8_t *b)
 {
     char *name;
 
@@ -228,11 +224,12 @@ uint8_t *vm_readpath(VM *vm, uint8_t *b)
     debug("reading %d clause(s)..\n", nclauses);
 
     Path *p = path(name, nclauses);
+    p->module = m;
 
-    vm->paths[vm->pathc++] = p;
+    m->paths[index] = p;
 
     for (int i = 0; i < nclauses; i++) {
-        b = vm_readclause(vm, b, i);
+        b = vm_readclause(vm, p, i, b);
     }
 
     return b;
@@ -257,15 +254,11 @@ void vm_open(VM *vm, const char *name, uint8_t *buffer)
 
     debug("reading %d paths..\n", pathsn);
 
-    for (int i = 0; i < pathsn; i++) {
-        buffer = vm_readpath(vm, buffer);
-    }
-    vm_load(vm, name, vm->paths);
-}
+    Module *m = module(name, pathsn);
 
-void vm_load(VM *vm, const char *name, Path *paths[])
-{
-    Module *m = module(name, paths, vm->pathc);
+    for (int i = 0; i < pathsn; i++) {
+        buffer = vm_readpath(vm, m, i, buffer);
+    }
 
     uint32_t key = hash(name, strlen(name)) % 512;
 

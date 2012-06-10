@@ -94,11 +94,11 @@ Frame *stack_pop(Stack *s)
 /*
  * Module allocator
  */
-Module *module(const char *name, Path *paths[], unsigned pathc)
+Module *module(const char *name, unsigned pathc)
 {
     Module *m = malloc(sizeof(*m));
             m->name = name;
-            m->paths = paths;
+            m->paths = malloc(sizeof(Path *) * pathc);
             m->pathc = pathc;
     return  m;
 }
