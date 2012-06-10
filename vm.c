@@ -585,6 +585,15 @@ reentry:
 
                 break;
             }
+            case OP_EQ: {
+                TValue b = RK(B(i)),
+                       c = RK(C(i));
+
+                if (b.v.number == c.v.number)
+                    f->pc ++;
+
+                break;
+            }
             case OP_TUPLE:
                 R[A] = *tuple(B(i));
                 break;

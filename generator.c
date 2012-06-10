@@ -423,7 +423,15 @@ static int gen_select(Generator *g, Node *n)
 
             TValue *pat = gen_pattern(g, c->o.clause.lval);
 
-            gen(g, iABC(OP_MATCH, reg, RKASK(gen_constant(g, NULL, pat)), gen_node(g, arg)));
+            OpCode op;
+
+            switch (pat->t) {
+                case TYPE_NUMBER:   op = OP_EQ;       break;
+                case TYPE_ATOM:
+                case TYPE_STRING:
+                default:            op = OP_MATCH;
+            }
+            gen(g, iABC(op, reg, RKASK(gen_constant(g, NULL, pat)), gen_node(g, arg)));
 
             savedpc = g->path->clause->pc;
             gen(g, 0); /* Patched in [1] */
