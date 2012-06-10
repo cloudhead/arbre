@@ -53,8 +53,6 @@ typedef struct {
     void     *prev;
     uint64_t  pc;
     uint8_t   result;
-    Module   *module;
-    Path     *path;
     Clause   *clause;
     TValue   *locals;
     int      nlocals;

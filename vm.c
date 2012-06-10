@@ -55,7 +55,7 @@ VM *vm(void)
     size_t msize = sizeof(ModuleList*) * 512;
     VM    *vm    = malloc(sizeof(*vm) + msize);
 
-    vm->path  = NULL;
+    vm->clause = NULL;
     vm->nprocs = 0;
     vm->procs  = malloc(sizeof(Process*) * 1024);
     vm->proc   = NULL;
@@ -379,10 +379,9 @@ int match(TValue *locals, TValue *pattern, TValue *v, TValue *local)
     return -1;
 }
 
-int vm_tailcall(VM *vm, Process *proc, /*Module *m, Path *p, */Clause *c, TValue *arg)
+int vm_tailcall(VM *vm, Process *proc, Clause *c, TValue *arg)
 {
     Module *m = proc->module;
-    Path *p = vm->path;
 
     Frame *frame = *(proc->stack->frame);
 
@@ -400,7 +399,7 @@ int vm_tailcall(VM *vm, Process *proc, /*Module *m, Path *p, */Clause *c, TValue
         for (int i = 0; i < proc->stack->size; i++)
             debug(INDENT);
 
-        printf("%s/%s ", m->name, p->name);
+        printf("%s/%s ", m->name, c->path->name);
         tvalue_pp(arg);
         printf("\n");
     #endif
@@ -415,18 +414,12 @@ int vm_tailcall(VM *vm, Process *proc, /*Module *m, Path *p, */Clause *c, TValue
     return nlocals;
 }
 
-int vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
+int vm_call(VM *vm, Process *proc, Clause *c, TValue *arg)
 {
     /* TODO: Perform pattern-match */
 
-    m = m ? m : proc->module;
-    p = p ? p : proc->path;
-    c = c ? c : p->clauses[0];
+    vm->clause = c;
 
-    vm->path = p;
-
-    assert(p);
-    assert(m);
     assert(c);
 
     size_t size = sizeof(TValue) * c->nlocals;
@@ -450,13 +443,8 @@ int vm_call(VM *vm, Process *proc, Module *m, Path *p, Clause *c, TValue *arg)
     printf("\n");
 #endif
 
-    if (! c)
-        return -1;
-
     Frame *f = frame(locals, c->nlocals);
 
-    f->module = m;
-    f->path   = p;
     f->clause = c;
     f->pc     = 0;
     f->prev   = NULL;
@@ -528,8 +516,8 @@ reentry:
     s = proc->stack;    /* Current stack */
     f = *(s->frame);    /* Current stack-frame */
     c = f->clause;      /* Current clause */
-    p = f->path;        /* Current path */
-    m = f->module;      /* Current module */
+    p = c->path;        /* Current path */
+    m = p->module;      /* Current module */
     R = f->locals;      /* Registry (local vars) */
     K = c->constants;   /* Constants */
 
@@ -647,7 +635,7 @@ reentry:
                     case TYPE_PATH: {
                         Path *p = callee.v.path;
                         c = p->clauses[0];
-                        matches = vm_call(vm, proc, m, p, c, &arg); /* Create & push stack call-frame */
+                        matches = vm_call(vm, proc, c, &arg); /* Create & push stack call-frame */
                         break;
                     }
                     case 0:
@@ -667,7 +655,7 @@ reentry:
                         K[INDEXK(B)] = *tvalue(TYPE_PATH, (Value){ .path = p });
 
                         c = p->clauses[0];
-                        matches = vm_call(vm, proc, m, p, c, &arg); /* Create & push stack call-frame */
+                        matches = vm_call(vm, proc, c, &arg); /* Create & push stack call-frame */
 
                         break;
                     }
@@ -733,7 +721,7 @@ TValue *vm_run(VM *vm, const char *module, const char *path)
 
     Process *proc = vm_spawn(vm, m, p);
 
-    vm_call(vm, proc, NULL, NULL, NULL, NULL);
+    vm_call(vm, proc, p->clauses[0], NULL);
 
     return vm_execute(vm, proc);
 }

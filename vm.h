@@ -8,7 +8,7 @@
  */
 typedef struct {
     unsigned long    pc;
-    Path            *path;
+    Clause          *clause;
     Process        **procs;
     Process         *proc;
     unsigned        nprocs;
