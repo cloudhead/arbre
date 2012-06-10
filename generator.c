@@ -402,6 +402,12 @@ static int gen_select(Generator *g, Node *n)
 
     ns = n->o.select.clauses;
 
+    /* Denotes whether or not this `select` node is the last value
+     * in the parent function, in which case it can just return
+     * from inside its clauses, instead of jumping outside. */
+    bool islast = g->block->o.block.body->end->head == n &&
+                  g->block == clause->node->o.clause.rval;
+
     for (int i = 0; i < nclauses; i++) {
         Node *c = ns->head;
 
@@ -464,10 +470,10 @@ static int gen_select(Generator *g, Node *n)
 
         ns = ns->tail;
     }
-    /* [2] Patch clauses to jump over following clauses */
+    /* [2] Patch clauses to skip over following clauses */
     for (int i = 0; i < nclauses - 1; i++) {
-        clause->code[patches[i]] =
-            iAJ(OP_JUMP, 0, clause->pc - patches[i] - 1);
+        clause->code[patches[i]] = islast ? iABC(OP_RETURN, result, 0, 0)
+                                          : iAJ(OP_JUMP, 0, clause->pc - patches[i] - 1);
     }
     return result;
 }
