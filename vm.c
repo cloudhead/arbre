@@ -651,12 +651,17 @@ reentry:
                 TValue arg = RK(C);
 
                 switch (callee.t) {
-                    case TYPE_PATH:
+                    case TYPE_PATH: {
+                        Path *p = callee.v.path;
                         c = p->clauses[0];
                         matches = vm_call(vm, proc, m, p, c, &arg); /* Create & push stack call-frame */
                         break;
+                    }
                     case 0:
                     case TYPE_PATHID: {
+                        Path   *p;
+                        Module *m;
+
                         const char *module = callee.v.pathid->module;
                         const char *path   = callee.v.pathid->path;
 
