@@ -24,8 +24,6 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <limits.h>
-#include <assert.h>
-#include <assert.h>
 
 #include "hash.h"
 #include "value.h"
@@ -35,14 +33,14 @@
 #include "error.h"
 #include "bin.h"
 
+
+#if defined(DEBUG)
 #define INDENT "    "
-
-#define DEBUG
-
-#ifdef DEBUG
+#include <assert.h>
 #define debug(...) (fprintf(stderr, __VA_ARGS__))
 #else
-#define debug(...) ;
+#define assert(X)
+#define debug(...)
 #endif
 
 Module *vm_module  (VM *vm, const char *name);
