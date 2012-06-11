@@ -350,17 +350,13 @@ int match(TValue *locals, TValue *pattern, TValue *v, TValue *local)
     if ((pattern->t & TYPE_MASK) == TYPE_ANY) {
         *local = *v;
         return 1;
-    }
-
-    if ((pattern->t & TYPE_MASK) == TYPE_VAR) {
+    } else if ((pattern->t & TYPE_MASK) == TYPE_VAR) {
         return match(locals, &locals[pattern->v.ident], v, local);
-    }
-
-    if ((pattern->t & TYPE_MASK) != (v->t & TYPE_MASK)) {
+    } else if ((pattern->t & TYPE_MASK) != (v->t & TYPE_MASK)) {
         return -1;
     }
 
-    switch (pattern->t) {
+    switch (pattern->t & TYPE_MASK) {
         case TYPE_TUPLE:
             return match_tuple(locals, pattern->v, v->v, local);
         case TYPE_LIST:
@@ -368,9 +364,7 @@ int match(TValue *locals, TValue *pattern, TValue *v, TValue *local)
         case TYPE_ATOM:
             return match_atom(pattern->v, v->v, local);
         case TYPE_NUMBER:
-            if (pattern->v.number == v->v.number)
-                return 0;
-            break;
+            return (pattern->v.number == v->v.number) ? 0 : -1;
         default:
             assert(0);
     }
