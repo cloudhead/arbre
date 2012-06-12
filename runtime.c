@@ -18,51 +18,22 @@
 #include "op.h"
 #include "runtime.h"
 
-void frame_pp(Frame *f);
-
-Frame *frame(TValue *locals, int nlocals)
-{
-    Frame *f = malloc(sizeof(*f));
-           f->locals  =  locals;
-           f->nlocals = nlocals;
-    return f;
-}
-
-void frame_pp(Frame *f)
-{
-    for (int i = 0; i < f->nlocals; i++) {
-        printf("R[%d]: ", i);
-        tvalue_pp(f->locals + i);
-        putchar('\n');
-    }
-}
-
 Stack *stack(void)
 {
     Stack *s = malloc(sizeof(*s));
            s->size = 0;
            s->capacity = 0;
-           s->frames = NULL;
+           s->base = 0;
            s->frame = NULL;
+           s->depth = 0;
     return s;
 }
 
-void stack_pp(Stack *s)
+void stack_correct(Stack *s, Frame *old)
 {
-    for (int i = s->size - 1; i >= 0; i--) {
-        frame_pp(s->frames[i]);
-        putchar('\n');
-    }
-}
-
-/*
- *
- */
-void stack_grow(Stack *s)
-{
-    if (s->size == s->capacity) {
-        s->capacity = (s->size + 1) * 2;
-        s->frames = realloc(s->frames, s->capacity * sizeof(Frame *));
+    for (Frame *f = s->frame; f != NULL; f = f->prev) {
+        if (f->prev)
+            f->prev = (f->prev - old) + s->base;
     }
 }
 
@@ -71,10 +42,36 @@ void stack_grow(Stack *s)
  */
 void stack_push(Stack *s, Frame *f)
 {
-    s->size ++;
-    s->frames = realloc(s->frames, s->size * sizeof(Frame *));
-    s->frame  = s->frames + s->size - 1;
-  *(s->frame) = f;
+    uint8_t nlocals = f->nlocals;
+
+    int nsize = s->size + sizeof(Frame)
+                        + sizeof(TValue) * nlocals;
+
+    Frame *old = NULL;
+
+    if (s->capacity < nsize) {
+        old = s->base;
+
+        s->capacity = (s->capacity + 1) * 2;
+
+        if (s->capacity < nsize)
+            s->capacity = nsize;
+
+        s->base = realloc(s->base, s->capacity);
+        memset(((char *)s->base + s->size + sizeof(Frame)), 0,
+               s->capacity - s->size - sizeof(Frame));
+    }
+    f->prev   = s->frame;
+    s->frame  = (Frame *)((char *)s->base + s->size);
+    s->size   = nsize;
+  *(s->frame) = *f;
+
+    if (s->depth > 0 && old)
+        stack_correct(s, old);
+
+    s->depth  ++;
+
+    assert(s->size <= s->capacity);
 }
 
 /*
@@ -82,12 +79,21 @@ void stack_push(Stack *s, Frame *f)
  */
 Frame *stack_pop(Stack *s)
 {
-    Frame *f = *(s->frame);
+    Frame *f = s->frame;
 
-    s->size --;
-    s->frames = realloc(s->frames, s->size * sizeof(Frame*));
-    s->frame  = s->frames + s->size - 1;
+    s->size -= sizeof(*f) + sizeof(TValue) * f->nlocals;
 
+    assert(s->size >= 0);
+
+    s->depth --;
+    s->frame = f->prev;
+
+    if (s->capacity - s->size > STACK_MAXDIFF) {
+        Frame *old = s->base;
+        s->capacity = (s->size + 1) * 2;
+        s->base = realloc(s->base, s->capacity);
+        stack_correct(s, old);
+    }
     return f;
 }
 

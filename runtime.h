@@ -6,6 +6,8 @@
  * runtime.h
  *
  */
+#define  STACK_MAXDIFF  4096
+
 struct Clause {
     struct Path    *path;
     TValue          pattern;
@@ -49,20 +51,21 @@ struct ModuleList {
 typedef struct Module     Module;
 typedef struct ModuleList ModuleList;
 
-typedef struct {
-    void     *prev;
-    uint64_t  pc;
-    uint8_t   result;
-    Clause   *clause;
-    TValue   *locals;
-    int      nlocals;
+typedef struct Frame {
+    struct Frame    *prev;
+    Instruction     *pc;
+    uint8_t          result;
+    Clause          *clause;
+    int             nlocals;
+    TValue           locals[];
 } Frame;
 
 typedef struct {
-    Frame   **frames;
-    Frame   **frame; /* Frame pointer */
-    int       size;
-    int       capacity;
+    Frame   *base;  /* Base of the stack */
+    Frame   *frame; /* Frame pointer */
+    int      depth;
+    size_t   size;
+    size_t   capacity;
 } Stack;
 
 #define PROC_WAITING 1

@@ -373,14 +373,10 @@ int match(TValue *locals, TValue *pattern, TValue *v, TValue *local)
 
 int vm_tailcall(VM *vm, Process *proc, Clause *c, TValue *arg)
 {
-    Module *m = proc->module;
+    Frame  *frame = proc->stack->frame;
+    TValue *local = frame->locals;
 
-    Frame *frame = *(proc->stack->frame);
-
-    size_t size = sizeof(TValue) * c->nlocals;
-    TValue *local  = frame->locals;
-
-    memset(frame->locals, 0, size);
+    memset(local, 0, sizeof(TValue) * c->nlocals);
 
     int nlocals = match(NULL, &c->pattern, arg, local);
 
@@ -388,10 +384,10 @@ int vm_tailcall(VM *vm, Process *proc, Clause *c, TValue *arg)
         return -1;
 
     #ifdef DEBUG
-        for (int i = 0; i < proc->stack->size; i++)
+        for (int i = 0; i < proc->stack->depth; i++)
             debug(INDENT);
 
-        printf("%s/%s ", m->name, c->path->name);
+        printf("%s/%s ", c->path->module->name, c->path->name);
         tvalue_pp(arg);
         printf("\n");
     #endif
@@ -400,8 +396,7 @@ int vm_tailcall(VM *vm, Process *proc, Clause *c, TValue *arg)
         return -1;
 
     frame->clause = c;
-    frame->pc     = 0;
-    frame->prev   = NULL;
+    frame->pc     = c->code;
 
     return nlocals;
 }
@@ -411,14 +406,19 @@ int vm_call(VM *vm, Process *proc, Clause *c, TValue *arg)
     /* TODO: Perform pattern-match */
 
     vm->clause = c;
+    Stack *s = proc->stack;
 
     assert(c);
 
-    size_t size = sizeof(TValue) * c->nlocals;
-    TValue *locals = malloc(size),
-           *local  = locals;
+    Frame f = (Frame){
+        .nlocals = c->nlocals,
+        .clause  = c,
+        .pc      = c->code
+    };
+    stack_push(proc->stack, &f);
 
-    memset(locals, 0, size);
+    TValue *locals = s->frame->locals,
+           *local  = locals;
 
     int nlocals = match(NULL, &c->pattern, arg, local);
 
@@ -426,22 +426,13 @@ int vm_call(VM *vm, Process *proc, Clause *c, TValue *arg)
         return -1;
     }
 
-    for (int i = 0; i < proc->stack->size; i++)
-        debug(INDENT);
-
-#ifdef DEBUG
-    printf("%s/%s ", m->name, p->name);
+#if defined(DEBUG)
+    for (int i = 0; i < proc->stack->depth; i++)
+        printf(INDENT);
+    printf("%s/%s ", c->path->module->name, c->path->name);
     tvalue_pp(arg);
     printf("\n");
 #endif
-
-    Frame *f = frame(locals, c->nlocals);
-
-    f->clause = c;
-    f->pc     = 0;
-    f->prev   = NULL;
-
-    stack_push(proc->stack, f);
 
     return nlocals;
 }
@@ -489,8 +480,6 @@ TValue *vm_execute(VM *vm, Process *proc)
 {
     int A, B, C;
 
-    Module *m;
-    Path   *p;
     Clause *c;
 
     Stack *s;
@@ -506,33 +495,30 @@ reentry:
     vm->proc = proc;
 
     s = proc->stack;    /* Current stack */
-    f = *(s->frame);    /* Current stack-frame */
+    f = s->frame;       /* Current stack-frame */
     c = f->clause;      /* Current clause */
-    p = c->path;        /* Current path */
-    m = p->module;      /* Current module */
     R = f->locals;      /* Registry (local vars) */
     K = c->constants;   /* Constants */
 
-    while ((i = c->code[f->pc++])) {
+    while ((i = *f->pc++)) {
         #ifdef DEBUG
-        for (int i = 0; i < proc->stack->size; i++)
+        for (int i = 0; i < proc->stack->depth; i++)
             debug(INDENT);
-        printf("%3lu:\t", f->pc); op_pp(i); putchar('\n');
+        printf("%3lu:\t", f->pc - f->clause->code - 1); op_pp(i); putchar('\n');
         #endif
-
-        proc->credits --;
-
-        OpCode op = OP(i);
 
         A = A(i);
 
-        switch (op) {
+        proc->credits --;
+
+        switch (OP(i)) {
             case OP_MOVE:
                 R[A] = R[B(i)];
                 break;
             case OP_LOADK:
-                B = INDEXK(D(i));
                 assert(A < f->nlocals);
+
+                B = INDEXK(D(i));
                 R[A] = K[B];
                 break;
             case OP_ADD: {
@@ -555,13 +541,15 @@ reentry:
             }
             case OP_JUMP:
                 f->pc += J(i);
-                continue;
+                break;
             case OP_MATCH: {
                 TValue b = RK(B(i)),
                        c = RK(C(i));
 
                 if (match(R, &b, &c, &R[A + 1]) >= 0)
                     f->pc ++;
+                else
+                    f->pc += J(*f->pc) + 1;
 
                 break;
             }
@@ -574,6 +562,8 @@ reentry:
 
                 if (b.v.number > c.v.number)
                     f->pc ++;
+                else
+                    f->pc += J(*f->pc) + 1;
 
                 break;
             }
@@ -583,6 +573,8 @@ reentry:
 
                 if (b.v.number == c.v.number)
                     f->pc ++;
+                else
+                    f->pc += J(*f->pc) + 1;
 
                 break;
             }
@@ -617,10 +609,10 @@ reentry:
                 int      matches = -1;
                 TValue   arg     = R[C(i)];
 
-                c = p->clauses[B(i)];
+                c = c->path->clauses[B(i)];
 
                 if ((matches = vm_tailcall(vm, proc, c, &arg)) < 0) /* Replace stack call-frame */
-                    error(1, 0, "no matches for %s/%s", m->name, p->name);
+                    error(1, 0, "no matches for %s/%s", c->path->module->name, c->path->name);
                 goto reentry;
             }
             case OP_CALL: {
@@ -634,9 +626,7 @@ reentry:
 
                 switch (callee.t) {
                     case TYPE_PATH: {
-                        Path *p = callee.v.path;
-                        c = p->clauses[0];
-                        matches = vm_call(vm, proc, c, &arg); /* Create & push stack call-frame */
+                        matches = vm_call(vm, proc, callee.v.path->clauses[0], &arg); /* Create & push stack call-frame */
                         break;
                     }
                     case 0:
@@ -667,9 +657,9 @@ reentry:
                         assert(0);
                 }
                 if (matches < 0)
-                    error(1, 0, "no matches for %s/%s", m->name, p->name);
+                    error(1, 0, "no matches for %s/%s", c->path->module->name, c->path->name);
 
-                (*s->frame)->result = A;                    /* Set return-value register */
+                s->frame->result = A;                    /* Set return-value register */
 
                 goto reentry;
             }
@@ -678,16 +668,18 @@ reentry:
 
                 /* We reached the top of the stack,
                  * exit loop & return last register value. */
-                if (s->size == 0)
+                if (s->depth == 0)
                     return &R[A];
 
-                (*s->frame)->locals[old->result] = RK(A);
+                assert(s->frame->locals);
+                assert(old);
 
-                for (int i = 0; i < proc->stack->size; i++)
+                s->frame->locals[old->result] = RK(A);
+
+                for (int i = 0; i < proc->stack->depth; i++)
                     debug(INDENT);
-                debug("%s/%s\n", (*s->frame)->module->name,
-                                 (*s->frame)->path->name);
-                free(old);
+                debug("%s/%s\n", s->frame->clause->path->module->name,
+                                 s->frame->clause->path->name);
                 goto reentry;
             }
             default:
@@ -701,10 +693,11 @@ reentry:
                 proc = np;
                 goto reentry;
             } else {
-                proc->credits = 16;
+                proc->credits = 96;
             }
         }
     }
+    assert(0);
     return NULL;
 }
 
