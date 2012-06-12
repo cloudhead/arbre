@@ -32,14 +32,13 @@
 #include "vm.h"
 #include "error.h"
 #include "bin.h"
+#include "assert.h"
 
 
 #if defined(DEBUG)
 #define INDENT "    "
-#include <assert.h>
 #define debug(...) (fprintf(stderr, __VA_ARGS__))
 #else
-#define assert(X)
 #define debug(...)
 #endif
 

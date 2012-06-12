@@ -12,11 +12,11 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
-#include <assert.h>
 
 #include "arbre.h"
 #include "op.h"
 #include "runtime.h"
+#include "assert.h"
 
 Stack *stack(void)
 {
