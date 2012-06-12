@@ -87,7 +87,7 @@ void        module_prepend  (ModuleList *list, Module *m);
 ModuleList *modulelist      (Module *head);
 
 Stack      *stack           (void);
-void        stack_push      (Stack *s, Frame *f);
+void        stack_push      (Stack *s, Clause *c);
 Frame      *stack_pop       (Stack *s);
 void        stack_pp        (Stack *s);
 

@@ -40,17 +40,17 @@ void stack_correct(Stack *s, Frame *old)
 /*
  * Push the given frame on the stack
  */
-void stack_push(Stack *s, Frame *f)
+void stack_push(Stack *s, Clause *c)
 {
-    uint8_t nlocals = f->nlocals;
-
     int nsize = s->size + sizeof(Frame)
-                        + sizeof(TValue) * nlocals;
+                        + sizeof(TValue) * c->nlocals;
 
-    Frame *old = NULL;
+    Frame *oldbase = NULL,
+          *prev = s->frame,
+          *f;
 
     if (s->capacity < nsize) {
-        old = s->base;
+        oldbase = s->base;
 
         s->capacity = (s->capacity + 1) * 2;
 
@@ -61,13 +61,17 @@ void stack_push(Stack *s, Frame *f)
         memset(((char *)s->base + s->size + sizeof(Frame)), 0,
                s->capacity - s->size - sizeof(Frame));
     }
-    f->prev   = s->frame;
+
     s->frame  = (Frame *)((char *)s->base + s->size);
     s->size   = nsize;
-  *(s->frame) = *f;
 
-    if (s->depth > 0 && old)
-        stack_correct(s, old);
+    f         = s->frame;
+    f->prev   = prev;
+    f->pc     = c->code;
+    f->clause = c;
+
+    if (s->depth > 0 && oldbase)
+        stack_correct(s, oldbase);
 
     s->depth  ++;
 
@@ -81,7 +85,7 @@ Frame *stack_pop(Stack *s)
 {
     Frame *f = s->frame;
 
-    s->size -= sizeof(*f) + sizeof(TValue) * f->nlocals;
+    s->size -= sizeof(*f) + sizeof(TValue) * f->clause->nlocals;
 
     assert(s->size >= 0);
 

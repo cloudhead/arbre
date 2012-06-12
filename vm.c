@@ -409,12 +409,7 @@ int vm_call(VM *vm, Process *proc, Clause *c, TValue *arg)
 
     assert(c);
 
-    Frame f = (Frame){
-        .nlocals = c->nlocals,
-        .clause  = c,
-        .pc      = c->code
-    };
-    stack_push(proc->stack, &f);
+    stack_push(s, c);
 
     TValue *locals = s->frame->locals,
            *local  = locals;
