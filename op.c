@@ -64,13 +64,13 @@ const unsigned char OPCODE_MODES[] = {
 
 void op_pp(Instruction i)
 {
-    OpCode o = OP(i);
+    OpCode o = iOP(i);
 
-    int a = A(i),
-        b = B(i),
-        c = C(i),
-        d = D(i),
-        j = J(i);
+    int a = iA(i),
+        b = iB(i),
+        c = iC(i),
+        d = iD(i),
+        j = iJ(i);
 
     printf("%-9s\t", OPCODE_STRINGS[o]);
 

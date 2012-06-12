@@ -40,12 +40,12 @@ enum             IMode {ABC, AD, AJ};   /* Instruction mode/format */
 /*
  * Instruction field macros
  */
-#define OP(i)   ((OpCode)((i) & 0xff))
-#define A(i)	((OpArg)((i) >> OPPOS_A) & 0xff)
-#define B(i)	((OpArg)((i) >> OPPOS_B) & 0xff)
-#define C(i)	((OpArg)((i) >> OPPOS_C) & 0xff)
-#define D(i)    ((OpArg)((i) >> OPPOS_D))
-#define J(i)    ((ptrdiff_t)(D(i) - OPMAX_J))
+#define iOP(i)   ((OpCode)((i) & 0xff))
+#define iA(i)    ((OpArg)((i) >> OPPOS_A) & 0xff)
+#define iB(i)    ((OpArg)((i) >> OPPOS_B) & 0xff)
+#define iC(i)    ((OpArg)((i) >> OPPOS_C) & 0xff)
+#define iD(i)    ((OpArg)((i) >> OPPOS_D))
+#define iJ(i)    ((ptrdiff_t)(iD(i) - OPMAX_J))
 
 /*
  * Instruction creation macros

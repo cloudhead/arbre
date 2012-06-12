@@ -476,10 +476,15 @@ Process *vm_select(VM *vm)
 }
 
 #define RK(x) (ISK(x) ? K[INDEXK(x)] : R[x])
+#define OP    (iOP(i))
+#define A     (iA(i))
+#define B     (iB(i))
+#define C     (iC(i))
+#define D     (iD(i))
+#define J     (iJ(i))
+
 TValue *vm_execute(VM *vm, Process *proc)
 {
-    int A, B, C;
-
     Clause *c;
 
     Stack *s;
@@ -507,55 +512,52 @@ reentry:
         printf("%3lu:\t", f->pc - f->clause->code - 1); op_pp(i); putchar('\n');
         #endif
 
-        A = A(i);
-
         proc->credits --;
 
-        switch (OP(i)) {
+        switch (OP) {
             case OP_MOVE:
-                R[A] = R[B(i)];
+                R[A] = R[B];
                 break;
             case OP_LOADK:
                 assert(A < f->nlocals);
 
-                B = INDEXK(D(i));
-                R[A] = K[B];
+                R[A] = K[INDEXK(D)];
                 break;
             case OP_ADD: {
-                assert(RK(B(i)).t == TYPE_NUMBER);
-                assert(RK(C(i)).t == TYPE_NUMBER);
+                assert(RK(B).t == TYPE_NUMBER);
+                assert(RK(C).t == TYPE_NUMBER);
 
                 R[A].t        = TYPE_NUMBER;
-                R[A].v.number = RK(B(i)).v.number +
-                                RK(C(i)).v.number;
+                R[A].v.number = RK(B).v.number +
+                                RK(C).v.number;
                 break;
             }
             case OP_SUB: {
-                assert(RK(B(i)).t == TYPE_NUMBER);
-                assert(RK(C(i)).t == TYPE_NUMBER);
+                assert(RK(B).t == TYPE_NUMBER);
+                assert(RK(C).t == TYPE_NUMBER);
 
                 R[A].t        = TYPE_NUMBER;
-                R[A].v.number = RK(B(i)).v.number -
-                                RK(C(i)).v.number;
+                R[A].v.number = RK(B).v.number -
+                                RK(C).v.number;
                 break;
             }
             case OP_JUMP:
-                f->pc += J(i);
+                f->pc += J;
                 break;
             case OP_MATCH: {
-                TValue b = RK(B(i)),
-                       c = RK(C(i));
+                TValue b = RK(B),
+                       c = RK(C);
 
                 if (match(R, &b, &c, &R[A + 1]) >= 0)
                     f->pc ++;
                 else
-                    f->pc += J(*f->pc) + 1;
+                    f->pc += iJ(*f->pc) + 1;
 
                 break;
             }
             case OP_GT: {
-                TValue b = RK(B(i)),
-                       c = RK(C(i));
+                TValue b = RK(B),
+                       c = RK(C);
 
                 assert(b.t == TYPE_NUMBER);
                 assert(c.t == TYPE_NUMBER);
@@ -563,53 +565,53 @@ reentry:
                 if (b.v.number > c.v.number)
                     f->pc ++;
                 else
-                    f->pc += J(*f->pc) + 1;
+                    f->pc += iJ(*f->pc) + 1;
 
                 break;
             }
             case OP_EQ: {
-                TValue b = RK(B(i)),
-                       c = RK(C(i));
+                TValue b = RK(B),
+                       c = RK(C);
 
                 if (b.v.number == c.v.number)
                     f->pc ++;
                 else
-                    f->pc += J(*f->pc) + 1;
+                    f->pc += iJ(*f->pc) + 1;
 
                 break;
             }
             case OP_TUPLE:
-                R[A] = *tuple(B(i));
+                R[A] = *tuple(B);
                 break;
             case OP_SETTUPLE:
-                B = B(i);
-
                 assert(R[A].t == TYPE_TUPLE);
                 assert(B < R[A].v.tuple->arity);
 
-                R[A].v.tuple->members[B] = RK(C(i));
+                R[A].v.tuple->members[B] = RK(C);
                 break;
             case OP_LIST:
                 R[A] = *list(0);
                 break;
             case OP_CONS: {
-                assert(R[B(i)].t == TYPE_LIST);
+                int c = C;
 
-                TValue *t = ISK(C(i)) ? &K[INDEXK(C(i))] : &R[C(i)];
+                assert(R[B].t == TYPE_LIST);
 
-                List *l = list_cons(R[B(i)].v.list, t);
+                TValue *t = ISK(c) ? &K[INDEXK(c)] : &R[c];
+
+                List *l = list_cons(R[B].v.list, t);
                 R[A] = *tvalue(TYPE_LIST, (Value){ .list = l });
                 break;
             }
             case OP_PATH:
-                R[A].v.pathid->module = RK(B(i)).v.atom;
-                R[A].v.pathid->path   = RK(C(i)).v.atom;
+                R[A].v.pathid->module = RK(B).v.atom;
+                R[A].v.pathid->path   = RK(C).v.atom;
                 break;
             case OP_TAILCALL: {
                 int      matches = -1;
-                TValue   arg     = R[C(i)];
+                TValue   arg     = R[C];
 
-                c = c->path->clauses[B(i)];
+                c = c->path->clauses[B];
 
                 if ((matches = vm_tailcall(vm, proc, c, &arg)) < 0) /* Replace stack call-frame */
                     error(1, 0, "no matches for %s/%s", c->path->module->name, c->path->name);
@@ -617,9 +619,6 @@ reentry:
             }
             case OP_CALL: {
                 int matches = -1;
-
-                B = B(i);
-                C = C(i);
 
                 TValue callee = RK(B);
                 TValue arg = RK(C);

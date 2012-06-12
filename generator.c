@@ -280,7 +280,7 @@ static int gen_clause(Generator *g, Node *n)
     reg = gen_block(g, n->o.clause.rval);
     exitscope(g->tree);
 
-    if (OP(g->path->clause->code[g->path->clause->pc - 1]) != OP_TAILCALL) {
+    if (iOP(g->path->clause->code[g->path->clause->pc - 1]) != OP_TAILCALL) {
         if (ISK(reg)) {
             rega = nextreg(g);
             gen(g, iAD(OP_LOADK, rega, reg));
