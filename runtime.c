@@ -22,8 +22,8 @@ Stack *stack(void)
 {
     Stack *s = malloc(sizeof(*s));
            s->size = 0;
-           s->capacity = 0;
-           s->base = 0;
+           s->capacity = sizeof(Frame) + sizeof(TValue);
+           s->base = malloc(s->capacity);
            s->frame = NULL;
            s->depth = 0;
     return s;
@@ -54,10 +54,7 @@ void stack_push(Stack *s, Clause *c)
     if (s->capacity < nsize) {
         oldbase = s->base;
 
-        if (s->capacity == 0)
-            s->capacity = 8;
-        else
-            s->capacity = (s->capacity) * 2;
+        s->capacity = (s->capacity) * 2;
 
         if (s->capacity < nsize)
             s->capacity = nsize;
