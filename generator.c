@@ -307,6 +307,16 @@ static int gen_ident(Generator *g, Node *n)
     }
 }
 
+static int gen_defined(Generator *g, Node *n)
+{
+    int  reg;
+
+    if ((reg = gen_ident(g, n)) == -1) {
+        nreportf(REPORT_ERROR, n, ERR_UNDEFINED, n->src);
+    }
+    return reg;
+}
+
 /* TODO: Implement a node2tval function */
 static TValue *gen_pattern(Generator *g, Node *n)
 {
@@ -647,9 +657,8 @@ static int gen_bind(Generator *g, Node *n)
 
     switch (rval->op) {
         case OIDENT:
-            rreg = gen_ident(g, rval);
+            rreg = gen_defined(g, rval);
             if (rreg == -1) {
-                nreportf(REPORT_ERROR, n, ERR_UNDEFINED, rval->src);
                 return rreg;
             }
             break;
