@@ -393,10 +393,10 @@ static int gen_select(Generator *g, Node *n)
     Node     *arg = n->o.select.arg;
 
     unsigned result = nextreg(g), ret;
-    unsigned long savedpc, offset;
+    unsigned long savedpc = -1, offset;
 
     int nclauses = n->o.select.nclauses;
-    int patches[nclauses];
+    int patches[nclauses - 1];
 
     ClauseEntry *clause = g->path->clause;
 

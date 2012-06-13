@@ -198,7 +198,7 @@ uint8_t *vm_readclause(VM *vm, Path *p, int index, uint8_t *b)
 
 uint8_t *vm_readpath(VM *vm, Module *m, int index, uint8_t *b)
 {
-    char *name;
+    char *name = NULL;
 
     /* Path attributes */
     uint8_t attrs   = *b ++;
