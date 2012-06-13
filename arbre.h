@@ -20,3 +20,7 @@
 #include  "node.h"
 #include  "tree.h"
 #include  "io.h"
+
+#define  ARBRE_DIR      ".arbre"
+#define  ARBRE_BIN_DIR  ".arbre/bin"
+#define  ARBRE_BIN_FMT  ".arbre/bin/%s.bin"

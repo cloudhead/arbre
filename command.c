@@ -28,6 +28,7 @@ char *strdup(const char *);
 #include  "command.h"
 #include  "error.h"
 #include  "reduce.h"
+#include  "limits.h"
 
 static int   command_build(Command *cmd);
 static int   command_run(Command *cmd);
@@ -251,6 +252,8 @@ static void ontoken(Token *t)
  */
 static int command_build(Command *c)
 {
+    static char out[PATH_MAX];
+
     // TODO: If no files were specified, build all arbre
     // files in the current dir.
     if (c->inputc == 0)
@@ -285,11 +288,10 @@ static int command_build(Command *c)
 
         Generator *g = generator(tree, src);
 
-        mkdir(".arbre",     0755);
-        mkdir(".arbre/bin", 0755);
+        mkdir(ARBRE_DIR,     0755);
+        mkdir(ARBRE_BIN_DIR, 0755);
 
-        char out[strlen(path) + 4 + 1];
-        sprintf(out, ".arbre/bin/%s.bin", path);
+        sprintf(out, ARBRE_BIN_FMT, path);
 
         if (! (c->fp = fopen(c->output ? c->output : out, "w+"))) {
             error(1, errno, "couldn't create file %s for writing", out);
