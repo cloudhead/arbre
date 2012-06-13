@@ -644,11 +644,14 @@ static int gen_bind(Generator *g, Node *n)
          *rval = n->o.match.rval;
 
     int lreg, rreg;
-    Sym *rident;
 
     switch (rval->op) {
         case OIDENT:
-            rident = tree_lookup(g->tree, rval->src);
+            rreg = gen_ident(g, rval);
+            if (rreg == -1) {
+                nreportf(REPORT_ERROR, n, ERR_UNDEFINED, rval->src);
+                return rreg;
+            }
             break;
         case OTUPLE:
             rreg = gen_tuple(g, rval);
