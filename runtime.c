@@ -32,8 +32,10 @@ Stack *stack(void)
 void stack_correct(Stack *s, Frame *old)
 {
     for (Frame *f = s->frame; f != NULL; f = f->prev) {
-        if (f->prev)
-            f->prev = (f->prev - old) + s->base;
+        if (f->prev) {
+            ptrdiff_t diff = (ptrdiff_t)f->prev - (ptrdiff_t)old;
+            f->prev = (Frame *)(diff + (ptrdiff_t)s->base);
+        }
     }
 }
 
@@ -52,17 +54,20 @@ void stack_push(Stack *s, Clause *c)
     if (s->capacity < nsize) {
         oldbase = s->base;
 
-        s->capacity = (s->capacity + 1) * 2;
+        if (s->capacity == 0)
+            s->capacity = 8;
+        else
+            s->capacity = (s->capacity) * 2;
 
         if (s->capacity < nsize)
             s->capacity = nsize;
 
         s->base = realloc(s->base, s->capacity);
-        memset(((char *)s->base + s->size + sizeof(Frame)), 0,
+        memset((Frame *)((ptrdiff_t)s->base + s->size + sizeof(Frame)), 0,
                s->capacity - s->size - sizeof(Frame));
     }
 
-    s->frame  = (Frame *)((char *)s->base + s->size);
+    s->frame  = (Frame *)((ptrdiff_t)s->base + s->size);
     s->size   = nsize;
 
     f         = s->frame;
@@ -83,7 +88,7 @@ void stack_push(Stack *s, Clause *c)
  */
 Frame *stack_pop(Stack *s)
 {
-    Frame *f = s->frame;
+    Frame *f = s->frame, *old;
 
     s->size -= sizeof(*f) + sizeof(TValue) * f->clause->nlocals;
 
@@ -93,7 +98,7 @@ Frame *stack_pop(Stack *s)
     s->frame = f->prev;
 
     if (s->capacity - s->size * 2 > STACK_MAXDIFF) {
-        Frame *old = s->base;
+        old = s->base;
         s->capacity = s->size * 2;
         s->base = realloc(s->base, s->capacity);
         if (s->base != old)
@@ -109,7 +114,7 @@ Module *module(const char *name, unsigned pathc)
 {
     Module *m = malloc(sizeof(*m));
             m->name = name;
-            m->paths = malloc(sizeof(Path *) * pathc);
+            m->paths = pathc ? malloc(sizeof(Path *) * pathc) : NULL;
             m->pathc = pathc;
     return  m;
 }

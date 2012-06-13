@@ -56,16 +56,15 @@ typedef struct Frame {
     Instruction     *pc;
     Clause          *clause;
     uint8_t          result;
-    intptr_t         ______;       /* Padding */
     TValue           locals[];
 } Frame;
 
 typedef struct {
     Frame   *base;  /* Base of the stack */
     Frame   *frame; /* Frame pointer */
-    int      depth;
     size_t   size;
     size_t   capacity;
+    int      depth;
 } Stack;
 
 #define PROC_WAITING 1
