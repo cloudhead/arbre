@@ -92,11 +92,12 @@ Frame *stack_pop(Stack *s)
     s->depth --;
     s->frame = f->prev;
 
-    if (s->capacity - s->size > STACK_MAXDIFF) {
+    if (s->capacity - s->size * 2 > STACK_MAXDIFF) {
         Frame *old = s->base;
-        s->capacity = (s->size + 1) * 2;
+        s->capacity = s->size * 2;
         s->base = realloc(s->base, s->capacity);
-        stack_correct(s, old);
+        if (s->base != old)
+            stack_correct(s, old);
     }
     return f;
 }

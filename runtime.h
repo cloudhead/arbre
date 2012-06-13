@@ -54,9 +54,9 @@ typedef struct ModuleList ModuleList;
 typedef struct Frame {
     struct Frame    *prev;
     Instruction     *pc;
-    uint8_t          result;
     Clause          *clause;
-    int             nlocals;
+    uint8_t          result;
+    intptr_t         ______;       /* Padding */
     TValue           locals[];
 } Frame;
 
