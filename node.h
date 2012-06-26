@@ -110,6 +110,7 @@ struct Node {
         struct { struct Node  *lval;  struct Node  *rval; } bind;
         struct { struct Node  *lval;  struct Node  *rval; } cmp;
         struct { struct Node  *lval;  struct Node  *rval; } cons;
+        struct { struct Node  *lval;  struct Node  *rval; } binop;
 
         struct {
             struct Node  *proc;

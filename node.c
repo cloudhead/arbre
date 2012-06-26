@@ -251,7 +251,10 @@ void pp_nodel(Node *n, int lvl)
                     printf(" : %d", n->type);
                 }
                 break;
-            case OSTRING: case ONUMBER: case OATOM:
+            case OATOM:
+                printf("%s", n->o.atom);
+                break;
+            case OSTRING: case ONUMBER:
                 printf("%s", n->src);
                 break;
             default: break;
