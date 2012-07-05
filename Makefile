@@ -8,9 +8,12 @@ HEADERS = *.h
 CFLAGS = -Wall -pedantic -std=c99 -O0 -g
 TARGET = bin/arbre
 
-$(TARGET): $(SRC) $(HEADERS)
+$(TARGET): $(SRC) $(HEADERS) Makefile
 	mkdir -p bin
 	$(CC) $(CFLAGS) -o $(TARGET) $(SRC) 
+
+analyze: $(SRC) $(HEADERS)
+	$(CC) $(CFLAGS) --analyze $(SRC)
 
 clean:
 	[ -f $(TARGET) ] && rm $(TARGET)
