@@ -209,16 +209,13 @@ static int gen_access(Generator *g, Node *n)
             int current = gen_constant(g, g->module->name, tvalue(TYPE_ATOM, v));
 
             switch (rval->op) {
-                case OATOM: {
+                case OIDENT: {
                     struct PathID *pid = malloc(sizeof(*pid));
                     pid->module = g->module->name;
-                    pid->path = rval->o.atom;
+                    pid->path = rval->src;
                     Value v = (Value){ .pathid = pid };
                     return RKASK(gen_constant(g, NULL, tvalue(TYPE_PATHID, v)));
                 }
-                case OIDENT:
-                    gen(g, iABC(OP_PATH, reg, RKASK(current), RKASK(rk)));
-                    break;
                 default:
                     assert(0);
                     break;
@@ -243,7 +240,7 @@ static int gen_apply(Generator *g, Node *n)
 
     bool tailcall = false;
 
-    char *name = n->o.apply.lval->o.path.name->o.atom;
+    char *name = n->o.apply.lval->o.path.name->src;
 
     for (Node *b = g->block; n == b->o.block.body->end->head; b = b->o.block.parent) {
         if (name == g->path->name || !strcmp(name, g->path->name)) { /* Tail-call */
@@ -570,7 +567,7 @@ static void gen_locals(Generator *g, Node *n)
 
 static int gen_path(Generator *g, Node *n)
 {
-    char *name = n->o.path.name->o.atom;
+    char *name = n->o.path.name->src;
 
     Sym *k = symtab_lookup(g->tree->psymbols, name);
 

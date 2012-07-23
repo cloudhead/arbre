@@ -4,14 +4,12 @@
 -- paths --
 -----------
 
-hello: world
-hello : world
+hello = world
 
-./hello : world
-./hello: world
+./hello = world
 
-./hello X: world
-./hello X : world
-./hello (X) : world
-./hello(X) : world
+./hello x = world
+./hello x = world
+./hello (x) = world
+./hello(x) = world
 

@@ -114,21 +114,29 @@ static void whitespace(Scanner *s)
 }
 
 /*
- * Consume an identifier, such as: Fnord
+ * Consume an identifier, such as: fnord
  */
 static void scan_ident(Scanner *s)
 {
-    while (isalnum(s->ch)) {
+    if (isalnum(s->ch) || s->ch == '_')
+        next(s);
+
+    while (isalnum(s->ch) || s->ch == '_' || s->ch == '\'') {
         next(s);
     }
 }
 
 /*
- * Consume an atom, such as: fnord
+ * Consume an atom, such as: 'fnord
  */
 static void scan_atom(Scanner *s)
 {
-    while (islower(s->ch) || s->ch == '_' || s->ch == '.') {
+    if (s->ch != '\'')
+        return;
+
+    next(s);
+
+    while (isalnum(s->ch) || s->ch == '_' || s->ch == '.') {
         next(s);
     }
 }
@@ -168,15 +176,15 @@ static void scan_comment(Scanner *s)
 }
 
 /*
- * Consume a character, such as: 'z'
+ * Consume a character, such as: `z`
  */
 static void scan_char(Scanner *s)
 {
-    if (s->ch == '\'') {
+    if (s->ch == '`') {
         next(s);
     } else if (isascii(s->ch)) {
         next(s);
-        if (s->ch == '\'') {
+        if (s->ch == '`') {
             next(s);
         } else {
             /* TODO: Handle error */
@@ -288,10 +296,10 @@ Token *scan(Scanner *s)
 
     if (c == -1) {
         tok = T_EOF;
-    } else if (isupper(c)) {
+    } else if (islower(c)) {
         scan_ident(s);
         tok = T_IDENT;
-    } else if (islower(c)) {
+    } else if (c == '\'') {
         scan_atom(s);
         tok = T_ATOM;
     } else if (isdigit(c)) {
@@ -315,8 +323,7 @@ Token *scan(Scanner *s)
             case  ';' :  tok = T_SEMICOLON;                 break;
             case  ',' :  tok = T_COMMA;                     break;
             case  '"' :  tok = T_STRING;   scan_string(s);  break;
-            case  '`' :  tok = T_ATOM;     scan_atom(s);    break;
-            case '\'' :  tok = T_CHAR;     scan_char(s);    break;
+            case  '`' :  tok = T_CHAR;     scan_char(s);    break;
             case '\n' :  tok = T_LF;       s->lf = true;    break;
             case  ' ' :  tok = T_SPACE;                     break;
             case  '+' :  tok = T_PLUS;                      break;

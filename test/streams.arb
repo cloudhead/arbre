@@ -4,15 +4,15 @@
 -- streams --
 -------------
 
-+ sending:
-    S <- fnord
-    S <- B
-    S <- (<-Fnord)
+sending =
+    s <- fnord
+    s <- b
+    s <- (<-fnord)
 
-+ receiving:
-    <-S
+receiving =
+    <-s
 
-+ piping:
-    S -> (\X: X) -> S1
-    S -> (\X: X) >> S1 >> S2
-    S -> (S1 -> S2)
+piping =
+    s -> (\x: x) -> s1
+    s -> (\x: x) >> s1 >> s2
+    s -> (s1 -> s2)

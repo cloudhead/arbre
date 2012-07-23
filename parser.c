@@ -295,7 +295,7 @@ static Node *parse_tuple(Parser *p)
  *
  *     9
  *     1..10
- *     X..
+ *     x..
  */
 static Node *parse_list_exp(Parser *p)
 {
@@ -317,7 +317,7 @@ static Node *parse_list_exp(Parser *p)
  * Parse list. Example:
  *
  *     [1, 2, 3..9]
- *     [X..]
+ *     [x..]
  */
 static Node *parse_list(Parser *p)
 {
@@ -360,7 +360,7 @@ static Node *parse_map(Parser *p)
 /*
  * Parse identifier. Example:
  *
- *     Fnord
+ *     fnord
  */
 static Node *parse_ident(Parser *p)
 {
@@ -374,7 +374,7 @@ static Node *parse_ident(Parser *p)
 /*
  * Parse atom. Example:
  *
- *     fnord
+ *     'fnord
  */
 static Node *parse_atom(Parser *p)
 {
@@ -402,7 +402,7 @@ static Node *parse_string(Parser *p)
 /*
  * Parse character. Example:
  *
- *     'y'
+ *     `y`
  */
 static Node *parse_char(Parser *p)
 {
@@ -429,7 +429,7 @@ static Node *parse_number(Parser *p)
 /*
  * Parse a message wait. Example:
  *
- *     <-Fnord
+ *     <-fnord
  */
 static Node *parse_wait(Parser *p)
 {
@@ -453,7 +453,7 @@ static Node *parse_wait(Parser *p)
 /*
  * Parse lambda expression. Example:
  *
- *     \X : X + 1
+ *     \x : x + 1
  */
 static Node *parse_lambda(Parser *p)
 {
@@ -493,7 +493,7 @@ static Node *parse_pipe(Parser *p, Node *lval)
 /*
  * Parse addition. Example:
  *
- *     A + B
+ *     a + b
  */
 static Node *parse_add(Parser *p, Node *lval)
 {
@@ -510,7 +510,7 @@ static Node *parse_add(Parser *p, Node *lval)
 /*
  * Parse subtraction. Example:
  *
- *     A - B
+ *     a - b
  */
 static Node *parse_sub(Parser *p, Node *lval)
 {
@@ -567,9 +567,9 @@ static Node *parse_expression(Parser *p)
     Node *n = NULL;
 
     switch (p->tok) { // Parse lval
-        case T_ATOM:
         case T_IDENT:
         case T_PERIOD:   n = parse_access(p);       break;
+        case T_ATOM:     n = parse_atom(p);         break;
         case T_BSLASH:   n = parse_lambda(p);       break;
         case T_LPAREN:   n = parse_tuple(p);        break;
         case T_LBRACK:   n = parse_list(p);         break;
@@ -669,7 +669,6 @@ static Node *parse_access(Parser *p)
     Node *n = NULL, *a;
 
     switch (p->tok) {
-        case T_ATOM:   n = parse_atom(p);    break;
         case T_IDENT:  n = parse_ident(p);   break;
         case T_PERIOD: n = parse_module(p);  break;
         case T_INT:    n = parse_number(p);  break;
@@ -696,7 +695,7 @@ static Node *parse_access(Parser *p)
  * be literal/static. Example:
  *
  *     ("hello", fnord)
- *     (ok, Data)
+ *     ('ok, data)
  */
 static Node *parse_pattern(Parser *p)
 {
@@ -785,10 +784,10 @@ static Node *parse_module(Parser *p)
             n->o.module.type = MODULE_CURRENT;
             n->o.module.path = NULL;
             break;
-        case T_ATOM:
+        case T_IDENT:
             next(p);
             n->o.module.type = MODULE_NAMED;
-            n->o.module.path = parse_atom(p);
+            n->o.module.path = parse_ident(p);
             break;
         default:
             return NULL;
@@ -876,7 +875,7 @@ static Node *parse_path(Parser *p)
             expect(p, T_SLASH);
             type = PATH_PUB;
             break;
-        case T_ATOM:
+        case T_IDENT:
             type = PATH_PRIV;
             break;
         default:
@@ -885,13 +884,25 @@ static Node *parse_path(Parser *p)
     }
     n = node(p->token, OPATH);
 
-    if (p->tok == T_ATOM) {
-        n->o.path.name = parse_atom(p);
+    if (p->tok == T_IDENT) {
+        n->o.path.name = parse_ident(p);
     } else {
-        error(p, "expected atom");
+        error(p, "expected ident");
     }
     n->o.path.type   = type;
-    n->o.path.clause = parse_clause(p);
+    n->o.path.clause = node(p->token, OCLAUSE);
+
+    if (p->tok == T_EQ) {
+        next(p);
+        n->o.path.clause->o.clause.lval = node(p->token, OTUPLE);
+        n->o.path.clause->o.clause.lval->o.tuple.arity = 0;
+    } else if ((n->o.path.clause->o.clause.lval = parse_pattern(p))) {
+        expect(p, T_EQ);
+    } else {
+        error(p, "expected clause pattern");
+        return NULL;
+    }
+    n->o.path.clause->o.clause.rval = parse_block(p);
 
     return n;
 }
@@ -1063,7 +1074,7 @@ static Node *parse_decl(Parser *p)
 
     /* TODO: Support parrens around parameter */
     switch (p->tok) {
-        case T_ATOM: case T_SLASH: case T_PERIOD:
+        case T_IDENT: case T_SLASH: case T_PERIOD:
             args = parse_module(p); // Module parameter
         default: break;
     }
@@ -1092,7 +1103,7 @@ static Node *parse_toplevel(Parser *p)
 
     switch (p->tok) {
         case T_PERIOD:
-        case T_ATOM:
+        case T_IDENT:
             node = parse_path(p);
             break;
         case T_PLUS:

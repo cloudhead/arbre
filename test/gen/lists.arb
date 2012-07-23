@@ -1,26 +1,26 @@
 --! arbre run $FILE
 
-sum.tco (L, S):
-    L ?
-      | [X, XS..] : ./sum.tco (XS, X + S)
-      | []        : S
+sum'tco (l, s) =
+    l ?
+      | [x, xs..] : ./sum'tco (xs, x + s)
+      | []        : s
 
-sum L:
-    L ?
-      | [X, XS..] : X + ./sum (XS)
+sum l =
+    l ?
+      | [x, xs..] : x + ./sum (xs)
       | []        : 0
 
-length L:
-    L ?
-      | [X, XS..] : 1 + ./length (XS)
+length l =
+    l ?
+      | [x, xs..] : 1 + ./length (xs)
       | []        : 0
 
-fib X:
-    X ? 0 : 0
+fib x =
+    x ? 0 : 0
       | 1 : 1
-      | N : (./fib (N - 1)) + (./fib (N - 2))
+      | n : (./fib (n - 1)) + (./fib (n - 2))
 
-main:
-    R := 120
-    L := [1, 2, 3, 4, 5, 6, 7, 8, 9]
-    (./length L) + (./fib 8) + (./sum L) + (./sum.tco (L, 0)) - R
+main =
+    r := 120
+    l := [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    (./length l) + (./fib 8) + (./sum l) + (./sum'tco (l, 0)) - r

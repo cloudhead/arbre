@@ -1,33 +1,33 @@
 --! arbre run $FILE
 
-select.a (X, Y):
-    ? X > Y, X < Y : 1
-    | X < Y        : 1
-    | X > Y        : 0
+select'a (x, y) =
+    ? x > y, x < y : 1
+    | x < y        : 1
+    | x > y        : 0
 
-select.b (X, Y):
-    ? X > Y, X < Y : 1 + 1 - 1
-    | X < Y        : 1
-    | X < Y        : 1 + 9 - 9
-    | X > Y        : 0
+select'b (x, y) =
+    ? x > y, x < y : 1 + 1 - 1
+    | x < y        : 1
+    | x < y        : 1 + 9 - 9
+    | x > y        : 0
 
-select.c (X, Y):
-    ? X > Y, X < Y, 1 > 0 : 1 + 1 - 1
-    | X > Y, 1 > 0        : 0
-    | X < Y               : 1 + 9 - 9
+select'c (x, y) =
+    ? x > y, x < y, 1 > 0 : 1 + 1 - 1
+    | x > y, 1 > 0        : 0
+    | x < y               : 1 + 9 - 9
 
-select.d (X, Y):
-    ? X > Y, X < Y, 1 > 0 : 1 + 1 - 1
-    | X > Y, 1 < 0        : 1
-    | X < Y               : 1 + 9 - 9
-    | X > Y, Y < X, 1 > 0 : 0
-    | X > Y, 1 < 0        : 1
-    | X > Y, 1 < 0        : 1
+select'd (x, y) =
+    ? x > y, x < y, 1 > 0 : 1 + 1 - 1
+    | x > y, 1 < 0        : 1
+    | x < y               : 1 + 9 - 9
+    | x > y, y < x, 1 > 0 : 0
+    | x > y, 1 < 0        : 1
+    | x > y, 1 < 0        : 1
 
-main:
-    A := ./select.a (9, 6)
-    B := ./select.b (9, 5)
-    C := ./select.b (9, 4)
-    D := ./select.d (9, 3)
-    A + B + C + D
+main =
+    a := ./select'a (9, 6)
+    b := ./select'b (9, 5)
+    c := ./select'b (9, 4)
+    d := ./select'd (9, 3)
+    a + b + c + d
 

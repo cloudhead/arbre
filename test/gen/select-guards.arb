@@ -1,13 +1,13 @@
 --! arbre run $FILE
 
-select (X):
-    X ? (0, 0)           : 1
-      | zero             : 1
-      | Y & Y < 0        : 1
-      | Y & Y > 0, Y < 0 : 1
-      | Y & Y > 9        : 1
-      | Y & Y > 0        : 0
-      | Y & Y < 0        : 1
+select (x) =
+    x ? (0, 0)           : 1
+      | 'zero            : 1
+      | y & y < 0        : 1
+      | y & y > 0, y < 0 : 1
+      | y & y > 9        : 1
+      | y & y > 0        : 0
+      | y & y < 0        : 1
 
-main:
+main =
     ./select (9)

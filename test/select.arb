@@ -4,35 +4,35 @@
 -- select --
 ------------
 
-+ inline:
-    X ?   1 : 1 | 2 : 2 | 3 : 3
-    X ? | 1 : 1 | 2 : 2 | 3 : 3
+inline =
+    x ?   1 : 1 | 2 : 2 | 3 : 3
+    x ? | 1 : 1 | 2 : 2 | 3 : 3
 
-+ multiline:
-    X ?
+multiline =
+    x ?
       | 1 : 1
       | 2 : 2
       | 3 : 3
 
-+ multiline: X ?
+multiline = x ?
                | 1 : 1
                | 2 : 2
                | 3 : 3
 
-+ multiline:
-    X ? | 1 : 1
+multiline =
+    x ? | 1 : 1
         | 2 : 2
         | 3 : 3
 
-+ multiline:
-    X ? 1 : 1
+multiline =
+    x ? 1 : 1
       | 2 : 2
       | 3 : 3
 
-+ guards:
+guards =
     ? true  : 1
     | false : 0
 
-+ guards:
-    X ? 1 & true  : 1
+guards =
+    x ? 1 & true  : 1
       | 0 & false : 0

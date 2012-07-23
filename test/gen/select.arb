@@ -1,35 +1,35 @@
 --! arbre run $FILE
 
-tuples:
+tuples =
     (0, 0) ? (0)    : 1
            | (0, 1) : 1
            | (0, 0) : 0
 
-atoms:
-    fnord ? fnor  : 1
-          | nord  : 1
-          | fnord : 0
+atoms =
+    'fnord ? 'fnor  : 1
+           | 'nord  : 1
+           | 'fnord : 0
 
-numbers:
+numbers =
     42 ? 0   : 1
        | 420 : 1
        | -1  : 1
        | 42  : 0
 
-strings:
+strings =
     -- TODO
     0
 
-mixed:
+mixed =
     42 ? 0         : 1
        | (42, 42)  : 1
-       | fnord     : 1
+       | 'fnord    : 1
        | 42        : 0
 
-main:
-    Tuples  := ./tuples ()
-    Atoms   := ./atoms ()
-    Numbers := ./numbers ()
-    Strings := ./strings ()
-    Mixed   := ./mixed ()
-    Tuples + Atoms + Numbers + Strings + Mixed
+main =
+    t := ./tuples ()
+    a := ./atoms ()
+    n := ./numbers ()
+    s := ./strings ()
+    m := ./mixed ()
+    t + a + n + s + m

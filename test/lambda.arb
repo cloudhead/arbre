@@ -1,6 +1,6 @@
 --! arbre build $FILE --syntax
 
-+ main:
-  \X: X
+main =
+  \x: x
   \(fnord): fnord
   (\fnord: fnord)
