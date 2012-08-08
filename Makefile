@@ -1,22 +1,32 @@
 
-CC = clang
-SRC = arbre.c  scanner.c  token.c     source.c  tokens.c\
-	  util.c   parser.c   generator.c tree.c    report.c\
-	  io.c     node.c     runtime.c   value.c   hash.c\
-	  vm.c     op.c       symtab.c    command.c error.c bin.c
-HEADERS = *.h
-CFLAGS = -Wall -pedantic -std=c99 -O0 -g
-TARGET = bin/arbre
+CC     := clang
+CFLAGS := -Wall -pedantic -std=c99 -O0 -g
+INCS   := -I../
+SRC    := $(wildcard *.c)
+OBJ    := $(SRC:.c=.o)
+TARGET := bin/arbre
 
-$(TARGET): $(SRC) $(HEADERS) Makefile
-	mkdir -p bin
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRC) 
+all: $(TARGET)
 
-analyze: $(SRC) $(HEADERS)
-	$(CC) $(CFLAGS) --analyze $(SRC)
+%.o: %.c
+	@echo "cc   $< => $@"
+	@$(CC) -c $(CFLAGS) $(INCS) -o $@ $<
+
+$(TARGET): $(OBJ)
+	@mkdir -p bin
+	@echo "=>   $(TARGET)"
+	@$(CC) $(OBJ) -o $(TARGET)
+	@echo OK
+
+%.d: %.c
+	@echo "dep  $*.o => $*.d"
+	@$(CC) $(INCS) -MM -MG -MT "$*.o $*.d" $*.c >$@
+
+-include $(OBJ:.o=.d)
 
 clean:
-	[ -f $(TARGET) ] && rm $(TARGET)
+	@rm -f $(OBJ)
+	@[ -f $(TARGET) ] && rm $(TARGET)
 
 test: $(TARGET)
 	test/test-runner.sh test/*.arb test/gen/*.arb
