@@ -405,7 +405,7 @@ int vm_call(VM *vm, Process *proc, Clause *c, TValue *arg)
     /* TODO: Perform pattern-match */
 
     vm->clause = c;
-    Stack *s = proc->stack;
+    struct stack *s = proc->stack;
 
     assert(c);
 
@@ -481,7 +481,7 @@ TValue *vm_execute(VM *vm, Process *proc)
 {
     Clause *c;
 
-    Stack *s;
+    struct stack *s;
     Frame *f;
 
     Instruction i;

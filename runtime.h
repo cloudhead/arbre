@@ -59,25 +59,25 @@ typedef struct Frame {
     TValue           locals[];
 } Frame;
 
-typedef struct {
+struct stack {
     Frame   *base;  /* Base of the stack */
     Frame   *frame; /* Frame pointer */
     size_t   size;
     size_t   capacity;
     int      depth;
-} Stack;
+};
 
 #define PROC_WAITING 1
 #define PROC_READY   1 << 1
 
 typedef struct {
-    Stack    *stack;
-    Path     *path;
-    Module   *module;
-    Clause   *clause;
-    uint64_t  pc;
-    uint16_t  credits;
-    uint8_t   flags;
+    struct stack   *stack;
+    Path           *path;
+    Module         *module;
+    Clause         *clause;
+    uint64_t        pc;
+    uint16_t        credits;
+    uint8_t         flags;
 } Process;
 
 Module     *module          (const char *name, unsigned pathc);
@@ -85,10 +85,10 @@ Path       *module_path     (Module *m, const char *path);
 void        module_prepend  (ModuleList *list, Module *m);
 ModuleList *modulelist      (Module *head);
 
-Stack      *stack           (void);
-void        stack_push      (Stack *s, Clause *c);
-Frame      *stack_pop       (Stack *s);
-void        stack_pp        (Stack *s);
+struct stack   *stack           (void);
+void            stack_push      (struct stack *s, Clause *c);
+Frame          *stack_pop       (struct stack *s);
+void            stack_pp        (struct stack *s);
 
 Path       *path            (const char *name, int nclauses);
 Process    *process         (Module *m, Path *path);

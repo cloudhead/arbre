@@ -19,18 +19,20 @@
 #include "runtime.h"
 #include "assert.h"
 
-Stack *stack(void)
+struct stack *stack(void)
 {
-    Stack *s = malloc(sizeof(*s));
-           s->size = 0;
-           s->capacity = sizeof(Frame) + sizeof(TValue);
-           s->base = malloc(s->capacity);
-           s->frame = NULL;
-           s->depth = 0;
+    struct stack *s = malloc(sizeof(*s));
+
+    s->size = 0;
+    s->capacity = sizeof(Frame) + sizeof(TValue);
+    s->base = malloc(s->capacity);
+    s->frame = NULL;
+    s->depth = 0;
+
     return s;
 }
 
-void stack_correct(Stack *s, Frame *old)
+void stack_correct(struct stack *s, Frame *old)
 {
     for (Frame *f = s->frame; f != NULL; f = f->prev) {
         if (f->prev) {
@@ -43,7 +45,7 @@ void stack_correct(Stack *s, Frame *old)
 /*
  * Push the given frame on the stack
  */
-void stack_push(Stack *s, Clause *c)
+void stack_push(struct stack *s, Clause *c)
 {
     int nsize = s->size + sizeof(Frame)
                         + sizeof(TValue) * c->nlocals;
@@ -84,7 +86,7 @@ void stack_push(Stack *s, Clause *c)
 /*
  * Pop the current frame from the stack
  */
-Frame *stack_pop(Stack *s)
+Frame *stack_pop(struct stack *s)
 {
     Frame *f = s->frame, *old;
 
