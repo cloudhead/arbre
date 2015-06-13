@@ -38,15 +38,15 @@ static void tty(const char *);
  */
 int vreportf(const char *fmt, va_list ap)
 {
-    return vfprintf(stderr, fmt, ap);
+	return vfprintf(stderr, fmt, ap);
 }
 int reportf(const char *fmt, ...)
 {
-    va_list ap;
-    va_start(ap, fmt);
-    vreportf(fmt, ap);
-    va_end(ap);
-    return 0;
+	va_list ap;
+	va_start(ap, fmt);
+	vreportf(fmt, ap);
+	va_end(ap);
+	return 0;
 }
 
 /*
@@ -54,10 +54,10 @@ int reportf(const char *fmt, ...)
  */
 void vtreportf(enum REPORT_TYPE type, Token *t, const char *fmt, va_list ap)
 {
-    source_seek(t->source, t->pos);
-    vpheaderf(type, t->source, fmt, ap);
-    psrcline(t->source, t->source->line);
-    carret(t->source->col);
+	source_seek(t->source, t->pos);
+	vpheaderf(type, t->source, fmt, ap);
+	psrcline(t->source, t->source->line);
+	carret(t->source->col);
 }
 
 /*
@@ -65,31 +65,31 @@ void vtreportf(enum REPORT_TYPE type, Token *t, const char *fmt, va_list ap)
  */
 void vnreportf(enum REPORT_TYPE type, struct node *n, const char *fmt, va_list ap)
 {
-    struct source *s = n->source;
+	struct source *s = n->source;
 
-    source_seek(s, n->pos);
-    vpheaderf(type, s, fmt, ap);
+	source_seek(s, n->pos);
+	vpheaderf(type, s, fmt, ap);
 
-    /* Print source extract */
-    psrcline(s, s->line);
+	/* Print source extract */
+	psrcline(s, s->line);
 
-    /* Highlight source */
-    switch (n->op) {
-        case OMATCH: case ODECL:
-            highlight(s, n);
-            break;
-        default:
-            carret(s->col);
-            break;
-    }
-    source_rewind(n->source);
+	/* Highlight source */
+	switch (n->op) {
+		case OMATCH: case ODECL:
+			highlight(s, n);
+			break;
+		default:
+			carret(s->col);
+			break;
+	}
+	source_rewind(n->source);
 }
 void nreportf(enum REPORT_TYPE type, struct node *n, const char *fmt, ...)
 {
-    va_list ap;
-    va_start(ap, fmt);
-    vnreportf(type, n, fmt, ap);
-    va_end(ap);
+	va_list ap;
+	va_start(ap, fmt);
+	vnreportf(type, n, fmt, ap);
+	va_end(ap);
 }
 
 /*
@@ -97,14 +97,14 @@ void nreportf(enum REPORT_TYPE type, struct node *n, const char *fmt, ...)
  */
 void vpreportf(enum REPORT_TYPE type, Parser *p, const char *fmt, va_list ap)
 {
-    vtreportf(type, p->token, fmt, ap);
+	vtreportf(type, p->token, fmt, ap);
 }
 void preportf(enum REPORT_TYPE type, Parser *p, const char *fmt, ...)
 {
-    va_list ap;
-    va_start(ap, fmt);
-    vpreportf(type, p, fmt, ap);
-    va_end(ap);
+	va_list ap;
+	va_start(ap, fmt);
+	vpreportf(type, p, fmt, ap);
+	va_end(ap);
 }
 
 /*
@@ -114,21 +114,21 @@ void preportf(enum REPORT_TYPE type, Parser *p, const char *fmt, ...)
  */
 static void vpheaderf(enum REPORT_TYPE type, struct source *s, const char *fmt, va_list ap)
 {
-    tty(COLOR_BOLD);
+	tty(COLOR_BOLD);
 
-    /* Print source location */
-    reportf("%s:%d:%d  ", s->path, s->line + 1, s->col + 1);
+	/* Print source location */
+	reportf("%s:%d:%d  ", s->path, s->line + 1, s->col + 1);
 
-    /* Print message label */
-    tty(REPORT_COLORS[type]);
-    reportf("%s: ", REPORT_LABELS[type]);
+	/* Print message label */
+	tty(REPORT_COLORS[type]);
+	reportf("%s: ", REPORT_LABELS[type]);
 
-    tty(COLOR_RESET);
+	tty(COLOR_RESET);
 
-    /* Print message */
-    tty(COLOR_BOLD);
-    vreportf(fmt, ap);
-    tty(COLOR_RESET);
+	/* Print message */
+	tty(COLOR_BOLD);
+	vreportf(fmt, ap);
+	tty(COLOR_RESET);
 }
 
 /*
@@ -136,9 +136,9 @@ static void vpheaderf(enum REPORT_TYPE type, struct source *s, const char *fmt, 
  */
 static void psrcline(struct source *s, int line)
 {
-    char *str = strdup(s->lineps[line]);
-    reportf("\n%s\n", strtok(str, "\n"));
-    free(str);
+	char *str = strdup(s->lineps[line]);
+	reportf("\n%s\n", strtok(str, "\n"));
+	free(str);
 }
 
 /*
@@ -146,9 +146,9 @@ static void psrcline(struct source *s, int line)
  */
 static void fill(char c, int count)
 {
-    for (int i = 0; i < count; i ++) {
-        fputc(c, stderr);
-    }
+	for (int i = 0; i < count; i ++) {
+		fputc(c, stderr);
+	}
 }
 
 /*
@@ -156,9 +156,9 @@ static void fill(char c, int count)
  */
 static void tty(const char *s)
 {
-    if (isatty(STDERR_FILENO)) {
-        fprintf(stderr, "%s", s);
-    }
+	if (isatty(STDERR_FILENO)) {
+		fprintf(stderr, "%s", s);
+	}
 }
 
 /*
@@ -166,11 +166,11 @@ static void tty(const char *s)
  */
 static void carret(int col)
 {
-    tty(COLOR_BOLD_GREEN);
-    fill(' ', col);
-    fputc('^', stderr);
-    fputc('\n', stderr);
-    tty(COLOR_RESET);
+	tty(COLOR_BOLD_GREEN);
+	fill(' ', col);
+	fputc('^', stderr);
+	fputc('\n', stderr);
+	tty(COLOR_RESET);
 }
 
 /*
@@ -178,21 +178,21 @@ static void carret(int col)
  */
 static void highlight(struct source *s, struct node *n)
 {
-    struct node *lval = n->o.match.lval,
-         *rval = n->o.match.rval;
+	struct node *lval = n->o.match.lval,
+	            *rval = n->o.match.rval;
 
-    source_seek(s, lval->pos);
+	source_seek(s, lval->pos);
 
-    tty(COLOR_BOLD_GREEN);
-    {
-        fill(' ', s->col);
-        fill('~', strlen(lval->src));
-        fill(' ', n->pos - (lval->pos + strlen(lval->src)));
-        fill('^', 1);
-        fill(' ', rval->pos - n->pos - 1);
-        fill('~', strlen(rval->src));
-        fill('\n', 1);
-    }
-    tty(COLOR_RESET);
+	tty(COLOR_BOLD_GREEN);
+	{
+		fill(' ', s->col);
+		fill('~', strlen(lval->src));
+		fill(' ', n->pos - (lval->pos + strlen(lval->src)));
+		fill('^', 1);
+		fill(' ', rval->pos - n->pos - 1);
+		fill('~', strlen(rval->src));
+		fill('\n', 1);
+	}
+	tty(COLOR_RESET);
 }
 

@@ -25,15 +25,15 @@
  */
 SymTable *symtab(size_t size)
 {
-    size_t dsize = sizeof(SymList*) * size;
-    SymTable *t  = malloc(sizeof(*t) + dsize);
+	size_t dsize = sizeof(SymList*) * size;
+	SymTable *t  = malloc(sizeof(*t) + dsize);
 
-    memset(t->data, 0, dsize);
+	memset(t->data, 0, dsize);
 
-    t->parent = NULL;
-    t->size   = size;
+	t->parent = NULL;
+	t->size   = size;
 
-    return t;
+	return t;
 }
 
 /*
@@ -41,7 +41,7 @@ SymTable *symtab(size_t size)
  */
 void symtab_free(SymTable *t)
 {
-    free(t);
+	free(t);
 }
 
 /*
@@ -49,20 +49,20 @@ void symtab_free(SymTable *t)
  */
 Sym *symtab_lookup(SymTable *t, const char *k)
 {
-    uint32_t key = hash(k, strlen(k)) % t->size;
-    SymList *ss  = t->data[key];
+	uint32_t key = hash(k, strlen(k)) % t->size;
+	SymList *ss  = t->data[key];
 
-    while (ss && ss->head) {
-        if (! strcmp(ss->head->name, k)) {
-            return ss->head;
-        }
-        ss = ss->tail;
-    }
+	while (ss && ss->head) {
+		if (! strcmp(ss->head->name, k)) {
+			return ss->head;
+		}
+		ss = ss->tail;
+	}
 
-    if (t->parent) {
-        return symtab_lookup(t->parent, k);
-    }
-    return NULL;
+	if (t->parent) {
+		return symtab_lookup(t->parent, k);
+	}
+	return NULL;
 }
 
 /*
@@ -74,13 +74,13 @@ Sym *symtab_lookup(SymTable *t, const char *k)
  */
 void symtab_insert(SymTable *t, const char *k, Sym *s)
 {
-    uint32_t key = hash(k, strlen(k)) % t->size;
+	uint32_t key = hash(k, strlen(k)) % t->size;
 
-    if (t->data[key]) {
-        sym_prepend(t->data[key], s);
-    } else {
-        t->data[key] = symlist(s);
-    }
+	if (t->data[key]) {
+		sym_prepend(t->data[key], s);
+	} else {
+		t->data[key] = symlist(s);
+	}
 }
 
 /*
@@ -88,11 +88,11 @@ void symtab_insert(SymTable *t, const char *k, Sym *s)
  */
 Sym *symbol(const char *k, Variable *v)
 {
-    Sym   *s = malloc(sizeof(*s));
-           s->name  = k;
-           s->type  = SYM_VAR;
-           s->e.var = v;
-    return s;
+	Sym   *s = malloc(sizeof(*s));
+	       s->name  = k;
+	       s->type  = SYM_VAR;
+	       s->e.var = v;
+	return s;
 }
 
 /*
@@ -100,11 +100,11 @@ Sym *symbol(const char *k, Variable *v)
  */
 Sym *psymbol(const char *k, PathEntry *p)
 {
-    Sym   *s = malloc(sizeof(*s));
-           s->name   = k;
-           s->type   = SYM_PATH;
-           s->e.path = p;
-    return s;
+	Sym   *s = malloc(sizeof(*s));
+	       s->name   = k;
+	       s->type   = SYM_PATH;
+	       s->e.path = p;
+	return s;
 }
 
 /*
@@ -112,11 +112,11 @@ Sym *psymbol(const char *k, PathEntry *p)
  */
 Sym *tvsymbol(const char *k, struct tvalue *t)
 {
-    Sym   *s = malloc(sizeof(*s));
-           s->name   = k;
-           s->type   = SYM_TVAL;
-           s->e.tval = t;
-    return s;
+	Sym   *s = malloc(sizeof(*s));
+	       s->name   = k;
+	       s->type   = SYM_TVAL;
+	       s->e.tval = t;
+	return s;
 }
 
 
@@ -125,10 +125,10 @@ Sym *tvsymbol(const char *k, struct tvalue *t)
  */
 SymList *symlist(Sym *head)
 {
-    SymList *list = malloc(sizeof(*list));
-    list->head = head;
-    list->tail = NULL;
-    return list;
+	SymList *list = malloc(sizeof(*list));
+	list->head = head;
+	list->tail = NULL;
+	return list;
 }
 
 /*
@@ -136,14 +136,14 @@ SymList *symlist(Sym *head)
  */
 void sym_prepend(SymList *list, Sym *s)
 {
-    SymList *head;
+	SymList *head;
 
-    if (list->head) {
-        head = symlist(s);
-        head->tail = list;
-    } else { /* empty */
-        list->head = s;
-    }
+	if (list->head) {
+		head = symlist(s);
+		head->tail = list;
+	} else { /* empty */
+		list->head = s;
+	}
 }
 
 /*
@@ -151,40 +151,40 @@ void sym_prepend(SymList *list, Sym *s)
  */
 void symtab_pp(SymTable *t)
 {
-    Sym     *s;
-    SymList *ss;
+	Sym     *s;
+	SymList *ss;
 
-    Variable *var;
+	Variable *var;
 
-    ttyprint(COLOR_BOLD, "symbols:\n");
+	ttyprint(COLOR_BOLD, "symbols:\n");
 
-    for (int i = 0; i < t->size; i++) {
-        if (t->data[i]) {
-            ss = t->data[i];
-            while (ss) {
-                s = ss->head;
-                putchar('\t');
-                ttyprint(COLOR_BOLD, s->name);
-                putchar(':');
+	for (int i = 0; i < t->size; i++) {
+		if (t->data[i]) {
+			ss = t->data[i];
+			while (ss) {
+				s = ss->head;
+				putchar('\t');
+				ttyprint(COLOR_BOLD, s->name);
+				putchar(':');
 
-                if (s->type == SYM_VAR) {
-                    var = s->e.var;
-                    putchar(' ');
-                    if (var->type) {
-                        if (var->type->name) {
-                            puts(var->type->name);
-                        } else {
-                            pp_node(var->type->node);
-                        }
-                    } else {
-                        printf(" -");
-                    }
-                } else {
-                    printf("...");
-                }
-                putchar('\n');
-                ss = ss->tail;
-            }
-        }
-    }
+				if (s->type == SYM_VAR) {
+					var = s->e.var;
+					putchar(' ');
+					if (var->type) {
+						if (var->type->name) {
+							puts(var->type->name);
+						} else {
+							pp_node(var->type->node);
+						}
+					} else {
+						printf(" -");
+					}
+				} else {
+					printf("...");
+				}
+				putchar('\n');
+				ss = ss->tail;
+			}
+		}
+	}
 }

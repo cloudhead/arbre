@@ -20,12 +20,12 @@
 
 int main(int argv, char *argc[])
 {
-    int code;
+	int code;
 
-    Command *c = command(argv, argc);
+	Command *c = command(argv, argc);
 
-    code = command_exec(c);
-           command_free(c);
+	code = command_exec(c);
+	       command_free(c);
 
-    return code;
+	return code;
 }

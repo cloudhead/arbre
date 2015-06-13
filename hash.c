@@ -9,11 +9,11 @@
 
 unsigned long hash(const char *input, unsigned long len)
 {
-    unsigned long hash = FNV_BASIS;
+	unsigned long hash = FNV_BASIS;
 
-    for (int i = 0; i < len; i ++) {
-        hash  ^=  input[i];
-        hash  *=  FNV_PRIME;
-    }
-    return hash;
+	for (int i = 0; i < len; i ++) {
+		hash  ^=  input[i];
+		hash  *=  FNV_PRIME;
+	}
+	return hash;
 }

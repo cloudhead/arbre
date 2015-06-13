@@ -9,37 +9,37 @@
  *
  */
 union SymEntry {
-    struct Variable  *var;
-    struct Type      *type;
-    struct PathEntry *path;
-    struct tvalue    *tval;
+	struct Variable  *var;
+	struct Type      *type;
+	struct PathEntry *path;
+	struct tvalue    *tval;
 };
 
 enum SymType {
-    SYM_VAR,
-    SYM_TYPE,
-    SYM_PATH,
-    SYM_TVAL
+	SYM_VAR,
+	SYM_TYPE,
+	SYM_PATH,
+	SYM_TVAL
 };
 
 struct Sym {
-    const char       *name;
-    enum  SymType     type;
-    union SymEntry    e;
+	const char       *name;
+	enum  SymType     type;
+	union SymEntry    e;
 };
 
 struct SymList {
-    struct Sym      *head;
-    struct SymList  *tail;
+	struct Sym      *head;
+	struct SymList  *tail;
 };
 
 typedef  struct Sym      Sym;
 typedef  struct SymList  SymList;
 
 struct SymTable {
-    size_t           size;
-    struct SymTable *parent;
-    struct SymList  *data[];
+	size_t           size;
+	struct SymTable *parent;
+	struct SymList  *data[];
 };
 typedef  struct SymTable  SymTable;
 

@@ -9,10 +9,10 @@
  *
  */
 typedef struct {
-    TOKEN          tok;      /* Token type (see tokens.h for list of tokens types) */
-    struct source *source;   /* struct source file the token belongs to */
-    size_t         pos;      /* Position of the token in the source file */
-    char          *src;      /* Scanned string literal for this token */
+	TOKEN          tok;      /* Token type (see tokens.h for list of tokens types) */
+	struct source *source;   /* struct source file the token belongs to */
+	size_t         pos;      /* Position of the token in the source file */
+	char          *src;      /* Scanned string literal for this token */
 } Token;
 
 char   *tokentos(Token *t, char *str, bool);

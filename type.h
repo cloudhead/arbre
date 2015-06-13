@@ -9,9 +9,9 @@
  *
  */
 struct Type {
-    char         *name;
-    struct node  *node;
-    unsigned int  id;
+	char         *name;
+	struct node  *node;
+	unsigned int  id;
 };
 
 typedef  struct Type  Type;

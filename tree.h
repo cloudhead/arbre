@@ -8,10 +8,10 @@
  */
 
 struct Tree {
-    struct node  *root;
-    SymTable     *symbols;
-    SymTable     *tsymbols;
-    SymTable     *psymbols;
+	struct node  *root;
+	SymTable     *symbols;
+	SymTable     *tsymbols;
+	SymTable     *psymbols;
 };
 
 typedef     struct Tree      Tree;
@@ -27,43 +27,43 @@ void        exitscope(Tree *t);
 void        pp_tree(Tree *);
 
 struct ClauseEntry {
-    struct node    *node;
+	struct node    *node;
 
-    /* Constants */
-    SymTable       *ktable;
-    struct tvalue **kheader;
-    unsigned        kindex;
+	/* Constants */
+	SymTable       *ktable;
+	struct tvalue **kheader;
+	unsigned        kindex;
 
-    /* Locals */
-    int            nlocals;
-    uint8_t        nreg;
+	/* Locals */
+	int            nlocals;
+	uint8_t        nreg;
 
-    /* Code */
-    uint32_t       *code;
-    unsigned long   codesize;
-    unsigned long   pc;
+	/* Code */
+	uint32_t       *code;
+	unsigned long   codesize;
+	unsigned long   pc;
 };
 
 typedef struct ClauseEntry ClauseEntry;
 
 struct PathEntry {
-    char          *name;
-    struct node   *node;
-    uint8_t        index;
+	char          *name;
+	struct node   *node;
+	uint8_t        index;
 
-    /* Clauses */
-    int            nclauses;
-    ClauseEntry    *clause;
-    ClauseEntry   **clauses;
+	/* Clauses */
+	int            nclauses;
+	ClauseEntry    *clause;
+	ClauseEntry   **clauses;
 };
 
 typedef unsigned Register;
 
 struct Variable {
-    char          *name;
-    struct node   *def;
-    struct Type   *type;
-    Register       reg : 8;
+	char          *name;
+	struct node   *def;
+	struct Type   *type;
+	Register       reg : 8;
 };
 
 typedef struct Variable Variable;

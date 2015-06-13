@@ -7,18 +7,18 @@
  *
  */
 typedef struct {
-    unsigned long       pc;
-    struct clause      *clause;
-    Process           **procs;
-    Process            *proc;
-    unsigned           nprocs;
-    struct modulelist  *modules[];
+	unsigned long       pc;
+	struct clause      *clause;
+	Process           **procs;
+	Process            *proc;
+	unsigned           nprocs;
+	struct modulelist  *modules[];
 } VM;
 
 struct version {
-    uint8_t major;
-    uint8_t minor;
-    uint8_t patch;
+	uint8_t major;
+	uint8_t minor;
+	uint8_t patch;
 };
 
 VM            *vm       (void);

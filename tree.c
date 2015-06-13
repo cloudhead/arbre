@@ -22,17 +22,17 @@
  */
 Tree *tree(void)
 {
-    Tree *t = malloc(sizeof(*t));
-    struct node *b = calloc(1, sizeof(*b));
+		Tree *t = malloc(sizeof(*t));
+		struct node *b = calloc(1, sizeof(*b));
 
-    b->o.block.body  = nodelist(NULL);
+		b->o.block.body  = nodelist(NULL);
 
-    t->root      = b;
-    t->symbols   = symtab(1024);
-    t->psymbols  = symtab(512);
-    t->tsymbols  = symtab(512);
+		t->root      = b;
+		t->symbols   = symtab(1024);
+		t->psymbols  = symtab(512);
+		t->tsymbols  = symtab(512);
 
-    return t;
+		return t;
 }
 
 /*
@@ -40,17 +40,17 @@ Tree *tree(void)
  */
 void tree_free(Tree *t)
 {
-    node_free(t->root);
-    symtab_free(t->symbols);
-    symtab_free(t->tsymbols);
-    symtab_free(t->psymbols);
-    free(t);
+		node_free(t->root);
+		symtab_free(t->symbols);
+		symtab_free(t->tsymbols);
+		symtab_free(t->psymbols);
+		free(t);
 }
 
 
 Sym *tree_lookup(Tree *t, char *k)
 {
-    return symtab_lookup(t->symbols, k);
+		return symtab_lookup(t->symbols, k);
 }
 
 /*
@@ -58,10 +58,10 @@ Sym *tree_lookup(Tree *t, char *k)
  */
 void enterscope(Tree *t)
 {
-    SymTable *tab  = symtab(1024);
+		SymTable *tab  = symtab(1024);
 
-    tab->parent  = t->symbols;
-    t->symbols   = tab;
+		tab->parent  = t->symbols;
+		t->symbols   = tab;
 }
 
 /*
@@ -69,8 +69,8 @@ void enterscope(Tree *t)
  */
 void exitscope(Tree *t)
 {
-    t->symbols  = t->symbols->parent;
-    /* TODO: free tables */
+		t->symbols  = t->symbols->parent;
+		/* TODO: free tables */
 }
 
 /*
@@ -78,22 +78,22 @@ void exitscope(Tree *t)
  */
 void pp_tree(Tree *t)
 {
-    pp_node(t->root);
+		pp_node(t->root);
 }
 
 ClauseEntry *clauseentry(struct node *n, uint8_t index)
 {
-    ClauseEntry  *c = malloc(sizeof(*c));
-                  c->node      = n;
-                  c->kheader   = calloc(128,  sizeof(struct tvalue*));
-                  c->ktable    = symtab(128);
-                  c->kindex    = 0;
-                  c->nreg      = 0;
-                  c->nlocals   = 0;
-                  c->pc        = 0;
-                  c->code      = calloc(4096, sizeof(uint32_t));
-                  c->codesize  = 4096;
-    return        c;
+		ClauseEntry  *c = malloc(sizeof(*c));
+		              c->node      = n;
+		              c->kheader   = calloc(128,  sizeof(struct tvalue*));
+		              c->ktable    = symtab(128);
+		              c->kindex    = 0;
+		              c->nreg      = 0;
+		              c->nlocals   = 0;
+		              c->pc        = 0;
+		              c->code      = calloc(4096, sizeof(uint32_t));
+		              c->codesize  = 4096;
+		return        c;
 }
 
 /*
@@ -101,13 +101,13 @@ ClauseEntry *clauseentry(struct node *n, uint8_t index)
  */
 PathEntry *pathentry(char *name, struct node *n, uint8_t index)
 {
-    PathEntry  *p = malloc(sizeof(*p));
-                p->name      = name;
-                p->node      = n;
-                p->index     = index;
-                p->clause    = NULL;
-                p->nclauses  = 0;
-                p->clauses   = calloc(255, sizeof(ClauseEntry *));
-    return      p;
+		PathEntry  *p = malloc(sizeof(*p));
+		            p->name      = name;
+		            p->node      = n;
+		            p->index     = index;
+		            p->clause    = NULL;
+		            p->nclauses  = 0;
+		            p->clauses   = calloc(255, sizeof(ClauseEntry *));
+		return      p;
 }
 

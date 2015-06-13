@@ -41,28 +41,28 @@ static int  poplvl(struct scanner *);
  */
 struct scanner *scanner(struct source *source)
 {
-    struct scanner *s = malloc(sizeof(*s));
+	struct scanner *s = malloc(sizeof(*s));
 
-    s->src    = source->data;
-    s->source = source;
-    s->len    = source->size;
-    s->pos    = s->rpos = -1;
-    s->ch     = T_ILLEGAL;
-    s->lvl    = 0;
-    s->dedent = 0;
-    s->lf     = 0;
-    s->line   = 0;
-    s->linepos= 0;
+	s->src    = source->data;
+	s->source = source;
+	s->len    = source->size;
+	s->pos    = s->rpos = -1;
+	s->ch     = T_ILLEGAL;
+	s->lvl    = 0;
+	s->dedent = 0;
+	s->lf     = 0;
+	s->line   = 0;
+	s->linepos= 0;
 
-    s->lvls.size  = 0;
-    s->lvls.stack = NULL;
-    s->lvls.sp    = NULL;
+	s->lvls.size  = 0;
+	s->lvls.stack = NULL;
+	s->lvls.sp    = NULL;
 
-    source_addline(s->source, 0);
-    pushlvl(s, 0);
-    next(s);
+	source_addline(s->source, 0);
+	pushlvl(s, 0);
+	next(s);
 
-    return s;
+	return s;
 }
 
 /*
@@ -70,8 +70,8 @@ struct scanner *scanner(struct source *source)
  */
 void scanner_free(struct scanner *s)
 {
-    free(s->lvls.stack);
-    free(s);
+	free(s->lvls.stack);
+	free(s);
 }
 
 /*
@@ -80,20 +80,20 @@ void scanner_free(struct scanner *s)
  */
 static void next(struct scanner *s)
 {
-    s->rpos ++;
+	s->rpos ++;
 
-    if (s->rpos <= s->len) {
-        char c = s->src[s->rpos];
+	if (s->rpos <= s->len) {
+		char c = s->src[s->rpos];
 
-        if (c == '\0') {
-            /* TODO: Handle error */
-            /* TODO: Handle unicode */
-        } else {
-            s->ch = c;
-        }
-    } else {
-        s->ch = -1; /* EOF */
-    }
+		if (c == '\0') {
+			/* TODO: Handle error */
+			/* TODO: Handle unicode */
+		} else {
+			s->ch = c;
+		}
+	} else {
+		s->ch = -1; /* EOF */
+	}
 }
 
 /*
@@ -102,9 +102,9 @@ static void next(struct scanner *s)
  */
 static void whitespace(struct scanner *s)
 {
-    while (s->ch != '\n' && isspace(s->ch)) {
-        next(s);
-    }
+	while (s->ch != '\n' && isspace(s->ch)) {
+		next(s);
+	}
 }
 
 /*
@@ -112,12 +112,12 @@ static void whitespace(struct scanner *s)
  */
 static void scan_ident(struct scanner *s)
 {
-    if (isalnum(s->ch) || s->ch == '_')
-        next(s);
+	if (isalnum(s->ch) || s->ch == '_')
+		next(s);
 
-    while (isalnum(s->ch) || s->ch == '_' || s->ch == '\'') {
-        next(s);
-    }
+	while (isalnum(s->ch) || s->ch == '_' || s->ch == '\'') {
+		next(s);
+	}
 }
 
 /*
@@ -125,14 +125,14 @@ static void scan_ident(struct scanner *s)
  */
 static void scan_atom(struct scanner *s)
 {
-    if (s->ch != '\'')
-        return;
+	if (s->ch != '\'')
+		return;
 
-    next(s);
+	next(s);
 
-    while (isalnum(s->ch) || s->ch == '_' || s->ch == '.') {
-        next(s);
-    }
+	while (isalnum(s->ch) || s->ch == '_' || s->ch == '.') {
+		next(s);
+	}
 }
 
 /*
@@ -140,9 +140,9 @@ static void scan_atom(struct scanner *s)
  */
 static void scan_number(struct scanner *s)
 {
-    while (isdigit(s->ch)) {
-        next(s);
-    }
+	while (isdigit(s->ch)) {
+		next(s);
+	}
 }
 
 /*
@@ -150,13 +150,13 @@ static void scan_number(struct scanner *s)
  */
 static void scan_string(struct scanner *s)
 {
-    while (s->ch != '"') {
-        if (s->ch == '\n' || s->ch < 0) {
-            /* TODO: Handle error */
-        }
-        next(s);
-    }
-    next(s); /* Consume closing '"' */
+	while (s->ch != '"') {
+		if (s->ch == '\n' || s->ch < 0) {
+			/* TODO: Handle error */
+		}
+		next(s);
+	}
+	next(s); /* Consume closing '"' */
 }
 
 /*
@@ -164,9 +164,9 @@ static void scan_string(struct scanner *s)
  */
 static void scan_comment(struct scanner *s)
 {
-    while (s->ch != '\n') {
-        next(s);
-    }
+	while (s->ch != '\n') {
+		next(s);
+	}
 }
 
 /*
@@ -174,18 +174,18 @@ static void scan_comment(struct scanner *s)
  */
 static void scan_char(struct scanner *s)
 {
-    if (s->ch == '`') {
-        next(s);
-    } else if (isascii(s->ch)) {
-        next(s);
-        if (s->ch == '`') {
-            next(s);
-        } else {
-            /* TODO: Handle error */
-        }
-    } else {
-        /* TODO: Handle error */
-    }
+	if (s->ch == '`') {
+		next(s);
+	} else if (isascii(s->ch)) {
+		next(s);
+		if (s->ch == '`') {
+			next(s);
+		} else {
+			/* TODO: Handle error */
+		}
+	} else {
+		/* TODO: Handle error */
+	}
 }
 
 /*
@@ -193,25 +193,25 @@ static void scan_char(struct scanner *s)
  */
 static int scan_indent(struct scanner *s)
 {
-    size_t pos, indent;
+	size_t pos, indent;
 
-    /* calculate current indentation */
-    pos = s->rpos, whitespace(s), indent = s->rpos - pos;
+	/* calculate current indentation */
+	pos = s->rpos, whitespace(s), indent = s->rpos - pos;
 
-    /* indent, dedent or don't change indentation */
-    if (indent > s->lvl && s->ch != '\n') {
-        pushlvl(s, (s->lvl = indent));
-        return true;
-    } else {
-        /* Only dedent if the current indentation
-         * is smaller than the previous indentation. */
-        while ((s->lvl > 0) && (indent <= *(s->lvls.sp - 1))) {
-            poplvl(s);
-            s->lvl = *(s->lvls.sp);
-            s->dedent ++;
-        }
-    }
-    return false;
+	/* indent, dedent or don't change indentation */
+	if (indent > s->lvl && s->ch != '\n') {
+		pushlvl(s, (s->lvl = indent));
+		return true;
+	} else {
+		/* Only dedent if the current indentation
+		 * is smaller than the previous indentation. */
+		while ((s->lvl > 0) && (indent <= *(s->lvls.sp - 1))) {
+			poplvl(s);
+			s->lvl = *(s->lvls.sp);
+			s->dedent ++;
+		}
+	}
+	return false;
 }
 
 
@@ -220,10 +220,10 @@ static int scan_indent(struct scanner *s)
  */
 static void pushlvl(struct scanner *s, int lvl)
 {
-    s->lvls.size ++;
-    s->lvls.stack = realloc(s->lvls.stack, s->lvls.size * sizeof(lvl));
-    s->lvls.sp    = s->lvls.stack + s->lvls.size - 1;
-  *(s->lvls.sp)   = lvl;
+	  s->lvls.size ++;
+	  s->lvls.stack = realloc(s->lvls.stack, s->lvls.size * sizeof(lvl));
+	  s->lvls.sp    = s->lvls.stack + s->lvls.size - 1;
+	*(s->lvls.sp)   = lvl;
 }
 
 /*
@@ -231,25 +231,25 @@ static void pushlvl(struct scanner *s, int lvl)
  */
 static int poplvl(struct scanner *s)
 {
-    int lvl = *(s->lvls.sp);
+	int lvl = *(s->lvls.sp);
 
-    s->lvls.size --;
-    s->lvls.stack = realloc(s->lvls.stack, s->lvls.size * sizeof(lvl));
-    s->lvls.sp    = s->lvls.stack + s->lvls.size - 1;
+	s->lvls.size --;
+	s->lvls.stack = realloc(s->lvls.stack, s->lvls.size * sizeof(lvl));
+	s->lvls.sp    = s->lvls.stack + s->lvls.size - 1;
 
-    return lvl;
+	return lvl;
 }
 
 static void newline(struct scanner *s)
 {
-    s->lf      = false;
-    s->line    ++;
-    s->linepos = s->rpos;
+	s->lf      = false;
+	s->line    ++;
+	s->linepos = s->rpos;
 
-    source_addline(s->source, s->linepos);
+	source_addline(s->source, s->linepos);
 
-    s->source->col = 0;
-    s->source->line ++;
+	s->source->col = 0;
+	s->source->line ++;
 }
 
 /*
@@ -265,117 +265,117 @@ static void newline(struct scanner *s)
  */
 Token *scan(struct scanner *s)
 {
-    TOKEN   tok = T_ILLEGAL;
-    size_t  pos = s->pos = s->rpos;
-    char    c;
+	TOKEN   tok = T_ILLEGAL;
+	size_t  pos = s->pos = s->rpos;
+	char    c;
 
-    /* if the last token a T_LF, scan for indentation changes */
-    if (s->lf) {
-        newline(s);
-        if (scan_indent(s)) {
-            return token(T_INDENT, s->source, pos, NULL);
-        }
-    }
+	/* if the last token a T_LF, scan for indentation changes */
+	if (s->lf) {
+		newline(s);
+		if (scan_indent(s)) {
+			return token(T_INDENT, s->source, pos, NULL);
+		}
+	}
 
-    /* 1. We have pending dedents, return a T_DEDENT, and decrement
-     *    the dedent counter. */
-    if (s->dedent) {
-        s->dedent --;
-        return token(T_DEDENT, s->source, pos, NULL);
-    }
-    whitespace(s);
+	/* 1. We have pending dedents, return a T_DEDENT, and decrement
+	 *    the dedent counter. */
+	if (s->dedent) {
+		s->dedent --;
+		return token(T_DEDENT, s->source, pos, NULL);
+	}
+	whitespace(s);
 
-    c   = s->ch;
-    pos = s->rpos;
+	c   = s->ch;
+	pos = s->rpos;
 
-    if (c == -1) {
-        tok = T_EOF;
-    } else if (islower(c)) {
-        scan_ident(s);
-        tok = T_IDENT;
-    } else if (c == '\'') {
-        scan_atom(s);
-        tok = T_ATOM;
-    } else if (isdigit(c)) {
-        scan_number(s);
-        tok = T_INT;
-    } else {
-        next(s); /* We advance here, but keep matching on `c` */
+	if (c == -1) {
+		tok = T_EOF;
+	} else if (islower(c)) {
+		scan_ident(s);
+		tok = T_IDENT;
+	} else if (c == '\'') {
+		scan_atom(s);
+		tok = T_ATOM;
+	} else if (isdigit(c)) {
+		scan_number(s);
+		tok = T_INT;
+	} else {
+		next(s); /* We advance here, but keep matching on `c` */
 
-        switch (c) {
-            case  '@' :  tok = T_AT;                        break;
-            case  '_' :  tok = T_UNDER;                     break;
-            case  '?' :  tok = T_QUESTION;                  break;
-            case  '&' :  tok = T_AND;                       break;
-            case  '|' :  tok = T_PIPE;                      break;
-            case  '(' :  tok = T_LPAREN;                    break;
-            case  ')' :  tok = T_RPAREN;                    break;
-            case  '[' :  tok = T_LBRACK;                    break;
-            case  ']' :  tok = T_RBRACK;                    break;
-            case  '{' :  tok = T_LBRACE;                    break;
-            case  '}' :  tok = T_RBRACE;                    break;
-            case  ';' :  tok = T_SEMICOLON;                 break;
-            case  ',' :  tok = T_COMMA;                     break;
-            case  '"' :  tok = T_STRING;   scan_string(s);  break;
-            case  '`' :  tok = T_CHAR;     scan_char(s);    break;
-            case '\n' :  tok = T_LF;       s->lf = true;    break;
-            case  ' ' :  tok = T_SPACE;                     break;
-            case  '+' :  tok = T_PLUS;                      break;
-            case  '/' :  tok = T_SLASH;                     break;
-            case '\\' :  tok = T_BSLASH;                    break;
-            case  '.' :
-                if (s->ch == '.') {
-                    tok = T_ELLIPSIS;
-                    next(s);
-                } else {
-                    tok = T_PERIOD;
-                }
-                break;
-            case  ':' :
-                switch (s->ch) {
-                    case '=':  tok = T_DEFINE;  next(s);  break;
-                    default :  tok = T_COLON;
-                }
-                break;
-            case '<':
-                switch (s->ch) {
-                    case  '-':  tok = T_LARROW;  next(s);  break;
-                    case  '=':  tok = T_LDARROW; next(s);  break;
-                    default  :  tok = T_LT;
-                }
-                break;
-            case '>':
-                if (s->ch == '>') {
-                    next(s);
-                    tok = T_RDARROW;
-                } else {
-                    tok = T_GT;
-                }
-                break;
-            case '-':
-                if (isdigit(s->ch)) {
-                    tok = T_INT;
-                    next(s);
-                    scan_number(s);
-                } else {
-                    switch (s->ch) {
-                        case  '>':  tok = T_RARROW;  next(s);         break;
-                        case  '-':  tok = T_COMMENT; scan_comment(s); break;
-                        default  :  tok = T_MINUS;
-                    }
-                }
-                break;
-            case '=':
-                switch (s->ch) {
-                    case  '>':  tok = T_REQARROW;  next(s);  break;
-                    default  :  tok = T_EQ;
-                }
-                break;
-        }
-    }
-    s->source->col = pos - s->linepos;
-    s->pos         = pos;
+		switch (c) {
+			case  '@' :  tok = T_AT;                        break;
+			case  '_' :  tok = T_UNDER;                     break;
+			case  '?' :  tok = T_QUESTION;                  break;
+			case  '&' :  tok = T_AND;                       break;
+			case  '|' :  tok = T_PIPE;                      break;
+			case  '(' :  tok = T_LPAREN;                    break;
+			case  ')' :  tok = T_RPAREN;                    break;
+			case  '[' :  tok = T_LBRACK;                    break;
+			case  ']' :  tok = T_RBRACK;                    break;
+			case  '{' :  tok = T_LBRACE;                    break;
+			case  '}' :  tok = T_RBRACE;                    break;
+			case  ';' :  tok = T_SEMICOLON;                 break;
+			case  ',' :  tok = T_COMMA;                     break;
+			case  '"' :  tok = T_STRING;   scan_string(s);  break;
+			case  '`' :  tok = T_CHAR;     scan_char(s);    break;
+			case '\n' :  tok = T_LF;       s->lf = true;    break;
+			case  ' ' :  tok = T_SPACE;                     break;
+			case  '+' :  tok = T_PLUS;                      break;
+			case  '/' :  tok = T_SLASH;                     break;
+			case '\\' :  tok = T_BSLASH;                    break;
+			case  '.' :
+				if (s->ch == '.') {
+					tok = T_ELLIPSIS;
+					next(s);
+				} else {
+					tok = T_PERIOD;
+				}
+				break;
+			case  ':' :
+				switch (s->ch) {
+					case '=':  tok = T_DEFINE;  next(s);  break;
+					default :  tok = T_COLON;
+				}
+				break;
+			case '<':
+				switch (s->ch) {
+					case  '-':  tok = T_LARROW;  next(s);  break;
+					case  '=':  tok = T_LDARROW; next(s);  break;
+					default  :  tok = T_LT;
+				}
+				break;
+			case '>':
+				if (s->ch == '>') {
+					next(s);
+					tok = T_RDARROW;
+				} else {
+					tok = T_GT;
+				}
+				break;
+			case '-':
+				if (isdigit(s->ch)) {
+					tok = T_INT;
+					next(s);
+					scan_number(s);
+				} else {
+					switch (s->ch) {
+						case  '>':  tok = T_RARROW;  next(s);         break;
+						case  '-':  tok = T_COMMENT; scan_comment(s); break;
+						default  :  tok = T_MINUS;
+					}
+				}
+				break;
+			case '=':
+				switch (s->ch) {
+					case  '>':  tok = T_REQARROW;  next(s);  break;
+					default  :  tok = T_EQ;
+				}
+				break;
+		}
+	}
+	s->source->col = pos - s->linepos;
+	s->pos         = pos;
 
-    return token(tok, s->source, pos, strndup(s->src + pos, s->rpos - pos));
+	return token(tok, s->source, pos, strndup(s->src + pos, s->rpos - pos));
 }
 

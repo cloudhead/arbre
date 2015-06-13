@@ -22,72 +22,72 @@ static char *readfile(const char *, size_t *);
 
 struct source *source(const char *path)
 {
-    struct source *src = malloc(sizeof(*src));
+	struct source *src = malloc(sizeof(*src));
 
-    src->path        = path;
-    src->data        = readfile(path, &src->size);
-    src->lines       = 0;
-    src->lineps      = malloc(1024 * sizeof(char *));
-    src->lineps_size = 1024;
+	src->path        = path;
+	src->data        = readfile(path, &src->size);
+	src->lines       = 0;
+	src->lineps      = malloc(1024 * sizeof(char *));
+	src->lineps_size = 1024;
 
-    source_rewind(src);
+	source_rewind(src);
 
-    return src;
+	return src;
 }
 
 void source_free(struct source *src)
 {
-    free(src->data);
-    free(src->lineps);
-    free(src);
+	free(src->data);
+	free(src->lineps);
+	free(src);
 }
 
 void source_seek(struct source *s, size_t pos)
 {
-    for (s->line = 0; s->line + 1 < s->lines; s->line++) {
-        if (s->lineps[s->line + 1] > s->data + pos) break;
-    }
-    for (s->col = 0; s->lineps[s->line][s->col] != '\n'; s->col++) {
-        if (s->lineps[s->line] + s->col == s->data + pos) break;
-    }
+	for (s->line = 0; s->line + 1 < s->lines; s->line++) {
+		if (s->lineps[s->line + 1] > s->data + pos) break;
+	}
+	for (s->col = 0; s->lineps[s->line][s->col] != '\n'; s->col++) {
+		if (s->lineps[s->line] + s->col == s->data + pos) break;
+	}
 }
 
 void source_rewind(struct source *s)
 {
-    s->line = 0;
-    s->col  = 0;
+	s->line = 0;
+	s->col  = 0;
 }
 
 void source_addline(struct source *s, size_t lpos)
 {
-    s->lineps[s->lines ++] = s->data + lpos;
+	s->lineps[s->lines ++] = s->data + lpos;
 
-    if (s->lines >= s->lineps_size) {
-        s->lineps = realloc(s->lineps, s->lineps_size * 2);
-    }
+	if (s->lines >= s->lineps_size) {
+		s->lineps = realloc(s->lineps, s->lineps_size * 2);
+	}
 }
 
 static char *readfile(const char *path, size_t *length)
 {
-    FILE   *fp;
-    char   *buffer;
-    size_t  size;
+	FILE   *fp;
+	char   *buffer;
+	size_t  size;
 
-    if (! (fp = fopen(path, "r")))
-        error(1, errno, "error reading %s\n", path);
+	if (! (fp = fopen(path, "r")))
+		error(1, errno, "error reading %s\n", path);
 
-    fseek(fp, 0L, SEEK_END);
-    size = ftell(fp);
-    rewind(fp);
+	fseek(fp, 0L, SEEK_END);
+	size = ftell(fp);
+	rewind(fp);
 
-    buffer = malloc(size + 1);
+	buffer = malloc(size + 1);
 
-    fread(buffer, size, 1, fp);
-    fclose(fp);
+	fread(buffer, size, 1, fp);
+	fclose(fp);
 
-    *length = size;
+	*length = size;
 
-    buffer[size] = '\0';
+	buffer[size] = '\0';
 
-    return buffer;
+	return buffer;
 }

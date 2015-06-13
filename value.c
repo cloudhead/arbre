@@ -16,135 +16,135 @@
 void tuple_pp (Value v);
 
 const char *TYPE_STRINGS[] = {
-    [TYPE_INVALID] = "INVALID",
-    [TYPE_NONE] = "_",
-    [TYPE_ANY] = "any",
-    [TYPE_VAR] = "var",
-    [TYPE_ATOM] = "atom",
-    [TYPE_BIN] = "bin",
-    [TYPE_TUPLE] = "tuple",
-    [TYPE_STRING] = "string",
-    [TYPE_NUMBER] = "number",
-    [TYPE_LIST] = "list",
-    [TYPE_PATH] = "path"
+	[TYPE_INVALID] = "INVALID",
+	[TYPE_NONE] = "_",
+	[TYPE_ANY] = "any",
+	[TYPE_VAR] = "var",
+	[TYPE_ATOM] = "atom",
+	[TYPE_BIN] = "bin",
+	[TYPE_TUPLE] = "tuple",
+	[TYPE_STRING] = "string",
+	[TYPE_NUMBER] = "number",
+	[TYPE_LIST] = "list",
+	[TYPE_PATH] = "path"
 };
 
 struct tvalue *tvalue(TYPE type, Value val)
 {
-    struct tvalue *tval = malloc(sizeof(*tval));
+	struct tvalue *tval = malloc(sizeof(*tval));
 
-    tval->v = val;
-    tval->t = type;
+	tval->v = val;
+	tval->t = type;
 
-    return tval;
+	return tval;
 }
 
 void tvalue_pp(struct tvalue *tval)
 {
-    if (tval == NULL) {
-        printf("()");
-        return;
-    }
+	if (tval == NULL) {
+		printf("()");
+		return;
+	}
 
-    TYPE t = tval->t;
-    Value v = tval->v;
+	TYPE t = tval->t;
+	Value v = tval->v;
 
-    switch (t & TYPE_MASK) {
-        case TYPE_TUPLE:
-            tuple_pp(v);
-            break;
-        case TYPE_BIN:
-            printf("<bin>");
-            break;
-        case TYPE_ATOM:
-            printf("%s", v.atom);
-            break;
-        case TYPE_STRING:
-            printf("<string>");
-            break;
-        case TYPE_NUMBER:
-            printf("%d", v.number);
-            break;
-        case TYPE_LIST: {
-            List *l = v.list;
-            printf("[");
-            while (l->head) {
-                tvalue_pp(l->head);
-                if ((l = l->tail)->head)
-                    printf(", ");
-            }
-            printf("]");
-            break;
-        }
-        default:
-            printf(t & Q_RANGE ? "<%s..>" : "<%s>", TYPE_STRINGS[t]);
-            break;
-    }
+	switch (t & TYPE_MASK) {
+		case TYPE_TUPLE:
+			tuple_pp(v);
+			break;
+		case TYPE_BIN:
+			printf("<bin>");
+			break;
+		case TYPE_ATOM:
+			printf("%s", v.atom);
+			break;
+		case TYPE_STRING:
+			printf("<string>");
+			break;
+		case TYPE_NUMBER:
+			printf("%d", v.number);
+			break;
+		case TYPE_LIST: {
+			List *l = v.list;
+			printf("[");
+			while (l->head) {
+				tvalue_pp(l->head);
+				if ((l = l->tail)->head)
+					printf(", ");
+			}
+			printf("]");
+			break;
+		}
+		default:
+			printf(t & Q_RANGE ? "<%s..>" : "<%s>", TYPE_STRINGS[t]);
+			break;
+	}
 }
 
 void tuple_pp(Value v)
 {
-    putchar('(');
-    for (int i = 0; i < v.tuple->arity; i++) {
-        tvalue_pp(&v.tuple->members[i]);
+	putchar('(');
+	for (int i = 0; i < v.tuple->arity; i++) {
+		tvalue_pp(&v.tuple->members[i]);
 
-        if (i < v.tuple->arity - 1)
-            printf(", ");
-    }
-    putchar(')');
+		if (i < v.tuple->arity - 1)
+			printf(", ");
+	}
+	putchar(')');
 }
 
 void tvalues_pp(struct tvalue *tval, int size)
 {
-    putchar('[');
-    for (int i = 0; i < size; i++) {
-        tvalue_pp(tval + i);
-        if (i < size - 1)
-            putchar(',');
-    }
-    putchar(']');
+	putchar('[');
+	for (int i = 0; i < size; i++) {
+		tvalue_pp(tval + i);
+		if (i < size - 1)
+			putchar(',');
+	}
+	putchar(']');
 }
 
 struct tvalue *tuple(int arity)
 {
-    assert(arity <= 255);
+	assert(arity <= 255);
 
-    Tuple *t = malloc(sizeof(*t) + sizeof(struct tvalue) * arity);
-           t->arity = arity;
+	Tuple *t = malloc(sizeof(*t) + sizeof(struct tvalue) * arity);
+	       t->arity = arity;
 
-    return tvalue(TYPE_TUPLE, (Value){ .tuple = t });
+	return tvalue(TYPE_TUPLE, (Value){ .tuple = t });
 }
 
 struct tvalue *list(struct tvalue *head)
 {
-    List *l = malloc(sizeof(*l));
-          l->head = head;
-          l->tail = NULL;
+	List *l = malloc(sizeof(*l));
+	      l->head = head;
+	      l->tail = NULL;
 
-    return tvalue(TYPE_LIST, (Value){ .list = l });
+	return tvalue(TYPE_LIST, (Value){ .list = l });
 }
 
 List *list_cons(List *list, struct tvalue *head)
 {
-    List *l = malloc(sizeof(*l));
-          l->head = head;
-          l->tail = list;
+	List *l = malloc(sizeof(*l));
+	      l->head = head;
+	      l->tail = list;
 
-    return l;
+	return l;
 }
 
 struct tvalue *atom(const char *name)
 {
-    assert(name);
+	assert(name);
 
-    return tvalue(TYPE_ATOM, (Value){ .atom = name });
+	return tvalue(TYPE_ATOM, (Value){ .atom = name });
 }
 
 struct tvalue *number(const char *src)
 {
-    int number = atoi(src);
+	int number = atoi(src);
 
-    Value v = (Value){ .number = number };
+	Value v = (Value){ .number = number };
 
-    return tvalue(TYPE_NUMBER, v);
+	return tvalue(TYPE_NUMBER, v);
 }

@@ -57,18 +57,18 @@ static  struct node  *parse_select(Parser *p, struct node *arg);
  */
 Parser *parser(struct source *src)
 {
-    Parser  *p = malloc(sizeof(*p));
-    p->scanner = scanner(src);
-    p->tree    = tree();
-    p->root    = p->tree->root;
-    p->token   = token(T_ILLEGAL, NULL, -1, NULL);
-    p->ontoken = NULL;
-    p->src     = NULL;
-    p->tok     = p->token->tok;
-    p->errors  = 0;
-    p->block   = NULL;
+	Parser  *p = malloc(sizeof(*p));
+	p->scanner = scanner(src);
+	p->tree    = tree();
+	p->root    = p->tree->root;
+	p->token   = token(T_ILLEGAL, NULL, -1, NULL);
+	p->ontoken = NULL;
+	p->src     = NULL;
+	p->tok     = p->token->tok;
+	p->errors  = 0;
+	p->block   = NULL;
 
-    return p;
+	return p;
 }
 
 /*
@@ -76,9 +76,9 @@ Parser *parser(struct source *src)
  */
 void parser_free(Parser *p)
 {
-    scanner_free(p->scanner);
-    tree_free(p->tree);
-    free(p);
+	scanner_free(p->scanner);
+	tree_free(p->tree);
+	free(p);
 }
 
 /*
@@ -86,10 +86,10 @@ void parser_free(Parser *p)
  */
 void pparser(Parser *p)
 {
-    printf("Parser{tok=%s", TOKEN_STRINGS[p->tok]);
-    p->src && printf("  src=`%s`", escape(p->src));
-    printf("  line=%lu", p->scanner->line + 1);
-    printf("  pos=%lu}\n", p->pos);
+	printf("Parser{tok=%s", TOKEN_STRINGS[p->tok]);
+	p->src && printf("  src=`%s`", escape(p->src));
+	printf("  line=%lu", p->scanner->line + 1);
+	printf("  pos=%lu}\n", p->pos);
 }
 
 /*
@@ -97,7 +97,7 @@ void pparser(Parser *p)
  */
 static void setsrc(Parser *p, struct node *n)
 {
-    n->src = strndup(p->scanner->src + n->pos, p->pos - n->pos);
+	n->src = strndup(p->scanner->src + n->pos, p->pos - n->pos);
 }
 
 /*
@@ -105,14 +105,14 @@ static void setsrc(Parser *p, struct node *n)
  */
 static TOKEN next(Parser *p)
 {
-    p->token = scan(p->scanner);
-    p->tok   = p->token->tok;
-    p->src   = p->token->src;
-    p->pos   = p->token->pos;
+	p->token = scan(p->scanner);
+	p->tok   = p->token->tok;
+	p->src   = p->token->src;
+	p->pos   = p->token->pos;
 
-    if (p->ontoken) p->ontoken(p->token);
+	if (p->ontoken) p->ontoken(p->token);
 
-    return p->tok;
+	return p->tok;
 }
 
 /*
@@ -121,14 +121,14 @@ static TOKEN next(Parser *p)
  */
 static void nextline(Parser *p)
 {
-    while (p->tok != T_LF && p->tok != T_EOF)
-        next(p);
-    if (p->tok == T_LF)
-        next(p);
+	while (p->tok != T_LF && p->tok != T_EOF)
+		next(p);
+	if (p->tok == T_LF)
+		next(p);
 
-    /* TODO: Handle this elsewhere */
-    if (p->tok == T_EOF)
-        exit(1);
+	/* TODO: Handle this elsewhere */
+	if (p->tok == T_EOF)
+		exit(1);
 }
 
 /*
@@ -136,14 +136,14 @@ static void nextline(Parser *p)
  */
 static void error(Parser *p, const char *fmt, ...)
 {
-    va_list ap;
-    va_start(ap, fmt);
-    vpreportf(REPORT_ERROR, p, fmt, ap);
-    va_end(ap);
+	va_list ap;
+	va_start(ap, fmt);
+	vpreportf(REPORT_ERROR, p, fmt, ap);
+	va_end(ap);
 
-    p->errors ++;
+	p->errors ++;
 
-    nextline(p);
+	nextline(p);
 }
 
 /*
@@ -152,12 +152,12 @@ static void error(Parser *p, const char *fmt, ...)
  */
 static bool expect(Parser *p, TOKEN t)
 {
-    if (p->tok != t) {
-        error(p, "expected %s got `%s`", TOKEN_STRINGS[t], escape(p->src));
-        return false;
-    }
-    next(p);
-    return true;
+	if (p->tok != t) {
+		error(p, "expected %s got `%s`", TOKEN_STRINGS[t], escape(p->src));
+		return false;
+	}
+	next(p);
+	return true;
 }
 
 /*
@@ -166,11 +166,11 @@ static bool expect(Parser *p, TOKEN t)
  */
 static bool isnext(Parser *p, TOKEN t)
 {
-    if (p->tok != t) {
-        return false;
-    }
-    next(p);
-    return true;
+	if (p->tok != t) {
+		return false;
+	}
+	next(p);
+	return true;
 }
 
 /*
@@ -178,10 +178,10 @@ static bool isnext(Parser *p, TOKEN t)
  */
 static void end(Parser *p)
 {
-    if (p->tok == T_SEMICOLON)
-        next(p);
-    if (p->tok == T_COMMENT)
-        next(p);
+	if (p->tok == T_SEMICOLON)
+		next(p);
+	if (p->tok == T_COMMENT)
+		next(p);
 }
 
 /*
@@ -189,10 +189,10 @@ static void end(Parser *p)
  */
 static struct node *block(Parser *p)
 {
-    struct node  *b = node(p->token, OBLOCK);
-           b->o.block.parent = p->block;
-           b->o.block.body   = nodelist(NULL);
-    return b;
+	struct node  *b = node(p->token, OBLOCK);
+	b->o.block.parent = p->block;
+	b->o.block.body   = nodelist(NULL);
+	return b;
 }
 
 /*
@@ -200,10 +200,10 @@ static struct node *block(Parser *p)
  */
 static struct node *access(Parser *p, struct node *base, struct node *attr)
 {
-    struct node *n = node(p->token, OACCESS);
-    n->o.access.lval = base;
-    n->o.access.rval = attr;
-    return n;
+	struct node *n = node(p->token, OACCESS);
+	n->o.access.lval = base;
+	n->o.access.rval = attr;
+	return n;
 }
 
 /*
@@ -211,10 +211,10 @@ static struct node *access(Parser *p, struct node *base, struct node *attr)
  */
 static struct node *range(Parser *p, struct node *from, struct node *to)
 {
-    struct node *n = node(p->token, ORANGE);
-    n->o.range.lval = from;
-    n->o.range.rval = to;
-    return n;
+	struct node *n = node(p->token, ORANGE);
+	n->o.range.lval = from;
+	n->o.range.rval = to;
+	return n;
 }
 
 /*
@@ -227,36 +227,36 @@ static struct node *range(Parser *p, struct node *from, struct node *to)
  *     items ::= (exp ',' items) | exp
  */
 static struct nodelist *parse_seq(Parser *p,
-                                  TOKEN open,
-                                  TOKEN close,
-                                  struct node *(parse)(Parser *),
-                                  unsigned *size)
+	                              TOKEN open,
+	                              TOKEN close,
+	                              struct node *(parse)(Parser *),
+	                              unsigned *size)
 {
-    struct nodelist *ns = nodelist(NULL);
-    struct node     *n  = NULL;
+	struct nodelist *ns = nodelist(NULL);
+	struct node     *n  = NULL;
 
-    expect(p, open); /* Eat opening delimiter */
+	expect(p, open); /* Eat opening delimiter */
 
-    int len = 0;
+	int len = 0;
 
-    if (p->tok == close) {
-        next(p);
-    } else {
-        while ((n = parse(p))) {
-            append(ns, n);
-            len ++;
+	if (p->tok == close) {
+		next(p);
+	} else {
+		while ((n = parse(p))) {
+			append(ns, n);
+			len ++;
 
-            if (p->tok == T_COMMA) {
-                next(p);
-            } else {
-                expect(p, close); /* Eat closing delimiter */
-                break;
-            }
-        }
-    }
-    size && (*size = len);
+			if (p->tok == T_COMMA) {
+				next(p);
+			} else {
+				expect(p, close); /* Eat closing delimiter */
+				break;
+			}
+		}
+	}
+	size && (*size = len);
 
-    return n ? ns : NULL;
+	return n ? ns : NULL;
 }
 
 /*
@@ -268,24 +268,24 @@ static struct nodelist *parse_seq(Parser *p,
  */
 static struct node *parse_tuple(Parser *p)
 {
-    unsigned len;
-    struct node *n;
-    struct nodelist *members = parse_seq(p, T_LPAREN,
-                                         T_RPAREN,
-                                         &parse_expression,
-                                         &len);
-    if (len == 1) {
-        n = members->head;
-    } else {
-        n = node(p->token, OTUPLE);
-        setsrc(p, n);
+	unsigned len;
+	struct node *n;
+	struct nodelist *members = parse_seq(p, T_LPAREN,
+	                                     T_RPAREN,
+	                                     &parse_expression,
+	                                     &len);
+	if (len == 1) {
+		n = members->head;
+	} else {
+		n = node(p->token, OTUPLE);
+		setsrc(p, n);
 
-        if (len > 1) {
-            n->o.tuple.arity   = len;
-            n->o.tuple.members = members;
-        }
-    }
-    return n;
+		if (len > 1) {
+			n->o.tuple.arity   = len;
+			n->o.tuple.members = members;
+		}
+	}
+	return n;
 }
 
 /*
@@ -299,18 +299,18 @@ static struct node *parse_tuple(Parser *p)
  */
 static struct node *parse_list_exp(Parser *p)
 {
-    struct node *n = NULL, *to = NULL;
+	struct node *n = NULL, *to = NULL;
 
-    if ((n = parse_expression(p))) {
-        if (p->tok == T_ELLIPSIS) {
-            next(p);
-            if (p->tok != T_RBRACK && p->tok != T_COMMA) {
-                to = parse_expression(p);
-            }
-            n = range(p, n, to);
-        }
-    }
-    return n;
+	if ((n = parse_expression(p))) {
+		if (p->tok == T_ELLIPSIS) {
+			next(p);
+			if (p->tok != T_RBRACK && p->tok != T_COMMA) {
+				to = parse_expression(p);
+			}
+			n = range(p, n, to);
+		}
+	}
+	return n;
 }
 
 /*
@@ -321,14 +321,14 @@ static struct node *parse_list_exp(Parser *p)
  */
 static struct node *parse_list(Parser *p)
 {
-    unsigned len = 0;
-    struct node *n = node(p->token, OLIST);
+	unsigned len = 0;
+	struct node *n = node(p->token, OLIST);
 
-    if ((n->o.list.items = parse_seq(p, T_LBRACK, T_RBRACK, &parse_list_exp, &len))) {
-        setsrc(p, n);
-    }
-    n->o.list.length = len;
-    return n;
+	if ((n->o.list.items = parse_seq(p, T_LBRACK, T_RBRACK, &parse_list_exp, &len))) {
+		setsrc(p, n);
+	}
+	n->o.list.length = len;
+	return n;
 }
 
 /*
@@ -338,7 +338,7 @@ static struct node *parse_list(Parser *p)
  */
 static struct node *parse_map_exp(Parser *p)
 {
-    return parse_clause(p);
+	return parse_clause(p);
 }
 
 /*
@@ -348,12 +348,12 @@ static struct node *parse_map_exp(Parser *p)
  */
 static struct node *parse_map(Parser *p)
 {
-    struct node *n = node(p->token, OMAP);
-    if ((n->o.map.items = parse_seq(p, T_LBRACE, T_RBRACE, &parse_map_exp, NULL))) {
-        setsrc(p, n);
-        return n;
-    }
-    return NULL;
+	struct node *n = node(p->token, OMAP);
+	if ((n->o.map.items = parse_seq(p, T_LBRACE, T_RBRACE, &parse_map_exp, NULL))) {
+		setsrc(p, n);
+		return n;
+	}
+	return NULL;
 }
 
 
@@ -364,11 +364,11 @@ static struct node *parse_map(Parser *p)
  */
 static struct node *parse_ident(Parser *p)
 {
-    struct node *n = node(p->token, OIDENT);
-    n->o.ident.decl  = NULL;
-    n->o.ident.def   = NULL;
-    next(p);
-    return n;
+	struct node *n = node(p->token, OIDENT);
+	n->o.ident.decl  = NULL;
+	n->o.ident.def   = NULL;
+	next(p);
+	return n;
 }
 
 /*
@@ -378,11 +378,11 @@ static struct node *parse_ident(Parser *p)
  */
 static struct node *parse_atom(Parser *p)
 {
-    struct node *n = node(p->token, OATOM);
-    n->o.atom = p->src;
-    n->type = TYPE_ATOM;
-    next(p);
-    return n;
+	struct node *n = node(p->token, OATOM);
+	n->o.atom = p->src;
+	n->type = TYPE_ATOM;
+	next(p);
+	return n;
 }
 
 /*
@@ -392,11 +392,11 @@ static struct node *parse_atom(Parser *p)
  */
 static struct node *parse_string(Parser *p)
 {
-    struct node *n = node(p->token, OSTRING);
-    n->o.string = p->src;
-    n->type = TYPE_STRING;
-    next(p);
-    return n;
+	struct node *n = node(p->token, OSTRING);
+	n->o.string = p->src;
+	n->type = TYPE_STRING;
+	next(p);
+	return n;
 }
 
 /*
@@ -406,10 +406,10 @@ static struct node *parse_string(Parser *p)
  */
 static struct node *parse_char(Parser *p)
 {
-    struct node *n = node(p->token, OCHAR);
-    n->o.chr = *(p->src);
-    next(p);
-    return n;
+	struct node *n = node(p->token, OCHAR);
+	n->o.chr = *(p->src);
+	next(p);
+	return n;
 }
 
 /*
@@ -419,11 +419,11 @@ static struct node *parse_char(Parser *p)
  */
 static struct node *parse_number(Parser *p)
 {
-    struct node *n = node(p->token, ONUMBER);
-    n->o.number = p->src;
-    n->type = TYPE_NUMBER;
-    next(p);
-    return n;
+	struct node *n = node(p->token, ONUMBER);
+	n->o.number = p->src;
+	n->type = TYPE_NUMBER;
+	next(p);
+	return n;
 }
 
 /*
@@ -433,20 +433,20 @@ static struct node *parse_number(Parser *p)
  */
 static struct node *parse_wait(Parser *p)
 {
-    struct node *n = node(p->token, OWAIT), *e;
-    int type;
+	struct node *n = node(p->token, OWAIT), *e;
+	int type;
 
-    switch (p->tok) {
-        case T_LARROW:
-            next(p);
-        default:
-            type = 0;
-    }
-    e = parse_ident(p);
+	switch (p->tok) {
+		case T_LARROW:
+			next(p);
+		default:
+			type = 0;
+	}
+	e = parse_ident(p);
 
-    n->o.wait.proc = e;
+	n->o.wait.proc = e;
 
-    return n;
+	return n;
 }
 
 
@@ -457,11 +457,11 @@ static struct node *parse_wait(Parser *p)
  */
 static struct node *parse_lambda(Parser *p)
 {
-    next(p); // '\'
+	next(p); // '\'
 
-    struct node *n = parse_clause(p);
+	struct node *n = parse_clause(p);
 
-    return n;
+	return n;
 }
 
 /*
@@ -472,22 +472,22 @@ static struct node *parse_lambda(Parser *p)
  */
 static struct node *parse_pipe(Parser *p, struct node *lval)
 {
-    struct node *n;
+	struct node *n;
 
-    while (p->tok == T_RARROW || p->tok == T_RDARROW || p->tok == T_REQARROW) {
-        next(p); // '->'
-        n = node(p->token, OPIPE);
-        n->o.pipe.lval = lval;
-        lval = n;
+	while (p->tok == T_RARROW || p->tok == T_RDARROW || p->tok == T_REQARROW) {
+		next(p); // '->'
+		n = node(p->token, OPIPE);
+		n->o.pipe.lval = lval;
+		lval = n;
 
-        switch (p->tok) {
-            case T_IDENT:  n->o.pipe.rval = parse_ident(p);  break;
-            case T_BSLASH: n->o.pipe.rval = parse_lambda(p); break;
-            case T_LPAREN: n->o.pipe.rval = parse_tuple(p);  break;
-            default:                                         return n;
-        }
-    }
-    return n;
+		switch (p->tok) {
+			case T_IDENT:  n->o.pipe.rval = parse_ident(p);  break;
+			case T_BSLASH: n->o.pipe.rval = parse_lambda(p); break;
+			case T_LPAREN: n->o.pipe.rval = parse_tuple(p);  break;
+			default:                                         return n;
+		}
+	}
+	return n;
 }
 
 /*
@@ -497,14 +497,14 @@ static struct node *parse_pipe(Parser *p, struct node *lval)
  */
 static struct node *parse_add(Parser *p, struct node *lval)
 {
-    struct node *n = node(p->token, OADD);
+	struct node *n = node(p->token, OADD);
 
-    next(p); // '+'
+	next(p); // '+'
 
-    n->o.add.lval = lval;
-    n->o.add.rval = parse_expression(p);
+	n->o.add.lval = lval;
+	n->o.add.rval = parse_expression(p);
 
-    return n;
+	return n;
 }
 
 /*
@@ -514,14 +514,14 @@ static struct node *parse_add(Parser *p, struct node *lval)
  */
 static struct node *parse_sub(Parser *p, struct node *lval)
 {
-    struct node *n = node(p->token, OSUB);
+	struct node *n = node(p->token, OSUB);
 
-    next(p); // '-'
+	next(p); // '-'
 
-    n->o.sub.lval = lval;
-    n->o.sub.rval = parse_expression(p);
+	n->o.sub.lval = lval;
+	n->o.sub.rval = parse_expression(p);
 
-    return n;
+	return n;
 }
 
 /*
@@ -531,14 +531,14 @@ static struct node *parse_sub(Parser *p, struct node *lval)
  */
 static struct node *parse_lt(Parser *p, struct node *lval)
 {
-    struct node *n = node(p->token, OLT);
+	struct node *n = node(p->token, OLT);
 
-    next(p); // '<'
+	next(p); // '<'
 
-    n->o.cmp.lval = lval;
-    n->o.cmp.rval = parse_expression(p);
+	n->o.cmp.lval = lval;
+	n->o.cmp.rval = parse_expression(p);
 
-    return n;
+	return n;
 }
 
 /*
@@ -548,14 +548,14 @@ static struct node *parse_lt(Parser *p, struct node *lval)
  */
 static struct node *parse_gt(Parser *p, struct node *lval)
 {
-    struct node *n = node(p->token, OGT);
+	struct node *n = node(p->token, OGT);
 
-    next(p); // '>'
+	next(p); // '>'
 
-    n->o.cmp.lval = lval;
-    n->o.cmp.rval = parse_expression(p);
+	n->o.cmp.lval = lval;
+	n->o.cmp.rval = parse_expression(p);
 
-    return n;
+	return n;
 }
 
 /*
@@ -564,58 +564,58 @@ static struct node *parse_gt(Parser *p, struct node *lval)
  */
 static struct node *parse_expression(Parser *p)
 {
-    struct node *n = NULL;
+	struct node *n = NULL;
 
-    switch (p->tok) { // Parse lval
-        case T_IDENT:
-        case T_PERIOD:   n = parse_access(p);       break;
-        case T_ATOM:     n = parse_atom(p);         break;
-        case T_BSLASH:   n = parse_lambda(p);       break;
-        case T_LPAREN:   n = parse_tuple(p);        break;
-        case T_LBRACK:   n = parse_list(p);         break;
-        case T_LBRACE:   n = parse_map(p);          break;
-        case T_STRING:   n = parse_string(p);       break;
-        case T_CHAR:     n = parse_char(p);         break;
-        case T_INT:      n = parse_number(p);       break;
-        case T_LARROW:   n = parse_wait(p);         break;
-        case T_PLUS:     n = parse_spawn(p);        goto question;
-        case T_QUESTION: n = parse_select(p, NULL); break;
-        default:         error(p, ERR_DEFAULT); return NULL;
-    }
+	switch (p->tok) { // Parse lval
+		case T_IDENT:
+		case T_PERIOD:   n = parse_access(p);       break;
+		case T_ATOM:     n = parse_atom(p);         break;
+		case T_BSLASH:   n = parse_lambda(p);       break;
+		case T_LPAREN:   n = parse_tuple(p);        break;
+		case T_LBRACK:   n = parse_list(p);         break;
+		case T_LBRACE:   n = parse_map(p);          break;
+		case T_STRING:   n = parse_string(p);       break;
+		case T_CHAR:     n = parse_char(p);         break;
+		case T_INT:      n = parse_number(p);       break;
+		case T_LARROW:   n = parse_wait(p);         break;
+		case T_PLUS:     n = parse_spawn(p);        goto question;
+		case T_QUESTION: n = parse_select(p, NULL); break;
+		default:         error(p, ERR_DEFAULT); return NULL;
+	}
 
-    switch (p->tok) { // Parse rval
-        case T_QUESTION:   n = parse_select(p, n); break;
-        case T_IDENT:  case T_LPAREN:
-        case T_STRING: case T_INT:
-        case T_LBRACK: case T_ATOM:       n = parse_apply(p, n);   break;
-        case T_LARROW: case T_LDARROW:    n = parse_send(p, n);    break;
-        case T_RARROW: case T_RDARROW:    n = parse_pipe(p, n);    break;
-        case T_DEFINE:                    n = parse_bind(p, n);    break;
-        case T_EQ:                        n = parse_match(p, n);   break;
-        case T_PLUS:                      n = parse_add(p, n);     break;
-        case T_MINUS:                     n = parse_sub(p, n);     break;
-        case T_GT:                        n = parse_gt(p, n);      break;
-        case T_LT:                        n = parse_lt(p, n);      break;
-        default:                                                   break;
-    }
+	switch (p->tok) { // Parse rval
+		case T_QUESTION:   n = parse_select(p, n); break;
+		case T_IDENT:  case T_LPAREN:
+		case T_STRING: case T_INT:
+		case T_LBRACK: case T_ATOM:       n = parse_apply(p, n);   break;
+		case T_LARROW: case T_LDARROW:    n = parse_send(p, n);    break;
+		case T_RARROW: case T_RDARROW:    n = parse_pipe(p, n);    break;
+		case T_DEFINE:                    n = parse_bind(p, n);    break;
+		case T_EQ:                        n = parse_match(p, n);   break;
+		case T_PLUS:                      n = parse_add(p, n);     break;
+		case T_MINUS:                     n = parse_sub(p, n);     break;
+		case T_GT:                        n = parse_gt(p, n);      break;
+		case T_LT:                        n = parse_lt(p, n);      break;
+		default:                                                   break;
+	}
 
 question:
 
-    switch (p->tok) {
-        case T_QUESTION:   n = parse_select(p, n); break;
-        default:                                   break;
-    }
-    return n;
+	switch (p->tok) {
+		case T_QUESTION:   n = parse_select(p, n); break;
+		default:                                   break;
+	}
+	return n;
 }
 
 static void parse_comments(Parser *p)
 {
-    while (p->tok == T_COMMENT) {
-        next(p);
+	while (p->tok == T_COMMENT) {
+		next(p);
 
-        if (p->tok == T_LF)
-            next(p);
-    }
+		if (p->tok == T_LF)
+			next(p);
+	}
 }
 
 /*
@@ -628,31 +628,31 @@ static void parse_comments(Parser *p)
  */
 static struct node *parse_block(Parser *p)
 {
-    struct node *n = block(p);
+	struct node *n = block(p);
 
-    p->block = n;
+	p->block = n;
 
-    if (p->tok == T_LF) { /* Multi-line block */
-        next(p);
+	if (p->tok == T_LF) { /* Multi-line block */
+		next(p);
 
-        parse_comments(p);
+		parse_comments(p);
 
-        expect(p, T_INDENT);
+		expect(p, T_INDENT);
 
-        while (p->tok != T_DEDENT) {
-            if (p->tok == T_LF || p->tok == T_COMMENT) {
-                next(p);
-                continue;
-            }
-            append(n->o.block.body, parse_primary(p));
-        }
-        expect(p, T_DEDENT);
-    } else {              /* Inline block */
-        append(n->o.block.body, parse_primary(p));
-    }
-    p->block = n;
+		while (p->tok != T_DEDENT) {
+			if (p->tok == T_LF || p->tok == T_COMMENT) {
+				next(p);
+				continue;
+			}
+			append(n->o.block.body, parse_primary(p));
+		}
+		expect(p, T_DEDENT);
+	} else {              /* Inline block */
+		append(n->o.block.body, parse_primary(p));
+	}
+	p->block = n;
 
-    return n;
+	return n;
 }
 
 /*
@@ -666,26 +666,26 @@ static struct node *parse_block(Parser *p)
  */
 static struct node *parse_access(Parser *p)
 {
-    struct node *n = NULL, *a;
+	struct node *n = NULL, *a;
 
-    switch (p->tok) {
-        case T_IDENT:  n = parse_ident(p);   break;
-        case T_PERIOD: n = parse_module(p);  break;
-        case T_INT:    n = parse_number(p);  break;
-        default:                             return NULL;
-    }
+	switch (p->tok) {
+		case T_IDENT:  n = parse_ident(p);   break;
+		case T_PERIOD: n = parse_module(p);  break;
+		case T_INT:    n = parse_number(p);  break;
+		default:                             return NULL;
+	}
 
-    if (n == NULL)
-        return NULL;
+	if (n == NULL)
+		return NULL;
 
-    if (p->tok == T_SLASH) {
-        next(p);
+	if (p->tok == T_SLASH) {
+		next(p);
 
-        if ((a = parse_access(p))) {
-            n = access(p, n, a);
-        }
-    }
-    return n;
+		if ((a = parse_access(p))) {
+			n = access(p, n, a);
+		}
+	}
+	return n;
 }
 
 /*
@@ -699,20 +699,20 @@ static struct node *parse_access(Parser *p)
  */
 static struct node *parse_pattern(Parser *p)
 {
-    struct node *n = NULL;
+	struct node *n = NULL;
 
-    switch (p->tok) {
-        case T_UNDER   :
-        case T_IDENT   : n = parse_ident(p);    break;
-        case T_LPAREN  : n = parse_tuple(p);    break;
-        case T_LBRACE  : n = parse_map(p);      break;
-        case T_LBRACK  : n = parse_list(p);     break;
-        case T_ATOM    : n = parse_atom(p);     break;
-        case T_STRING  : n = parse_string(p);   break;
-        case T_INT     : n = parse_number(p);   break;
-        default        : error(p, "unrecognised pattern");
-    }
-    return n;
+	switch (p->tok) {
+		case T_UNDER   :
+		case T_IDENT   : n = parse_ident(p);    break;
+		case T_LPAREN  : n = parse_tuple(p);    break;
+		case T_LBRACE  : n = parse_map(p);      break;
+		case T_LBRACK  : n = parse_list(p);     break;
+		case T_ATOM    : n = parse_atom(p);     break;
+		case T_STRING  : n = parse_string(p);   break;
+		case T_INT     : n = parse_number(p);   break;
+		default        : error(p, "unrecognised pattern");
+	}
+	return n;
 }
 
 /*
@@ -723,20 +723,20 @@ static struct node *parse_pattern(Parser *p)
  */
 static struct node *parse_bind(Parser *p, struct node *lval)
 {
-    struct node *n;
+	struct node *n;
 
-    n = node(p->token, OBIND);
-    n->o.bind.lval = lval;
+	n = node(p->token, OBIND);
+	n->o.bind.lval = lval;
 
-    switch (p->tok) {
-        case T_DEFINE:
-            next(p);
-            n->o.bind.rval = parse_expression(p);
-            break;
-        default:
-            break;
-    }
-    return n;
+	switch (p->tok) {
+		case T_DEFINE:
+			next(p);
+			n->o.bind.rval = parse_expression(p);
+			break;
+		default:
+			break;
+	}
+	return n;
 }
 
 /*
@@ -747,20 +747,20 @@ static struct node *parse_bind(Parser *p, struct node *lval)
  */
 static struct node *parse_match(Parser *p, struct node *lval)
 {
-    struct node *n;
+	struct node *n;
 
-    n = node(p->token, OMATCH);
-    n->o.match.lval = lval;
+	n = node(p->token, OMATCH);
+	n->o.match.lval = lval;
 
-    switch (p->tok) {
-        case T_EQ:
-            next(p);
-            n->o.match.rval = parse_expression(p);
-            break;
-        default:
-            break;
-    }
-    return n;
+	switch (p->tok) {
+		case T_EQ:
+			next(p);
+			n->o.match.rval = parse_expression(p);
+			break;
+		default:
+			break;
+	}
+	return n;
 }
 
 /*
@@ -771,28 +771,28 @@ static struct node *parse_match(Parser *p, struct node *lval)
  */
 static struct node *parse_module(Parser *p)
 {
-    struct node *n = node(p->token, OMODULE);
+	struct node *n = node(p->token, OMODULE);
 
-    switch (p->tok) {
-        case T_SLASH:
-            next(p); // '/'
-            n->o.module.type = MODULE_ROOT;
-            n->o.module.path = NULL;
-            break;
-        case T_PERIOD:
-            next(p); // '.'
-            n->o.module.type = MODULE_CURRENT;
-            n->o.module.path = NULL;
-            break;
-        case T_IDENT:
-            next(p);
-            n->o.module.type = MODULE_NAMED;
-            n->o.module.path = parse_ident(p);
-            break;
-        default:
-            return NULL;
-    }
-    return n;
+	switch (p->tok) {
+		case T_SLASH:
+			next(p); // '/'
+			n->o.module.type = MODULE_ROOT;
+			n->o.module.path = NULL;
+			break;
+		case T_PERIOD:
+			next(p); // '.'
+			n->o.module.type = MODULE_CURRENT;
+			n->o.module.path = NULL;
+			break;
+		case T_IDENT:
+			next(p);
+			n->o.module.type = MODULE_NAMED;
+			n->o.module.path = parse_ident(p);
+			break;
+		default:
+			return NULL;
+	}
+	return n;
 }
 
 /*
@@ -802,20 +802,20 @@ static struct node *parse_module(Parser *p)
  */
 static struct node *parse_clause(Parser *p)
 {
-    struct node *n = node(p->token, OCLAUSE);
+	struct node *n = node(p->token, OCLAUSE);
 
-    if (p->tok == T_COLON) {
-        next(p);
-        n->o.clause.lval = node(p->token, OTUPLE);
-        n->o.clause.lval->o.tuple.arity = 0;
-    } else if ((n->o.bind.lval = parse_pattern(p))) {
-        expect(p, T_COLON);
-    } else {
-        error(p, "expected clause pattern");
-        return NULL;
-    }
-    n->o.bind.rval = parse_block(p);
-    return n;
+	if (p->tok == T_COLON) {
+		next(p);
+		n->o.clause.lval = node(p->token, OTUPLE);
+		n->o.clause.lval->o.tuple.arity = 0;
+	} else if ((n->o.bind.lval = parse_pattern(p))) {
+		expect(p, T_COLON);
+	} else {
+		error(p, "expected clause pattern");
+		return NULL;
+	}
+	n->o.bind.rval = parse_block(p);
+	return n;
 }
 
 /*
@@ -825,14 +825,14 @@ static struct node *parse_clause(Parser *p)
  */
 static struct node *parse_msgpath(Parser *p)
 {
-    struct node *n = node(p->token, OMPATH);
+	struct node *n = node(p->token, OMPATH);
 
-    next(p); // Consume `+`
+	next(p); // Consume `+`
 
-    n->o.mpath.type   = PATH_MSG;
-    n->o.mpath.clause = parse_clause(p);
+	n->o.mpath.type   = PATH_MSG;
+	n->o.mpath.clause = parse_clause(p);
 
-    return n;
+	return n;
 }
 
 /*
@@ -842,21 +842,21 @@ static struct node *parse_msgpath(Parser *p)
  */
 static struct node *parse_spawn(Parser *p)
 {
-    struct node *n = node(p->token, OSPAWN);
-    struct node *a = NULL;
+	struct node *n = node(p->token, OSPAWN);
+	struct node *a = NULL;
 
-    next(p); // Consume `+`
+	next(p); // Consume `+`
 
-    switch (p->tok) {
-        case T_PERIOD: case T_IDENT: case T_ATOM:
-            a = parse_access(p); break;
-        default:
-            // Error
-            error(p, "expected function call");
-    }
-    n->o.spawn.apply = parse_apply(p, a);
+	switch (p->tok) {
+		case T_PERIOD: case T_IDENT: case T_ATOM:
+			a = parse_access(p); break;
+		default:
+			// Error
+			error(p, "expected function call");
+	}
+	n->o.spawn.apply = parse_apply(p, a);
 
-    return n;
+	return n;
 }
 
 /*
@@ -866,45 +866,45 @@ static struct node *parse_spawn(Parser *p)
  */
 static struct node *parse_path(Parser *p)
 {
-    struct node  *n = NULL;
-    PATH   type;
+	struct node  *n = NULL;
+	PATH   type;
 
-    switch (p->tok) {
-        case T_PERIOD:
-            next(p);
-            expect(p, T_SLASH);
-            type = PATH_PUB;
-            break;
-        case T_IDENT:
-            type = PATH_PRIV;
-            break;
-        default:
-            error(p, ERR_DEFAULT);
-            return NULL;
-    }
-    n = node(p->token, OPATH);
+	switch (p->tok) {
+		case T_PERIOD:
+			next(p);
+			expect(p, T_SLASH);
+			type = PATH_PUB;
+			break;
+		case T_IDENT:
+			type = PATH_PRIV;
+			break;
+		default:
+			error(p, ERR_DEFAULT);
+			return NULL;
+	}
+	n = node(p->token, OPATH);
 
-    if (p->tok == T_IDENT) {
-        n->o.path.name = parse_ident(p);
-    } else {
-        error(p, "expected ident");
-    }
-    n->o.path.type   = type;
-    n->o.path.clause = node(p->token, OCLAUSE);
+	if (p->tok == T_IDENT) {
+		n->o.path.name = parse_ident(p);
+	} else {
+		error(p, "expected ident");
+	}
+	n->o.path.type   = type;
+	n->o.path.clause = node(p->token, OCLAUSE);
 
-    if (p->tok == T_EQ) {
-        next(p);
-        n->o.path.clause->o.clause.lval = node(p->token, OTUPLE);
-        n->o.path.clause->o.clause.lval->o.tuple.arity = 0;
-    } else if ((n->o.path.clause->o.clause.lval = parse_pattern(p))) {
-        expect(p, T_EQ);
-    } else {
-        error(p, "expected clause pattern");
-        return NULL;
-    }
-    n->o.path.clause->o.clause.rval = parse_block(p);
+	if (p->tok == T_EQ) {
+		next(p);
+		n->o.path.clause->o.clause.lval = node(p->token, OTUPLE);
+		n->o.path.clause->o.clause.lval->o.tuple.arity = 0;
+	} else if ((n->o.path.clause->o.clause.lval = parse_pattern(p))) {
+		expect(p, T_EQ);
+	} else {
+		error(p, "expected clause pattern");
+		return NULL;
+	}
+	n->o.path.clause->o.clause.rval = parse_block(p);
 
-    return n;
+	return n;
 }
 
 /*
@@ -914,40 +914,40 @@ static struct node *parse_path(Parser *p)
  */
 static struct node *parse_send(Parser *p, struct node *t)
 {
-    struct node *n = node(p->token, OSEND), *e;
-    int    type;
+	struct node *n = node(p->token, OSEND), *e;
+	int    type;
 
-    switch (p->tok) {
-        case T_LARROW:
-            next(p);
-        default:
-            type = 0;
-    }
-    e = parse_expression(p);
+	switch (p->tok) {
+		case T_LARROW:
+			next(p);
+		default:
+			type = 0;
+	}
+	e = parse_expression(p);
 
-    n->o.send.lval = t;
-    n->o.send.rval = e;
+	n->o.send.lval = t;
+	n->o.send.rval = e;
 
-    return n;
+	return n;
 }
 
 static struct node *parse_guard(Parser *p)
 {
-    return parse_expression(p);
+	return parse_expression(p);
 }
 
 static struct nodelist *parse_guards(Parser *p, int *len)
 {
-    struct node     *n;
-    struct nodelist *ns = nodelist(NULL);
+	struct node     *n;
+	struct nodelist *ns = nodelist(NULL);
 
-    do {
-        n = parse_guard(p);
-        append(ns, n);
-        (*len) ++;
-    } while (isnext(p, T_COMMA));
+	do {
+		n = parse_guard(p);
+		append(ns, n);
+		(*len) ++;
+	} while (isnext(p, T_COMMA));
 
-    return ns;
+	return ns;
 }
 
 /*
@@ -957,70 +957,70 @@ static struct nodelist *parse_guards(Parser *p, int *len)
  */
 static struct node *_parse_select(Parser *p, struct node *arg)
 {
-    struct nodelist *ns     = nodelist(NULL),
-                    *guards = NULL;
+	struct nodelist *ns     = nodelist(NULL),
+	                *guards = NULL;
 
-    struct node *clause  = NULL,
-                *select  = node(p->token, OSELECT),
-                *pattern = NULL;
+	struct node *clause  = NULL,
+	            *select  = node(p->token, OSELECT),
+	            *pattern = NULL;
 
-    select->o.select.arg = arg;
+	select->o.select.arg = arg;
 
-    // The first `|` is optional
-    if (p->tok == T_PIPE) next(p);
+	// The first `|` is optional
+	if (p->tok == T_PIPE) next(p);
 
-    int len = 0;
+	int len = 0;
 
-    do {
-        clause = node(p->token, OCLAUSE);
-        clause->o.clause.nguards = 0;
+	do {
+		clause = node(p->token, OCLAUSE);
+		clause->o.clause.nguards = 0;
 
-        if (arg) {
-            pattern = parse_pattern(p);
+		if (arg) {
+			pattern = parse_pattern(p);
 
-            if (isnext(p, T_AND))
-                guards = parse_guards(p, &clause->o.clause.nguards);
+			if (isnext(p, T_AND))
+				guards = parse_guards(p, &clause->o.clause.nguards);
 
-        } else {
-            guards = parse_guards(p, &clause->o.clause.nguards);
-        }
-        expect(p, T_COLON);
+		} else {
+			guards = parse_guards(p, &clause->o.clause.nguards);
+		}
+		expect(p, T_COLON);
 
-        clause->o.clause.guards = guards;
-        clause->o.clause.lval   = pattern;
-        clause->o.clause.rval   = parse_block(p);
+		clause->o.clause.guards = guards;
+		clause->o.clause.lval   = pattern;
+		clause->o.clause.rval   = parse_block(p);
 
-        append(ns, clause);
-        len ++;
+		append(ns, clause);
+		len ++;
 
-        if (p->tok == T_LF)
-            next(p);
+		if (p->tok == T_LF)
+			next(p);
 
-        if (p->tok == T_INDENT)
-            next(p);
+		if (p->tok == T_INDENT)
+			next(p);
 
-    } while (isnext(p, T_PIPE));
+	} while (isnext(p, T_PIPE));
 
-    select->o.select.nclauses = len;
-    select->o.select.clauses = ns;
+	select->o.select.nclauses = len;
+	select->o.select.clauses = ns;
 
-    return select;
+	return select;
 }
 static struct node *parse_select(Parser *p, struct node *arg)
 {
-    struct node *n;
+	struct node *n;
 
-    expect(p, T_QUESTION);
+	expect(p, T_QUESTION);
 
-    if (p->tok == T_LF) {
-        next(p);
-        expect(p, T_INDENT);
-        n = _parse_select(p, arg);
-        expect(p, T_DEDENT);
-    } else {
-        n = _parse_select(p, arg);
-    }
-    return n;
+	if (p->tok == T_LF) {
+		next(p);
+		expect(p, T_INDENT);
+		n = _parse_select(p, arg);
+		expect(p, T_DEDENT);
+	} else {
+		n = _parse_select(p, arg);
+	}
+	return n;
 }
 
 /*
@@ -1031,14 +1031,14 @@ static struct node *parse_select(Parser *p, struct node *arg)
  */
 static struct node *parse_apply(Parser *p, struct node *t)
 {
-    struct node *n = node(p->token, OAPPLY), *e = NULL;
+	struct node *n = node(p->token, OAPPLY), *e = NULL;
 
-    e = parse_expression(p);
+	e = parse_expression(p);
 
-    n->o.apply.lval = t;
-    n->o.apply.rval = e;
+	n->o.apply.lval = t;
+	n->o.apply.rval = e;
 
-    return n;
+	return n;
 }
 
 /*
@@ -1051,14 +1051,14 @@ static struct node *parse_apply(Parser *p, struct node *t)
  */
 static struct node *parse_primary(Parser *p)
 {
-    struct node *node = NULL;
+	struct node *node = NULL;
 
-    if ((node = parse_expression(p))) {
-        end(p);
-    } else {
-        nextline(p);
-    }
-    return node;
+	if ((node = parse_expression(p))) {
+		end(p);
+	} else {
+		nextline(p);
+	}
+	return node;
 }
 
 /*
@@ -1068,27 +1068,27 @@ static struct node *parse_primary(Parser *p)
  */
 static struct node *parse_decl(Parser *p)
 {
-    struct node *n, *module, *args = NULL, *alias = NULL;
+	struct node *n, *module, *args = NULL, *alias = NULL;
 
-    module = access(p, parse_module(p),  parse_access(p));
+	module = access(p, parse_module(p),  parse_access(p));
 
-    /* TODO: Support parrens around parameter */
-    switch (p->tok) {
-        case T_IDENT: case T_SLASH: case T_PERIOD:
-            args = parse_module(p); // Module parameter
-        default: break;
-    }
+	/* TODO: Support parrens around parameter */
+	switch (p->tok) {
+		case T_IDENT: case T_SLASH: case T_PERIOD:
+			args = parse_module(p); // Module parameter
+		default: break;
+	}
 
-    if (p->tok == T_AT) { // Module alias
-        next(p); // '@'
-        alias = parse_atom(p);
-    }
-    n = node(p->token, ODECL);
-    n->o.decl.module = module;
-    n->o.decl.args = args;
-    n->o.decl.alias = alias;
+	if (p->tok == T_AT) { // Module alias
+		next(p); // '@'
+		alias = parse_atom(p);
+	}
+	n = node(p->token, ODECL);
+	n->o.decl.module = module;
+	n->o.decl.args = args;
+	n->o.decl.alias = alias;
 
-    return n;
+	return n;
 }
 
 /*
@@ -1099,23 +1099,23 @@ static struct node *parse_decl(Parser *p)
  */
 static struct node *parse_toplevel(Parser *p)
 {
-    struct node *node = NULL;
+	struct node *node = NULL;
 
-    switch (p->tok) {
-        case T_PERIOD:
-        case T_IDENT:
-            node = parse_path(p);
-            break;
-        case T_PLUS:
-            node = parse_msgpath(p);
-            break;
-        case T_SLASH:
-            node = parse_decl(p);
-            break;
-        default:
-            error(p, ERR_DEFAULT);
-    }
-    return node;
+	switch (p->tok) {
+		case T_PERIOD:
+		case T_IDENT:
+			node = parse_path(p);
+			break;
+		case T_PLUS:
+			node = parse_msgpath(p);
+			break;
+		case T_SLASH:
+			node = parse_decl(p);
+			break;
+		default:
+			error(p, ERR_DEFAULT);
+	}
+	return node;
 }
 
 
@@ -1125,19 +1125,19 @@ static struct node *parse_toplevel(Parser *p)
  */
 Tree *parse(Parser *p)
 {
-    struct node    *node;
+	struct node    *node;
 
-    next(p);
+	next(p);
 
-    while (p->tok != T_EOF) {
-        if (p->tok == T_LF || p->tok == T_COMMENT) {
-            next(p); continue;
-        }
-        if ((node = parse_toplevel(p))) {
-            append(p->root->o.block.body, node);
-            next(p);
-        }
-    }
-    return p->tree;
+	while (p->tok != T_EOF) {
+		if (p->tok == T_LF || p->tok == T_COMMENT) {
+			next(p); continue;
+		}
+		if ((node = parse_toplevel(p))) {
+			append(p->root->o.block.body, node);
+			next(p);
+		}
+	}
+	return p->tree;
 }
 

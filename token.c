@@ -22,14 +22,14 @@
  */
 char *tokentos(Token *t, char *str, bool showsrc)
 {
-    const char *token = TOKEN_STRINGS[t->tok];
+	const char *token = TOKEN_STRINGS[t->tok];
 
-    if (t->src && showsrc) {
-        sprintf(str, "<%s %s>", token, escape(t->src));
-    } else {
-        sprintf(str, "<%s>", token);
-    }
-    return str;
+	if (t->src && showsrc) {
+		sprintf(str, "<%s %s>", token, escape(t->src));
+	} else {
+		sprintf(str, "<%s>", token);
+	}
+	return str;
 }
 
 /*
@@ -37,11 +37,11 @@ char *tokentos(Token *t, char *str, bool showsrc)
  */
 Token *token(TOKEN tok, struct source *source, size_t pos, char *src)
 {
-    Token *t   =  malloc(sizeof(*t));
-    t->tok     =  tok;
-    t->source  =  source;
-    t->pos     =  pos;
-    t->src     =  src;
-    return t;
+	Token *t   =  malloc(sizeof(*t));
+	t->tok     =  tok;
+	t->source  =  source;
+	t->pos     =  pos;
+	t->src     =  src;
+	return t;
 }
 

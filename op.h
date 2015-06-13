@@ -8,9 +8,9 @@
  *
  */
 typedef struct {
-    unsigned short   length;
-    TYPE             type;
-    char             value[];
+	unsigned short   length;
+	TYPE             type;
+	char             value[];
 } Constant;
 
 extern const char         *OPCODE_STRINGS[];
@@ -51,13 +51,13 @@ enum             IMode {ABC, AD, AJ};   /* Instruction mode/format */
  * Instruction creation macros
  */
 #define iABC(o,a,b,c) (((Instruction)(o))              \
-                     | ((Instruction)(a) << OPPOS_A)   \
-                     | ((Instruction)(b) << OPPOS_B)   \
-                     | ((Instruction)(c) << OPPOS_C))
+	                 | ((Instruction)(a) << OPPOS_A)   \
+	                 | ((Instruction)(b) << OPPOS_B)   \
+	                 | ((Instruction)(c) << OPPOS_C))
 
 #define iAD(o,a,d)    (((Instruction)(o))              \
-                     | ((Instruction)(a)  << OPPOS_A)  \
-                     | ((Instruction)(d)  << OPPOS_D))
+	                 | ((Instruction)(a)  << OPPOS_A)  \
+	                 | ((Instruction)(d)  << OPPOS_D))
 
 #define iAJ(o,a,j)   iAD(o, a, ((int32_t)(j) + OPMAX_J))
 
@@ -86,35 +86,35 @@ enum             IMode {ABC, AD, AJ};   /* Instruction mode/format */
  * op-codes
  */
 typedef enum {
-    OP_INVALID,
-    OP_MOVE,
-    OP_LOADK,
-    OP_ADD,
-    OP_SUB,
-    OP_GT,
-    OP_EQ,
-    OP_JUMP,
-    OP_RETURN,
-    OP_MATCH,
-    OP_TUPLE,
-    OP_SETTUPLE,
-    OP_LIST,
-    OP_CONS,
-    OP_CALL,
-    OP_TAILCALL,
-    OP_SEND,
-    OP_LAMBDA,
-    OP_PATH
+	OP_INVALID,
+	OP_MOVE,
+	OP_LOADK,
+	OP_ADD,
+	OP_SUB,
+	OP_GT,
+	OP_EQ,
+	OP_JUMP,
+	OP_RETURN,
+	OP_MATCH,
+	OP_TUPLE,
+	OP_SETTUPLE,
+	OP_LIST,
+	OP_CONS,
+	OP_CALL,
+	OP_TAILCALL,
+	OP_SEND,
+	OP_LAMBDA,
+	OP_PATH
 } OpCode;
 
 /*
  * op-code modes
  */
 enum OpArgMask {
-    OPARG__,  /* argument is not used */
-    OPARG_U,  /* argument is used */
-    OPARG_R,  /* argument is a register or a jump offset */
-    OPARG_K   /* argument is a constant or register/constant (RK) */
+	OPARG__,  /* argument is not used */
+	OPARG_U,  /* argument is used */
+	OPARG_R,  /* argument is a register or a jump offset */
+	OPARG_K   /* argument is a constant or register/constant (RK) */
 };
 
 #define OPMODE(m)  ((enum IMode)(OPCODE_MODES[m] & 3))

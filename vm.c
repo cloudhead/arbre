@@ -49,424 +49,424 @@ int match (struct tvalue *locals, struct tvalue *pattern, struct tvalue *v, stru
 
 VM *vm(void)
 {
-    size_t msize = sizeof(struct modulelist *) * 512;
-    VM    *vm    = malloc(sizeof(*vm) + msize);
+	size_t msize = sizeof(struct modulelist *) * 512;
+	VM    *vm    = malloc(sizeof(*vm) + msize);
 
-    vm->clause = NULL;
-    vm->nprocs = 0;
-    vm->procs  = malloc(sizeof(Process*) * 1024);
-    vm->proc   = NULL;
+	vm->clause = NULL;
+	vm->nprocs = 0;
+	vm->procs  = malloc(sizeof(Process*) * 1024);
+	vm->proc   = NULL;
 
-    memset(vm->modules, 0, msize);
+	memset(vm->modules, 0, msize);
 
-    return vm;
+	return vm;
 }
 
 void vm_free(VM *vm)
 {
-    // TODO: Implement
+	// TODO: Implement
 }
 
 uint8_t *vm_readk(VM *vm, uint8_t *b, struct tvalue *k);
 
 uint8_t *vm_readlist(VM *vm, uint8_t *b, Value *v)
 {
-    size_t length = *(size_t *)b;
+	size_t length = *(size_t *)b;
 
-    b += sizeof(length);
+	b += sizeof(length);
 
-    List *l = list_cons(NULL, NULL);
+	List *l = list_cons(NULL, NULL);
 
-    for (size_t i = 0; i < length; i++) {
-        struct tvalue *val = malloc(sizeof(*val));
+	for (size_t i = 0; i < length; i++) {
+		struct tvalue *val = malloc(sizeof(*val));
 
-        b = vm_readk(vm, b, val);
-        l = list_cons(l, val);
+		b = vm_readk(vm, b, val);
+		l = list_cons(l, val);
 
-        if (i < length - 1)
-            debug(", ");
-    }
-    (*v).list = l;
+		if (i < length - 1)
+			debug(", ");
+	}
+	(*v).list = l;
 
-    return b;
+	return b;
 }
 
 uint8_t *vm_readk(VM *vm, uint8_t *b, struct tvalue *k)
 {
-    TYPE t = *b ++;
-    Value v;
+	TYPE t = *b ++;
+	Value v;
 
-    switch (t & TYPE_MASK) {
-        case TYPE_PATHID:
-            v.pathid = malloc(sizeof(*v.pathid));
-            v.pathid->module = (char *)b;
-            b += strlen(v.pathid->module) + 1;
-            v.pathid->path = (char *)b;
-            b += strlen(v.pathid->path) + 1;
-            break;
-        case TYPE_LIST: {
-            debug("[");
-            b = vm_readlist(vm, b, &v);
-            debug("]");
-            break;
-        }
-        case TYPE_ATOM:
-            v.atom = (char *)b;
-            b += strlen(v.atom) + 1;
-            debug("%s", v.atom);
-            break;
-        case TYPE_STRING:
-            assert(0);
-            break;
-        case TYPE_NUMBER:
-            v.number = *(int *)b;
-            b += sizeof(int);
-            debug("%d", v.number);
-            break;
-        case TYPE_ANY:
-            v.ident = *b ++;
-            debug("<any>");
-            if (t & Q_RANGE) {
-                debug("..");
-            }
-            break;
-        case TYPE_VAR:
-            v.ident = *b ++;
-            debug("r%d", v.ident);
-            break;
-        case TYPE_TUPLE: {
-            uint8_t arity = *b ++;
+	switch (t & TYPE_MASK) {
+		case TYPE_PATHID:
+			v.pathid = malloc(sizeof(*v.pathid));
+			v.pathid->module = (char *)b;
+			b += strlen(v.pathid->module) + 1;
+			v.pathid->path = (char *)b;
+			b += strlen(v.pathid->path) + 1;
+			break;
+		case TYPE_LIST: {
+			debug("[");
+			b = vm_readlist(vm, b, &v);
+			debug("]");
+			break;
+		}
+		case TYPE_ATOM:
+			v.atom = (char *)b;
+			b += strlen(v.atom) + 1;
+			debug("%s", v.atom);
+			break;
+		case TYPE_STRING:
+			assert(0);
+			break;
+		case TYPE_NUMBER:
+			v.number = *(int *)b;
+			b += sizeof(int);
+			debug("%d", v.number);
+			break;
+		case TYPE_ANY:
+			v.ident = *b ++;
+			debug("<any>");
+			if (t & Q_RANGE) {
+				debug("..");
+			}
+			break;
+		case TYPE_VAR:
+			v.ident = *b ++;
+			debug("r%d", v.ident);
+			break;
+		case TYPE_TUPLE: {
+			uint8_t arity = *b ++;
 
-            debug("(");
+			debug("(");
 
-            // TODO: Use `tuple` function
-            v.tuple = malloc(sizeof(*v.tuple) + sizeof(struct tvalue) * arity);
-            v.tuple->arity = arity;
+			// TODO: Use `tuple` function
+			v.tuple = malloc(sizeof(*v.tuple) + sizeof(struct tvalue) * arity);
+			v.tuple->arity = arity;
 
-            for (int i = 0; i < arity; i++) {
-                b = vm_readk(vm, b, v.tuple->members + i);
-            }
-            debug(")");
-            break;
-        }
-        default:
-            assert(0);
-            break;
-    }
-    k->t = t;
-    k->v = v;
+			for (int i = 0; i < arity; i++) {
+				b = vm_readk(vm, b, v.tuple->members + i);
+			}
+			debug(")");
+			break;
+		}
+		default:
+			assert(0);
+			break;
+	}
+	k->t = t;
+	k->v = v;
 
-    return b;
+	return b;
 }
 
 /* TODO: Paths should be per-module */
 uint8_t *vm_readclause(VM *vm, struct path *p, int index, uint8_t *b)
 {
-    /* Pattern */
-    struct tvalue pattern = bin_readnode(&b);
+	/* Pattern */
+	struct tvalue pattern = bin_readnode(&b);
 
-    /* Number of locals */
-    uint8_t nlocals = *b ++;
+	/* Number of locals */
+	uint8_t nlocals = *b ++;
 
-    /* Size of constants table */
-    uint8_t ksize = *b ++;
+	/* Size of constants table */
+	uint8_t ksize = *b ++;
 
-    debug("reading clause with %d constant(s) and %d local(s)..\n", ksize, nlocals);
+	debug("reading clause with %d constant(s) and %d local(s)..\n", ksize, nlocals);
 
-    struct clause *c = clause(pattern, nlocals, ksize);
-    c->path = p;
+	struct clause *c = clause(pattern, nlocals, ksize);
+	c->path = p;
 
-    for (int i = 0; i < ksize; i++) {
-        debug("\tk%d = ", i);
-        b = vm_readk(vm, b, &c->constants[i]);
-        debug("\n");
-    }
-    debug("\n");
+	for (int i = 0; i < ksize; i++) {
+		debug("\tk%d = ", i);
+		b = vm_readk(vm, b, &c->constants[i]);
+		debug("\n");
+	}
+	debug("\n");
 
-    c->codelen = *((unsigned long*)b);
-    b += sizeof(c->codelen);
+	c->codelen = *((unsigned long*)b);
+	b += sizeof(c->codelen);
 
-    c->code = (Instruction *)b;
+	c->code = (Instruction *)b;
 
-    /* Skip all code */
-    b += c->codelen * sizeof(Instruction);
+	/* Skip all code */
+	b += c->codelen * sizeof(Instruction);
 
-    p->clauses[index] = c;
+	p->clauses[index] = c;
 
-    return b;
+	return b;
 }
 
 uint8_t *vm_readpath(VM *vm, struct module *m, int index, uint8_t *b)
 {
-    char *name = NULL;
+	char *name = NULL;
 
-    /* Path attributes */
-    uint8_t attrs   = *b ++;
-    uint8_t namelen = *b ++;
+	/* Path attributes */
+	uint8_t attrs   = *b ++;
+	uint8_t namelen = *b ++;
 
-    assert(attrs);
+	assert(attrs);
 
-    /* TODO: check attributes instead */
-    /* TODO: clean this up.. maybe with strdup */
-    if (namelen > 0) {
-        name = malloc(namelen + 1);
-        memcpy(name, b, namelen);
-        name[namelen] = '\0';
-        b += namelen;
-    }
+	/* TODO: check attributes instead */
+	/* TODO: clean this up.. maybe with strdup */
+	if (namelen > 0) {
+		name = malloc(namelen + 1);
+		memcpy(name, b, namelen);
+		name[namelen] = '\0';
+		b += namelen;
+	}
 
-    uint8_t nclauses = *b ++;
+	uint8_t nclauses = *b ++;
 
-    debug("reading path '%s'..\n", name);
-    debug("reading %d clause(s)..\n", nclauses);
+	debug("reading path '%s'..\n", name);
+	debug("reading %d clause(s)..\n", nclauses);
 
-    struct path *p = path(name, nclauses);
-    p->module = m;
+	struct path *p = path(name, nclauses);
+	p->module = m;
 
-    m->paths[index] = p;
+	m->paths[index] = p;
 
-    for (int i = 0; i < nclauses; i++) {
-        b = vm_readclause(vm, p, i, b);
-    }
+	for (int i = 0; i < nclauses; i++) {
+		b = vm_readclause(vm, p, i, b);
+	}
 
-    return b;
+	return b;
 }
 
 void vm_open(VM *vm, const char *name, uint8_t *buffer)
 {
-    unsigned char magic = *buffer;
+	unsigned char magic = *buffer;
 
-    if (magic != 167) { /* TODO: Make this segment 2 bytes */
-        error(1, 0, "file is not an arbre bin file");
-    }
-    buffer ++;
+	if (magic != 167) { /* TODO: Make this segment 2 bytes */
+		error(1, 0, "file is not an arbre bin file");
+	}
+	buffer ++;
 
-    struct version v = *((struct version *)buffer);
-    buffer += sizeof(struct version); /* XXX: How portable is this? */
+	struct version v = *((struct version *)buffer);
+	buffer += sizeof(struct version); /* XXX: How portable is this? */
 
-    debug("version %d.%d.%d\n", v.major, v.minor, v.patch);
+	debug("version %d.%d.%d\n", v.major, v.minor, v.patch);
 
-    int pathsn = *((int*)buffer);
-    buffer += sizeof(int);
+	int pathsn = *((int*)buffer);
+	buffer += sizeof(int);
 
-    debug("reading %d paths..\n", pathsn);
+	debug("reading %d paths..\n", pathsn);
 
-    struct module *m = module(name, pathsn);
+	struct module *m = module(name, pathsn);
 
-    for (int i = 0; i < pathsn; i++) {
-        buffer = vm_readpath(vm, m, i, buffer);
-    }
+	for (int i = 0; i < pathsn; i++) {
+		buffer = vm_readpath(vm, m, i, buffer);
+	}
 
-    uint32_t key = hash(name, strlen(name)) % 512;
+	uint32_t key = hash(name, strlen(name)) % 512;
 
-    if (vm->modules[key]) {
-        module_prepend(vm->modules[key], m);
-    } else {
-        vm->modules[key] = modulelist(m);
-    }
+	if (vm->modules[key]) {
+		module_prepend(vm->modules[key], m);
+	} else {
+		vm->modules[key] = modulelist(m);
+	}
 }
 
 int match_atom(Value pattern, Value v, struct tvalue *local)
 {
-    // TODO: If we keep a global store of atoms, we only
-    // need a pointer comparison here.
-    if (! strcmp(pattern.atom, v.atom))
-        return 0;
+	// TODO: If we keep a global store of atoms, we only
+	// need a pointer comparison here.
+	if (! strcmp(pattern.atom, v.atom))
+		return 0;
 
-    return -1;
+	return -1;
 }
 
 int match_tuple(struct tvalue *locals, Value pattern, Value v, struct tvalue *local)
 {
-    int m = 0, nmatches = 0;
+	int m = 0, nmatches = 0;
 
-    if (pattern.tuple->arity != v.tuple->arity)
-        return -1;
+	if (pattern.tuple->arity != v.tuple->arity)
+		return -1;
 
-    for (int i = 0; i < v.tuple->arity; i++) {
-        m = match(locals, pattern.tuple->members + i, v.tuple->members + i, local + nmatches);
+	for (int i = 0; i < v.tuple->arity; i++) {
+		m = match(locals, pattern.tuple->members + i, v.tuple->members + i, local + nmatches);
 
-        if (m == -1)
-            return -1;
+		if (m == -1)
+			return -1;
 
-        nmatches += m;
-    }
-    return nmatches;
+		nmatches += m;
+	}
+	return nmatches;
 }
 
 int match_list(struct tvalue *locals, Value pattern, Value v, struct tvalue *local)
 {
-    int m = 0, nmatches = 0;
+	int m = 0, nmatches = 0;
 
-    List *pat = pattern.list;
-    List *val = v.list;
+	List *pat = pattern.list;
+	List *val = v.list;
 
-    while (val) {
-        if (!val->head && !pat->head) { /* Reached end of both lists (match) */
-            break;
-        }
+	while (val) {
+		if (!val->head && !pat->head) { /* Reached end of both lists (match) */
+			break;
+		}
 
-        if (val->head && !pat->head) { /* pattern is shorter than value */
-            return -1;
-        }
+		if (val->head && !pat->head) { /* pattern is shorter than value */
+			return -1;
+		}
 
-        if (pat->head->t & Q_RANGE) {
-            struct tvalue *t = tvalue(TYPE_LIST, (Value){ .list = val });
-            m = match(locals, pat->head, t, local + nmatches);
-            return nmatches + m;
-        } else {
-            m = match(locals, pat->head, val->head, local + nmatches);
-        }
+		if (pat->head->t & Q_RANGE) {
+			struct tvalue *t = tvalue(TYPE_LIST, (Value){ .list = val });
+			m = match(locals, pat->head, t, local + nmatches);
+			return nmatches + m;
+		} else {
+			m = match(locals, pat->head, val->head, local + nmatches);
+		}
 
-        if (!val->head && pat->head) { /* value is shorter than pattern */
-            return -1;
-        }
+		if (!val->head && pat->head) { /* value is shorter than pattern */
+			return -1;
+		}
 
-        if (m == -1)
-            return -1;
+		if (m == -1)
+			return -1;
 
-        nmatches += m;
+		nmatches += m;
 
-        pat = pat->tail;
-        val = val->tail;
-    }
-    return nmatches;
+		pat = pat->tail;
+		val = val->tail;
+	}
+	return nmatches;
 }
 
 int match(struct tvalue *locals, struct tvalue *pattern, struct tvalue *v, struct tvalue *local)
 {
-    assert(pattern);
+	assert(pattern);
 
-    if (v == NULL) {
-        if ((pattern->t & TYPE_MASK) == TYPE_TUPLE &&
-            pattern->v.tuple->arity == 0) {
-            return 0;
-        } else {
-            return -1;
-        }
-    }
+	if (v == NULL) {
+		if ((pattern->t & TYPE_MASK) == TYPE_TUPLE &&
+			pattern->v.tuple->arity == 0) {
+			return 0;
+		} else {
+			return -1;
+		}
+	}
 
-    if ((pattern->t & TYPE_MASK) == TYPE_ANY) {
-        *local = *v;
-        return 1;
-    } else if ((pattern->t & TYPE_MASK) == TYPE_VAR) {
-        return match(locals, &locals[pattern->v.ident], v, local);
-    } else if ((pattern->t & TYPE_MASK) != (v->t & TYPE_MASK)) {
-        return -1;
-    }
+	if ((pattern->t & TYPE_MASK) == TYPE_ANY) {
+		*local = *v;
+		return 1;
+	} else if ((pattern->t & TYPE_MASK) == TYPE_VAR) {
+		return match(locals, &locals[pattern->v.ident], v, local);
+	} else if ((pattern->t & TYPE_MASK) != (v->t & TYPE_MASK)) {
+		return -1;
+	}
 
-    switch (pattern->t & TYPE_MASK) {
-        case TYPE_TUPLE:
-            return match_tuple(locals, pattern->v, v->v, local);
-        case TYPE_LIST:
-            return match_list(locals, pattern->v, v->v, local);
-        case TYPE_ATOM:
-            return match_atom(pattern->v, v->v, local);
-        case TYPE_NUMBER:
-            return (pattern->v.number == v->v.number) ? 0 : -1;
-        default:
-            assert(0);
-    }
-    return -1;
+	switch (pattern->t & TYPE_MASK) {
+		case TYPE_TUPLE:
+			return match_tuple(locals, pattern->v, v->v, local);
+		case TYPE_LIST:
+			return match_list(locals, pattern->v, v->v, local);
+		case TYPE_ATOM:
+			return match_atom(pattern->v, v->v, local);
+		case TYPE_NUMBER:
+			return (pattern->v.number == v->v.number) ? 0 : -1;
+		default:
+			assert(0);
+	}
+	return -1;
 }
 
 int vm_tailcall(VM *vm, Process *proc, struct clause *c, struct tvalue *arg)
 {
-    struct frame  *frame = proc->stack->frame;
-    struct tvalue *local = frame->locals;
+	struct frame  *frame = proc->stack->frame;
+	struct tvalue *local = frame->locals;
 
-    memset(local, 0, sizeof(struct tvalue) * c->nlocals);
+	memset(local, 0, sizeof(struct tvalue) * c->nlocals);
 
-    int nlocals = match(NULL, &c->pattern, arg, local);
+	int nlocals = match(NULL, &c->pattern, arg, local);
 
-    if (nlocals == -1)
-        return -1;
+	if (nlocals == -1)
+		return -1;
 
-    #ifdef DEBUG
-        for (int i = 0; i < proc->stack->depth; i++)
-            debug(INDENT);
+	#ifdef DEBUG
+		for (int i = 0; i < proc->stack->depth; i++)
+			debug(INDENT);
 
-        printf("%s/%s ", c->path->module->name, c->path->name);
-        tvalue_pp(arg);
-        printf("\n");
-    #endif
+		printf("%s/%s ", c->path->module->name, c->path->name);
+		tvalue_pp(arg);
+		printf("\n");
+	#endif
 
-    if (! c)
-        return -1;
+	if (! c)
+		return -1;
 
-    frame->clause = c;
-    frame->pc     = c->code;
+	frame->clause = c;
+	frame->pc     = c->code;
 
-    return nlocals;
+	return nlocals;
 }
 
 int vm_call(VM *vm, Process *proc, struct clause *c, struct tvalue *arg)
 {
-    /* TODO: Perform pattern-match */
+	/* TODO: Perform pattern-match */
 
-    vm->clause = c;
-    struct stack *s = proc->stack;
+	vm->clause = c;
+	struct stack *s = proc->stack;
 
-    assert(c);
+	assert(c);
 
-    stack_push(s, c);
+	stack_push(s, c);
 
-    struct tvalue *locals = s->frame->locals,
-                  *local  = locals;
+	struct tvalue *locals = s->frame->locals,
+				  *local  = locals;
 
-    int nlocals = match(NULL, &c->pattern, arg, local);
+	int nlocals = match(NULL, &c->pattern, arg, local);
 
-    if (nlocals == -1) {
-        return -1;
-    }
+	if (nlocals == -1) {
+		return -1;
+	}
 
 #if defined(DEBUG)
-    for (int i = 0; i < proc->stack->depth; i++)
-        printf(INDENT);
-    printf("%s/%s ", c->path->module->name, c->path->name);
-    tvalue_pp(arg);
-    printf("\n");
+	for (int i = 0; i < proc->stack->depth; i++)
+		printf(INDENT);
+	printf("%s/%s ", c->path->module->name, c->path->name);
+	tvalue_pp(arg);
+	printf("\n");
 #endif
 
-    return nlocals;
+	return nlocals;
 }
 
 Process *vm_spawn(VM *vm, struct module *m, struct path *p)
 {
-    Process *proc = process(m, p);
+	Process *proc = process(m, p);
 
-    proc->flags |= PROC_READY;
+	proc->flags |= PROC_READY;
 
-    vm->procs[vm->nprocs++] = proc;
+	vm->procs[vm->nprocs++] = proc;
 
-    return proc;
+	return proc;
 }
 
 Process *vm_select(VM *vm)
 {
-    Process *proc;
+	Process *proc;
 
-    /* TODO: Don't start from 0, start from last proc */
+	/* TODO: Don't start from 0, start from last proc */
 
-    for (;;) {
-        for (int i = 0; i < vm->nprocs; i++) {
-            if ((proc = vm->procs[i])) {
-                if ((proc->credits > 0) && (proc->flags & PROC_READY)) {
-                    return proc;
-                }
-            }
-        }
-        /* All proc credits exhausted, reset */
-        /* TODO: We don't need this step if we start from the last proc,
-         * and reset as we go */
-        for (int i = 0; i < vm->nprocs; i++) {
-            if ((proc = vm->procs[i])) {
-                proc->credits = 16;
-            }
-        }
-    }
-    assert(0);
-    return NULL;
+	for (;;) {
+		for (int i = 0; i < vm->nprocs; i++) {
+			if ((proc = vm->procs[i])) {
+				if ((proc->credits > 0) && (proc->flags & PROC_READY)) {
+					return proc;
+				}
+			}
+		}
+		/* All proc credits exhausted, reset */
+		/* TODO: We don't need this step if we start from the last proc,
+		 * and reset as we go */
+		for (int i = 0; i < vm->nprocs; i++) {
+			if ((proc = vm->procs[i])) {
+				proc->credits = 16;
+			}
+		}
+	}
+	assert(0);
+	return NULL;
 }
 
 #define RK(x) (ISK(x) ? K[INDEXK(x)] : R[x])
@@ -479,250 +479,250 @@ Process *vm_select(VM *vm)
 
 struct tvalue *vm_execute(VM *vm, Process *proc)
 {
-    struct clause *c;
+	struct clause *c;
 
-    struct stack *s;
-    struct frame *f;
+	struct stack *s;
+	struct frame *f;
 
-    Instruction i;
+	Instruction i;
 
-    struct tvalue *R;
-    struct tvalue *K;
+	struct tvalue *R;
+	struct tvalue *K;
 
 reentry:
 
-    vm->proc = proc;
+	vm->proc = proc;
 
-    s = proc->stack;    /* Current stack */
-    f = s->frame;       /* Current stack-frame */
-    c = f->clause;      /* Current clause */
-    R = f->locals;      /* Registry (local vars) */
-    K = c->constants;   /* Constants */
+	s = proc->stack;    /* Current stack */
+	f = s->frame;       /* Current stack-frame */
+	c = f->clause;      /* Current clause */
+	R = f->locals;      /* Registry (local vars) */
+	K = c->constants;   /* Constants */
 
-    while ((i = *f->pc++)) {
-        #ifdef DEBUG
-        for (int i = 0; i < proc->stack->depth; i++)
-            debug(INDENT);
-        printf("%3lu:\t", f->pc - f->clause->code - 1); op_pp(i); putchar('\n');
-        #endif
+	while ((i = *f->pc++)) {
+		#ifdef DEBUG
+		for (int i = 0; i < proc->stack->depth; i++)
+			debug(INDENT);
+		printf("%3lu:\t", f->pc - f->clause->code - 1); op_pp(i); putchar('\n');
+		#endif
 
-        proc->credits --;
+		proc->credits --;
 
-        switch (OP) {
-            case OP_MOVE:
-                R[A] = R[B];
-                break;
-            case OP_LOADK:
-                assert(A < f->nlocals);
+		switch (OP) {
+			case OP_MOVE:
+				R[A] = R[B];
+				break;
+			case OP_LOADK:
+				assert(A < f->nlocals);
 
-                R[A] = K[INDEXK(D)];
-                break;
-            case OP_ADD: {
-                assert(RK(B).t == TYPE_NUMBER);
-                assert(RK(C).t == TYPE_NUMBER);
+				R[A] = K[INDEXK(D)];
+				break;
+			case OP_ADD: {
+				assert(RK(B).t == TYPE_NUMBER);
+				assert(RK(C).t == TYPE_NUMBER);
 
-                R[A].t        = TYPE_NUMBER;
-                R[A].v.number = RK(B).v.number +
-                                RK(C).v.number;
-                break;
-            }
-            case OP_SUB: {
-                assert(RK(B).t == TYPE_NUMBER);
-                assert(RK(C).t == TYPE_NUMBER);
+				R[A].t        = TYPE_NUMBER;
+				R[A].v.number = RK(B).v.number +
+								RK(C).v.number;
+				break;
+			}
+			case OP_SUB: {
+				assert(RK(B).t == TYPE_NUMBER);
+				assert(RK(C).t == TYPE_NUMBER);
 
-                R[A].t        = TYPE_NUMBER;
-                R[A].v.number = RK(B).v.number -
-                                RK(C).v.number;
-                break;
-            }
-            case OP_JUMP:
-                f->pc += J;
-                break;
-            case OP_MATCH: {
-                struct tvalue b = RK(B),
-                              c = RK(C);
+				R[A].t        = TYPE_NUMBER;
+				R[A].v.number = RK(B).v.number -
+								RK(C).v.number;
+				break;
+			}
+			case OP_JUMP:
+				f->pc += J;
+				break;
+			case OP_MATCH: {
+				struct tvalue b = RK(B),
+							  c = RK(C);
 
-                if (match(R, &b, &c, &R[A + 1]) >= 0)
-                    f->pc ++;
-                else
-                    f->pc += iJ(*f->pc) + 1;
+				if (match(R, &b, &c, &R[A + 1]) >= 0)
+					f->pc ++;
+				else
+					f->pc += iJ(*f->pc) + 1;
 
-                break;
-            }
-            case OP_GT: {
-                struct tvalue b = RK(B),
-                              c = RK(C);
+				break;
+			}
+			case OP_GT: {
+				struct tvalue b = RK(B),
+							  c = RK(C);
 
-                assert(b.t == TYPE_NUMBER);
-                assert(c.t == TYPE_NUMBER);
+				assert(b.t == TYPE_NUMBER);
+				assert(c.t == TYPE_NUMBER);
 
-                if (b.v.number > c.v.number)
-                    f->pc ++;
-                else
-                    f->pc += iJ(*f->pc) + 1;
+				if (b.v.number > c.v.number)
+					f->pc ++;
+				else
+					f->pc += iJ(*f->pc) + 1;
 
-                break;
-            }
-            case OP_EQ: {
-                struct tvalue b = RK(B),
-                              c = RK(C);
+				break;
+			}
+			case OP_EQ: {
+				struct tvalue b = RK(B),
+							  c = RK(C);
 
-                if (b.v.number == c.v.number)
-                    f->pc ++;
-                else
-                    f->pc += iJ(*f->pc) + 1;
+				if (b.v.number == c.v.number)
+					f->pc ++;
+				else
+					f->pc += iJ(*f->pc) + 1;
 
-                break;
-            }
-            case OP_TUPLE:
-                R[A] = *tuple(B);
-                break;
-            case OP_SETTUPLE:
-                assert(R[A].t == TYPE_TUPLE);
-                assert(B < R[A].v.tuple->arity);
+				break;
+			}
+			case OP_TUPLE:
+				R[A] = *tuple(B);
+				break;
+			case OP_SETTUPLE:
+				assert(R[A].t == TYPE_TUPLE);
+				assert(B < R[A].v.tuple->arity);
 
-                R[A].v.tuple->members[B] = RK(C);
-                break;
-            case OP_LIST:
-                R[A] = *list(0);
-                break;
-            case OP_CONS: {
-                int c = C;
+				R[A].v.tuple->members[B] = RK(C);
+				break;
+			case OP_LIST:
+				R[A] = *list(0);
+				break;
+			case OP_CONS: {
+				int c = C;
 
-                assert(R[B].t == TYPE_LIST);
+				assert(R[B].t == TYPE_LIST);
 
-                struct tvalue *t = ISK(c) ? &K[INDEXK(c)] : &R[c];
+				struct tvalue *t = ISK(c) ? &K[INDEXK(c)] : &R[c];
 
-                List *l = list_cons(R[B].v.list, t);
-                R[A] = *tvalue(TYPE_LIST, (Value){ .list = l });
-                break;
-            }
-            case OP_PATH:
-                R[A].v.pathid->module = RK(B).v.atom;
-                R[A].v.pathid->path   = RK(C).v.atom;
-                break;
-            case OP_TAILCALL: {
-                int             matches = -1;
-                struct tvalue   arg     = R[C];
+				List *l = list_cons(R[B].v.list, t);
+				R[A] = *tvalue(TYPE_LIST, (Value){ .list = l });
+				break;
+			}
+			case OP_PATH:
+				R[A].v.pathid->module = RK(B).v.atom;
+				R[A].v.pathid->path   = RK(C).v.atom;
+				break;
+			case OP_TAILCALL: {
+				int             matches = -1;
+				struct tvalue   arg     = R[C];
 
-                c = c->path->clauses[B];
+				c = c->path->clauses[B];
 
-                if ((matches = vm_tailcall(vm, proc, c, &arg)) < 0) /* Replace stack call-frame */
-                    error(1, 0, "no matches for %s/%s", c->path->module->name, c->path->name);
-                goto reentry;
-            }
-            case OP_CALL: {
-                int matches = -1;
+				if ((matches = vm_tailcall(vm, proc, c, &arg)) < 0) /* Replace stack call-frame */
+					error(1, 0, "no matches for %s/%s", c->path->module->name, c->path->name);
+				goto reentry;
+			}
+			case OP_CALL: {
+				int matches = -1;
 
-                struct tvalue callee = RK(B);
-                struct tvalue arg = RK(C);
+				struct tvalue callee = RK(B);
+				struct tvalue arg = RK(C);
 
-                switch (callee.t) {
-                    case TYPE_PATH: {
-                        matches = vm_call(vm, proc, callee.v.path->clauses[0], &arg); /* Create & push stack call-frame */
-                        break;
-                    }
-                    case 0:
-                    case TYPE_PATHID: {
-                        struct path   *p;
-                        struct module *m;
+				switch (callee.t) {
+					case TYPE_PATH: {
+						matches = vm_call(vm, proc, callee.v.path->clauses[0], &arg); /* Create & push stack call-frame */
+						break;
+					}
+					case 0:
+					case TYPE_PATHID: {
+						struct path   *p;
+						struct module *m;
 
-                        const char *module = callee.v.pathid->module;
-                        const char *path   = callee.v.pathid->path;
+						const char *module = callee.v.pathid->module;
+						const char *path   = callee.v.pathid->path;
 
-                        if (! (m = vm_module(vm, module)))
-                            error(1, 0, "module `%s` not found", module);
+						if (! (m = vm_module(vm, module)))
+							error(1, 0, "module `%s` not found", module);
 
-                        if (! (p = module_path(m, path)))
-                            error(1, 0, "path `%s` not found in `%s` module", path, module);
+						if (! (p = module_path(m, path)))
+							error(1, 0, "path `%s` not found in `%s` module", path, module);
 
-                        K[INDEXK(B)] = *tvalue(TYPE_PATH, (Value){ .path = p });
+						K[INDEXK(B)] = *tvalue(TYPE_PATH, (Value){ .path = p });
 
-                        c = p->clauses[0];
-                        matches = vm_call(vm, proc, c, &arg); /* Create & push stack call-frame */
+						c = p->clauses[0];
+						matches = vm_call(vm, proc, c, &arg); /* Create & push stack call-frame */
 
-                        break;
-                    }
-                    case TYPE_CLAUSE:
-                        c = callee.v.clause;
-                        break;
-                    default:
-                        assert(0);
-                }
-                if (matches < 0)
-                    error(1, 0, "no matches for %s/%s", c->path->module->name, c->path->name);
+						break;
+					}
+					case TYPE_CLAUSE:
+						c = callee.v.clause;
+						break;
+					default:
+						assert(0);
+				}
+				if (matches < 0)
+					error(1, 0, "no matches for %s/%s", c->path->module->name, c->path->name);
 
-                s->frame->result = A;                    /* Set return-value register */
+				s->frame->result = A;                    /* Set return-value register */
 
-                goto reentry;
-            }
-            case OP_RETURN: {
-                struct frame *old = stack_pop(s);
+				goto reentry;
+			}
+			case OP_RETURN: {
+				struct frame *old = stack_pop(s);
 
-                /* We reached the top of the stack,
-                 * exit loop & return last register value. */
-                if (s->depth == 0)
-                    return &R[A];
+				/* We reached the top of the stack,
+				 * exit loop & return last register value. */
+				if (s->depth == 0)
+					return &R[A];
 
-                assert(s->frame->locals);
-                assert(old);
+				assert(s->frame->locals);
+				assert(old);
 
-                s->frame->locals[old->result] = RK(A);
+				s->frame->locals[old->result] = RK(A);
 
-                for (int i = 0; i < proc->stack->depth; i++)
-                    debug(INDENT);
-                debug("%s/%s\n", s->frame->clause->path->module->name,
-                                 s->frame->clause->path->name);
-                goto reentry;
-            }
-            default:
-                assert(0);
-                break;
-        }
-        if (proc->credits == 0) {
-            Process *np;
+				for (int i = 0; i < proc->stack->depth; i++)
+					debug(INDENT);
+				debug("%s/%s\n", s->frame->clause->path->module->name,
+								 s->frame->clause->path->name);
+				goto reentry;
+			}
+			default:
+				assert(0);
+				break;
+		}
+		if (proc->credits == 0) {
+			Process *np;
 
-            if ((np = vm_select(vm))) {
-                proc = np;
-                goto reentry;
-            } else {
-                proc->credits = 96;
-            }
-        }
-    }
-    assert(0);
-    return NULL;
+			if ((np = vm_select(vm))) {
+				proc = np;
+				goto reentry;
+			} else {
+				proc->credits = 96;
+			}
+		}
+	}
+	assert(0);
+	return NULL;
 }
 
 struct tvalue *vm_run(VM *vm, const char *module, const char *path)
 {
-    struct module *m = vm_module(vm, module);
+	struct module *m = vm_module(vm, module);
 
-    if (! m)
-        error(2, 0, "couldn't find module '%s'", module);
+	if (! m)
+		error(2, 0, "couldn't find module '%s'", module);
 
-    struct path *p = module_path(m, path);
+	struct path *p = module_path(m, path);
 
-    if (! p)
-        error(2, 0, "couldn't find path '%s/%s'", module, path);
+	if (! p)
+		error(2, 0, "couldn't find path '%s/%s'", module, path);
 
-    Process *proc = vm_spawn(vm, m, p);
+	Process *proc = vm_spawn(vm, m, p);
 
-    vm_call(vm, proc, p->clauses[0], NULL);
+	vm_call(vm, proc, p->clauses[0], NULL);
 
-    return vm_execute(vm, proc);
+	return vm_execute(vm, proc);
 }
 
 struct module *vm_module(VM *vm, const char *name)
 {
-    uint32_t key = hash(name, strlen(name)) % 512;
-    struct modulelist *ms  = vm->modules[key];
+	uint32_t key = hash(name, strlen(name)) % 512;
+	struct modulelist *ms  = vm->modules[key];
 
-    while (ms && ms->head) {
-        if (! strcmp(ms->head->name, name)) {
-            return ms->head;
-        }
-        ms = ms->tail;
-    }
-    return NULL;
+	while (ms && ms->head) {
+		if (! strcmp(ms->head->name, name)) {
+			return ms->head;
+		}
+		ms = ms->tail;
+	}
+	return NULL;
 }
