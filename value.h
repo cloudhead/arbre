@@ -58,8 +58,8 @@ struct PathID {
 };
 
 struct Select;
-struct Clause;
-struct Path;
+struct clause;
+struct path;
 
 typedef union {
     struct TValue  *tval;
@@ -68,11 +68,11 @@ typedef union {
     int             number;
     const char     *atom;
     String         *string;
-    struct Clause  *clause;
+    struct clause  *clause;
     struct Tuple   *tuple;
     struct List    *list;
     struct Select  *select;
-    struct Path    *path;
+    struct path    *path;
     struct PathID  *pathid;
 } Value;
 

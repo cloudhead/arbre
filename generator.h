@@ -11,7 +11,7 @@ typedef struct {
     struct source  *source;
     PathEntry      *path;
     PathEntry     **paths;
-    Module         *module;
+    struct module  *module;
     struct node    *block; /* Current block */
     int             env; /* Index of root module */
     int             head;

@@ -8,8 +8,8 @@
  */
 #define  STACK_MAXDIFF  4096
 
-struct Clause {
-    struct Path    *path;
+struct clause {
+    struct path    *path;
     TValue          pattern;
     Instruction    *code;
     unsigned long   codelen; /* TODO: Rename to ncode */
@@ -18,53 +18,48 @@ struct Clause {
     int             constantsn; /* TODO: Rename to nconstants */
     int             pc;
 };
-typedef struct Clause Clause;
 
 struct Select {
-    int     nclauses : 8;
-    Clause  *clauses[];
+    int            nclauses : 8;
+    struct clause  *clauses[];
 };
 typedef struct Select Select;
 
-struct Path {
+struct path {
     const char     *name;
-    struct Module  *module;
+    struct module  *module;
 
     /* Clauses */
     int            nclauses;
-    Clause         *clause;
-    Clause        **clauses;
+    struct clause  *clause;
+    struct clause **clauses;
 };
-typedef struct Path Path;
 
-struct Module {
+struct module {
     const char   *name;
-    struct Path **paths;
+    struct path **paths;
     unsigned      pathc;
 };
 
-struct ModuleList {
-    struct Module     *head;
-    struct ModuleList *tail;
+struct modulelist {
+    struct module     *head;
+    struct modulelist *tail;
 };
 
-typedef struct Module     Module;
-typedef struct ModuleList ModuleList;
-
-typedef struct Frame {
-    struct Frame    *prev;
+struct frame {
+    struct frame    *prev;
     Instruction     *pc;
-    Clause          *clause;
+    struct clause   *clause;
     uint8_t          result;
     TValue           locals[];
-} Frame;
+};
 
 struct stack {
-    Frame   *base;  /* Base of the stack */
-    Frame   *frame; /* Frame pointer */
-    size_t   size;
-    size_t   capacity;
-    int      depth;
+    struct frame   *base;  /* Base of the stack */
+    struct frame   *frame; /* struct frame pointer */
+    size_t          size;
+    size_t          capacity;
+    int             depth;
 };
 
 #define PROC_WAITING 1
@@ -72,28 +67,28 @@ struct stack {
 
 typedef struct {
     struct stack   *stack;
-    Path           *path;
-    Module         *module;
-    Clause         *clause;
+    struct path    *path;
+    struct module  *module;
+    struct clause  *clause;
     uint64_t        pc;
     uint16_t        credits;
     uint8_t         flags;
 } Process;
 
-Module     *module          (const char *name, unsigned pathc);
-Path       *module_path     (Module *m, const char *path);
-void        module_prepend  (ModuleList *list, Module *m);
-ModuleList *modulelist      (Module *head);
+struct module     *module          (const char *name, unsigned pathc);
+struct path       *module_path     (struct module *m, const char *path);
+void               module_prepend  (struct modulelist *list, struct module *m);
+struct modulelist *modulelist      (struct module *head);
 
 struct stack   *stack           (void);
-void            stack_push      (struct stack *s, Clause *c);
-Frame          *stack_pop       (struct stack *s);
+void            stack_push      (struct stack *s, struct clause *c);
+struct frame   *stack_pop       (struct stack *s);
 void            stack_pp        (struct stack *s);
 
-Path       *path            (const char *name, int nclauses);
-Process    *process         (Module *m, Path *path);
-Frame      *frame           (TValue *locals, int nlocals);
-void        frame_pp        (Frame *);
+struct path       *path            (const char *name, int nclauses);
+Process           *process         (struct module *m, struct path *path);
+struct frame      *frame           (TValue *locals, int nlocals);
+void               frame_pp        (struct frame *);
 
-Clause     *clause          (TValue pattern, int nlocals, int clen);
-TValue     *select_         (int nclauses);
+struct clause     *clause          (TValue pattern, int nlocals, int clen);
+TValue            *select_         (int nclauses);

@@ -24,7 +24,7 @@ struct stack *stack(void)
     struct stack *s = malloc(sizeof(*s));
 
     s->size = 0;
-    s->capacity = sizeof(Frame) + sizeof(TValue);
+    s->capacity = sizeof(struct frame) + sizeof(TValue);
     s->base = malloc(s->capacity);
     s->frame = NULL;
     s->depth = 0;
@@ -32,12 +32,12 @@ struct stack *stack(void)
     return s;
 }
 
-void stack_correct(struct stack *s, Frame *old)
+void stack_correct(struct stack *s, struct frame *old)
 {
-    for (Frame *f = s->frame; f != NULL; f = f->prev) {
+    for (struct frame *f = s->frame; f != NULL; f = f->prev) {
         if (f->prev) {
             ptrdiff_t diff = (ptrdiff_t)f->prev - (ptrdiff_t)old;
-            f->prev = (Frame *)(diff + (ptrdiff_t)s->base);
+            f->prev = (struct frame *)(diff + (ptrdiff_t)s->base);
         }
     }
 }
@@ -45,14 +45,14 @@ void stack_correct(struct stack *s, Frame *old)
 /*
  * Push the given frame on the stack
  */
-void stack_push(struct stack *s, Clause *c)
+void stack_push(struct stack *s, struct clause *c)
 {
-    int nsize = s->size + sizeof(Frame)
+    int nsize = s->size + sizeof(struct frame)
                         + sizeof(TValue) * c->nlocals;
 
-    Frame *oldbase = NULL,
-          *prev = s->frame,
-          *f;
+    struct frame *oldbase = NULL,
+                 *prev = s->frame,
+                 *f;
 
     if (s->capacity < nsize) {
         oldbase = s->base;
@@ -63,11 +63,11 @@ void stack_push(struct stack *s, Clause *c)
             s->capacity = nsize;
 
         s->base = realloc(s->base, s->capacity);
-        memset((Frame *)((ptrdiff_t)s->base + s->size + sizeof(Frame)), 0,
-               s->capacity - s->size - sizeof(Frame));
+        memset((struct frame *)((ptrdiff_t)s->base + s->size + sizeof(struct frame)), 0,
+               s->capacity - s->size - sizeof(struct frame));
     }
 
-    s->frame  = (Frame *)((ptrdiff_t)s->base + s->size);
+    s->frame  = (struct frame *)((ptrdiff_t)s->base + s->size);
     s->size   = nsize;
 
     f         = s->frame;
@@ -86,9 +86,9 @@ void stack_push(struct stack *s, Clause *c)
 /*
  * Pop the current frame from the stack
  */
-Frame *stack_pop(struct stack *s)
+struct frame *stack_pop(struct stack *s)
 {
-    Frame *f = s->frame, *old;
+    struct frame *f = s->frame, *old;
 
     s->size -= sizeof(*f) + sizeof(TValue) * f->clause->nlocals;
 
@@ -110,32 +110,34 @@ Frame *stack_pop(struct stack *s)
 /*
  * Module allocator
  */
-Module *module(const char *name, unsigned pathc)
+struct module *module(const char *name, unsigned pathc)
 {
-    Module *m = malloc(sizeof(*m));
-            m->name = name;
-            m->paths = pathc ? malloc(sizeof(Path *) * pathc) : NULL;
-            m->pathc = pathc;
-    return  m;
+    struct module *m = malloc(sizeof(*m));
+
+    m->name = name;
+    m->paths = pathc ? malloc(sizeof(struct path *) * pathc) : NULL;
+    m->pathc = pathc;
+
+    return m;
 }
 
 /*
  * SymList allocator/initializer
  */
-ModuleList *modulelist(Module *head)
+struct modulelist *modulelist(struct module *head)
 {
-    ModuleList *list = malloc(sizeof(*list));
+    struct modulelist *list = malloc(sizeof(*list));
     list->head = head;
     list->tail = NULL;
     return list;
 }
 
 /*
- * Prepend Module `m` to ModuleList `list`
+ * Prepend module `m` to `list`
  */
-void module_prepend(ModuleList *list, Module *m)
+void module_prepend(struct modulelist *list, struct module *m)
 {
-    ModuleList *head;
+    struct modulelist *head;
 
     if (list->head) {
         head = modulelist(m);
@@ -145,7 +147,7 @@ void module_prepend(ModuleList *list, Module *m)
     }
 }
 
-Path *module_path(Module *m, const char *path)
+struct path *module_path(struct module *m, const char *path)
 {
     /* TODO: Optimize with hash table */
     for (int i = 0; i < m->pathc; i++) {
@@ -156,24 +158,28 @@ Path *module_path(Module *m, const char *path)
     return NULL;
 }
 
-Path *path(const char *name, int nclauses)
+struct path *path(const char *name, int nclauses)
 {
-    Path  *p = malloc(sizeof(*p));
-           p->name = name;
-           p->nclauses = nclauses;
-           p->clauses = calloc(nclauses, sizeof(Clause));
+    struct path *p = malloc(sizeof(*p));
+
+    p->name = name;
+    p->nclauses = nclauses;
+    p->clauses = calloc(nclauses, sizeof(struct clause));
+
     return p;
 }
 
-Clause *clause(TValue pattern, int nlocals, int clen)
+struct clause *clause(TValue pattern, int nlocals, int clen)
 {
-    Clause *c = malloc(sizeof(*c));
-            c->pattern = pattern;
-            c->nlocals = nlocals;
-            c->constants = malloc(sizeof(TValue) * clen);
-            c->constantsn = clen;
-            c->pc = -1;
-    return  c;
+    struct clause *c = malloc(sizeof(*c));
+
+    c->pattern = pattern;
+    c->nlocals = nlocals;
+    c->constants = malloc(sizeof(TValue) * clen);
+    c->constantsn = clen;
+    c->pc = -1;
+
+    return c;
 }
 
 TValue *select_(int nclauses)
@@ -186,7 +192,7 @@ TValue *select_(int nclauses)
     return tvalue(TYPE_SELECT, (Value){ .select = s });
 }
 
-Process *process(Module *m, Path *path)
+Process *process(struct module *m, struct path *path)
 {
     Process *p = malloc(sizeof(*p));
     p->stack = stack();

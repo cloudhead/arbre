@@ -95,7 +95,7 @@ Variable *var(char *name, Register reg)
     return v;
 }
 
-Module *source_module(struct source *src)
+struct module *source_module(struct source *src)
 {
     char *sep  = strrchr(src->path, '.'),
          *name = strndup(src->path, sep - src->path);

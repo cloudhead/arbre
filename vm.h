@@ -7,12 +7,12 @@
  *
  */
 typedef struct {
-    unsigned long    pc;
-    Clause          *clause;
-    Process        **procs;
-    Process         *proc;
-    unsigned        nprocs;
-    ModuleList      *modules[];
+    unsigned long       pc;
+    struct clause      *clause;
+    Process           **procs;
+    Process            *proc;
+    unsigned           nprocs;
+    struct modulelist  *modules[];
 } VM;
 
 struct version {
@@ -22,6 +22,6 @@ struct version {
 };
 
 VM     *vm       (void);
-void    vm_load  (VM *vm, const char *module, Path *paths[]);
+void    vm_load  (VM *vm, const char *module, struct path *paths[]);
 void    vm_open  (VM *vm, const char *module, uint8_t *code);
-TValue *vm_run   (VM *vm,  const char *module, const char *path);
+TValue *vm_run   (VM *vm, const char *module, const char *path);

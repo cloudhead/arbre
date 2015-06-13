@@ -42,14 +42,14 @@
 #define debug(...)
 #endif
 
-Module *vm_module  (VM *vm, const char *name);
+struct module *vm_module  (VM *vm, const char *name);
 TValue *vm_execute (VM *vm, Process *proc);
 
 int match (TValue *locals, TValue *pattern, TValue *v, TValue *local);
 
 VM *vm(void)
 {
-    size_t msize = sizeof(ModuleList*) * 512;
+    size_t msize = sizeof(struct modulelist *) * 512;
     VM    *vm    = malloc(sizeof(*vm) + msize);
 
     vm->clause = NULL;
@@ -160,7 +160,7 @@ uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k)
 }
 
 /* TODO: Paths should be per-module */
-uint8_t *vm_readclause(VM *vm, Path *p, int index, uint8_t *b)
+uint8_t *vm_readclause(VM *vm, struct path *p, int index, uint8_t *b)
 {
     /* Pattern */
     TValue pattern = bin_readnode(&b);
@@ -173,7 +173,7 @@ uint8_t *vm_readclause(VM *vm, Path *p, int index, uint8_t *b)
 
     debug("reading clause with %d constant(s) and %d local(s)..\n", ksize, nlocals);
 
-    Clause *c = clause(pattern, nlocals, ksize);
+    struct clause *c = clause(pattern, nlocals, ksize);
     c->path = p;
 
     for (int i = 0; i < ksize; i++) {
@@ -196,7 +196,7 @@ uint8_t *vm_readclause(VM *vm, Path *p, int index, uint8_t *b)
     return b;
 }
 
-uint8_t *vm_readpath(VM *vm, Module *m, int index, uint8_t *b)
+uint8_t *vm_readpath(VM *vm, struct module *m, int index, uint8_t *b)
 {
     char *name = NULL;
 
@@ -220,7 +220,7 @@ uint8_t *vm_readpath(VM *vm, Module *m, int index, uint8_t *b)
     debug("reading path '%s'..\n", name);
     debug("reading %d clause(s)..\n", nclauses);
 
-    Path *p = path(name, nclauses);
+    struct path *p = path(name, nclauses);
     p->module = m;
 
     m->paths[index] = p;
@@ -251,7 +251,7 @@ void vm_open(VM *vm, const char *name, uint8_t *buffer)
 
     debug("reading %d paths..\n", pathsn);
 
-    Module *m = module(name, pathsn);
+    struct module *m = module(name, pathsn);
 
     for (int i = 0; i < pathsn; i++) {
         buffer = vm_readpath(vm, m, i, buffer);
@@ -370,10 +370,10 @@ int match(TValue *locals, TValue *pattern, TValue *v, TValue *local)
     return -1;
 }
 
-int vm_tailcall(VM *vm, Process *proc, Clause *c, TValue *arg)
+int vm_tailcall(VM *vm, Process *proc, struct clause *c, TValue *arg)
 {
-    Frame  *frame = proc->stack->frame;
-    TValue *local = frame->locals;
+    struct frame  *frame = proc->stack->frame;
+    TValue *local        = frame->locals;
 
     memset(local, 0, sizeof(TValue) * c->nlocals);
 
@@ -400,7 +400,7 @@ int vm_tailcall(VM *vm, Process *proc, Clause *c, TValue *arg)
     return nlocals;
 }
 
-int vm_call(VM *vm, Process *proc, Clause *c, TValue *arg)
+int vm_call(VM *vm, Process *proc, struct clause *c, TValue *arg)
 {
     /* TODO: Perform pattern-match */
 
@@ -431,7 +431,7 @@ int vm_call(VM *vm, Process *proc, Clause *c, TValue *arg)
     return nlocals;
 }
 
-Process *vm_spawn(VM *vm, Module *m, Path *p)
+Process *vm_spawn(VM *vm, struct module *m, struct path *p)
 {
     Process *proc = process(m, p);
 
@@ -479,10 +479,10 @@ Process *vm_select(VM *vm)
 
 TValue *vm_execute(VM *vm, Process *proc)
 {
-    Clause *c;
+    struct clause *c;
 
     struct stack *s;
-    Frame *f;
+    struct frame *f;
 
     Instruction i;
 
@@ -624,8 +624,8 @@ reentry:
                     }
                     case 0:
                     case TYPE_PATHID: {
-                        Path   *p;
-                        Module *m;
+                        struct path   *p;
+                        struct module *m;
 
                         const char *module = callee.v.pathid->module;
                         const char *path   = callee.v.pathid->path;
@@ -657,7 +657,7 @@ reentry:
                 goto reentry;
             }
             case OP_RETURN: {
-                Frame *old = stack_pop(s);
+                struct frame *old = stack_pop(s);
 
                 /* We reached the top of the stack,
                  * exit loop & return last register value. */
@@ -696,12 +696,12 @@ reentry:
 
 TValue *vm_run(VM *vm, const char *module, const char *path)
 {
-    Module *m = vm_module(vm, module);
+    struct module *m = vm_module(vm, module);
 
     if (! m)
         error(2, 0, "couldn't find module '%s'", module);
 
-    Path *p = module_path(m, path);
+    struct path *p = module_path(m, path);
 
     if (! p)
         error(2, 0, "couldn't find path '%s/%s'", module, path);
@@ -713,10 +713,10 @@ TValue *vm_run(VM *vm, const char *module, const char *path)
     return vm_execute(vm, proc);
 }
 
-Module *vm_module(VM *vm, const char *name)
+struct module *vm_module(VM *vm, const char *name)
 {
     uint32_t key = hash(name, strlen(name)) % 512;
-    ModuleList *ms  = vm->modules[key];
+    struct modulelist *ms  = vm->modules[key];
 
     while (ms && ms->head) {
         if (! strcmp(ms->head->name, name)) {
