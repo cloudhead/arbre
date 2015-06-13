@@ -25,8 +25,8 @@ enum             IMode {ABC, AD, AJ};   /* Instruction mode/format */
  */
 #define OPSIZE        8
 #define OPPOS_A       OPSIZE
-#define OPPOS_C       OPPOS_A + OPSIZE
-#define OPPOS_B       OPPOS_C + OPSIZE
+#define OPPOS_C       (OPPOS_A + OPSIZE)
+#define OPPOS_B       (OPPOS_C + OPSIZE)
 #define OPPOS_D       OPPOS_C
 
 
