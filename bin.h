@@ -6,4 +6,4 @@
  * bin.h
  *
  */
-TValue bin_readnode(uint8_t **bp);
+struct tvalue bin_readnode(uint8_t **bp);

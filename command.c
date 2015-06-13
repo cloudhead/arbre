@@ -200,7 +200,7 @@ static int command_test(Command *cmd)
  */
 static int command_run(Command *c)
 {
-    TValue *ret;
+    struct tvalue *ret;
 
     if (c->inputc > 1)
         error(1, 0, "more than one input file was given");

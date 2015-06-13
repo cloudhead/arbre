@@ -142,7 +142,7 @@ void generate(Generator *g, FILE *out)
     }
 }
 
-static int gen_constant(Generator *g, const char *src, TValue *tval)
+static int gen_constant(Generator *g, const char *src, struct tvalue *tval)
 {
     if (src) {
         Sym *k = symtab_lookup(g->path->clause->ktable, src);
@@ -151,9 +151,9 @@ static int gen_constant(Generator *g, const char *src, TValue *tval)
             return k->e.tval->v.number;
     }
 
-    int      index  = g->path->clause->kindex++;
-    Value    v      = (Value){ .number = index };
-    TValue  *indexv = tvalue(-1, v);
+    int             index  = g->path->clause->kindex++;
+    Value           v      = (Value){ .number = index };
+    struct tvalue  *indexv = tvalue(-1, v);
 
     g->path->clause->kheader[index] = tval;
 
@@ -172,7 +172,7 @@ static unsigned nextreg(Generator *g)
 static int gen_atom(Generator *g, struct node *n)
 {
     Value v = (Value){ .atom = n->src };
-    TValue *tval = tvalue(TYPE_ATOM, v);
+    struct tvalue *tval = tvalue(TYPE_ATOM, v);
 
     return RKASK(gen_constant(g, n->src, tval));
 }
@@ -315,9 +315,9 @@ static int gen_defined(Generator *g, struct node *n)
 }
 
 /* TODO: Implement a node2tval function */
-static TValue *gen_pattern(Generator *g, struct node *n)
+static struct tvalue *gen_pattern(Generator *g, struct node *n)
 {
-    TValue *pattern;
+    struct tvalue *pattern;
 
     if (! n)
         return NULL;
@@ -428,7 +428,7 @@ static int gen_select(Generator *g, struct node *n)
         if (c->o.clause.lval && arg) {
             unsigned reg = nextreg(g);
 
-            TValue *pat = gen_pattern(g, c->o.clause.lval);
+            struct tvalue *pat = gen_pattern(g, c->o.clause.lval);
 
             OpCode op;
 
@@ -593,7 +593,7 @@ static int gen_num(Generator *g, struct node *n)
 
     Value v = (Value){ .number = number };
 
-    TValue *tval = tvalue(TYPE_NUMBER, v);
+    struct tvalue *tval = tvalue(TYPE_NUMBER, v);
 
     // TODO: Think about inlining small numbers
 
@@ -763,7 +763,7 @@ static void dump_pattern(struct node *pattern, FILE *out)
     dump_node(pattern, out);
 }
 
-static void dump_constant(TValue *tval, FILE *out)
+static void dump_constant(struct tvalue *tval, FILE *out)
 {
     /* Write constant type */
     fputc(tval->t, out);
@@ -823,7 +823,7 @@ static void dump_constant(TValue *tval, FILE *out)
 
 static void dump_clause(ClauseEntry *c, FILE *out)
 {
-    TValue *tval;
+    struct tvalue *tval;
 
     /* Write clause pattern */
     dump_pattern(c->node->o.clause.lval, out);

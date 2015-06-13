@@ -12,7 +12,7 @@ union SymEntry {
     struct Variable  *var;
     struct Type      *type;
     struct PathEntry *path;
-    struct TValue    *tval;
+    struct tvalue    *tval;
 };
 
 enum SymType {
@@ -51,7 +51,7 @@ void      symtab_pp(SymTable *t);
 
 Sym      *symbol(const char *k, struct Variable *v);
 Sym      *psymbol(const char *k, struct PathEntry *p);
-Sym      *tvsymbol(const char *k, TValue *tv);
+Sym      *tvsymbol(const char *k, struct tvalue *tv);
 SymList  *symlist(Sym *head);
 void      sym_prepend(SymList *list, Sym *s);
 

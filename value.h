@@ -8,7 +8,7 @@
  */
 
 /*
- * TValue data-types
+ * Tvalue data-types
  */
 typedef enum {
     TYPE_INVALID,
@@ -37,7 +37,7 @@ typedef enum {
  */
 
 /*
- * TValue data-type qualifiers
+ * Tvalue data-type qualifiers
  */
 typedef enum {
     Q_NONE     = 0,
@@ -62,7 +62,7 @@ struct clause;
 struct path;
 
 typedef union {
-    struct TValue  *tval;
+    struct tvalue  *tval;
     unsigned char   ident;
     bool            boolean;
     int             number;
@@ -76,37 +76,34 @@ typedef union {
     struct PathID  *pathid;
 } Value;
 
-struct TValue {
+struct tvalue {
     TYPE    t;
     Value   v;
 };
 
-struct TValueList {
-    struct TValue     *head;
-    struct TValueList *tail;
+struct tvaluelist {
+    struct tvalue     *head;
+    struct tvaluelist *tail;
 };
 
-typedef struct TValueList TValueList;
-typedef struct TValue     TValue;
-
 struct Tuple {
-    int     arity : 8;
-    TValue  members[];
+    int           arity : 8;
+    struct tvalue members[];
 };
 typedef struct Tuple Tuple;
 
 struct List {
-    TValue        *head;
+    struct tvalue *head;
     struct List   *tail;
 };
 typedef struct List List;
 
-TValue *tvalue(TYPE type, Value val);
-void    tvalue_pp(TValue *tval);
-void    tvalues_pp(TValue *tval, int size);
+struct tvalue *tvalue(TYPE type, Value val);
+void           tvalue_pp(struct tvalue *tval);
+void           tvalues_pp(struct tvalue *tval, int size);
 
-TValue *tuple(int arity);
-TValue *list(TValue *);
-TValue *atom(const char *);
-TValue *number(const char *);
-List   *list_cons(List *list, TValue *e);
+struct tvalue *tuple(int arity);
+struct tvalue *list(struct tvalue *);
+struct tvalue *atom(const char *);
+struct tvalue *number(const char *);
+List   *list_cons(List *list, struct tvalue *e);

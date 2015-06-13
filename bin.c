@@ -16,11 +16,11 @@
 
 #include  "value.h"
 
-TValue bin_readtuple(uint8_t **bp);
+struct tvalue bin_readtuple(uint8_t **bp);
 
-TValue bin_readnode(uint8_t **bp)
+struct tvalue bin_readnode(uint8_t **bp)
 {
-    TValue tv;
+    struct tvalue tv;
 
     TYPE t = *(*bp)++;
 
@@ -29,7 +29,7 @@ TValue bin_readnode(uint8_t **bp)
             tv = bin_readtuple(bp);
             break;
         case TYPE_NUMBER:
-            tv = (TValue){
+            tv = (struct tvalue){
                 .t = TYPE_NUMBER,
                 .v = (Value){
                     .number = *(int *)*bp
@@ -40,7 +40,7 @@ TValue bin_readnode(uint8_t **bp)
         case TYPE_ATOM: {
             uint8_t len = *(*bp)++;
 
-            tv = (TValue){
+            tv = (struct tvalue){
                 .t = TYPE_ATOM,
                 .v = (Value){
                      // Alternatively `strndup(*bp, len)`
@@ -51,7 +51,7 @@ TValue bin_readnode(uint8_t **bp)
             break;
         }
         case TYPE_ANY:
-            tv = (TValue){ .t = TYPE_ANY };
+            tv = (struct tvalue){ .t = TYPE_ANY };
             break;
         default:
             assert(0);
@@ -59,11 +59,11 @@ TValue bin_readnode(uint8_t **bp)
     return tv;
 }
 
-TValue bin_readtuple(uint8_t **bp)
+struct tvalue bin_readtuple(uint8_t **bp)
 {
     uint8_t arity = *(*bp)++;
 
-    Tuple *tup = malloc(sizeof(*tup) + sizeof(TValue) * arity);
+    Tuple *tup = malloc(sizeof(*tup) + sizeof(struct tvalue) * arity);
     tup->arity = arity;
 
     for (int i = 0; i < arity; i++) {
@@ -71,7 +71,7 @@ TValue bin_readtuple(uint8_t **bp)
     }
 
     Value v = (Value){ .tuple = tup };
-    TValue *t = tvalue(TYPE_TUPLE, v);
+    struct tvalue *t = tvalue(TYPE_TUPLE, v);
 
     return *t;
 }

@@ -108,9 +108,9 @@ Sym *psymbol(const char *k, PathEntry *p)
 }
 
 /*
- * Sym allocator/initializer (TValue)
+ * Sym allocator/initializer (tvalue)
  */
-Sym *tvsymbol(const char *k, TValue *t)
+Sym *tvsymbol(const char *k, struct tvalue *t)
 {
     Sym   *s = malloc(sizeof(*s));
            s->name   = k;

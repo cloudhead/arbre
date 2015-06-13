@@ -31,7 +31,7 @@ struct ClauseEntry {
 
     /* Constants */
     SymTable       *ktable;
-    TValue        **kheader;
+    struct tvalue **kheader;
     unsigned        kindex;
 
     /* Locals */

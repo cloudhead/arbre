@@ -10,11 +10,11 @@
 
 struct clause {
     struct path    *path;
-    TValue          pattern;
+    struct tvalue   pattern;
     Instruction    *code;
     unsigned long   codelen; /* TODO: Rename to ncode */
     int            nlocals;
-    TValue         *constants;
+    struct tvalue  *constants;
     int             constantsn; /* TODO: Rename to nconstants */
     int             pc;
 };
@@ -51,7 +51,7 @@ struct frame {
     Instruction     *pc;
     struct clause   *clause;
     uint8_t          result;
-    TValue           locals[];
+    struct tvalue    locals[];
 };
 
 struct stack {
@@ -87,8 +87,8 @@ void            stack_pp        (struct stack *s);
 
 struct path       *path            (const char *name, int nclauses);
 Process           *process         (struct module *m, struct path *path);
-struct frame      *frame           (TValue *locals, int nlocals);
+struct frame      *frame           (struct tvalue *locals, int nlocals);
 void               frame_pp        (struct frame *);
 
-struct clause     *clause          (TValue pattern, int nlocals, int clen);
-TValue            *select_         (int nclauses);
+struct clause     *clause          (struct tvalue pattern, int nlocals, int clen);
+struct tvalue     *select_         (int nclauses);

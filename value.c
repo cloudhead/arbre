@@ -29,9 +29,9 @@ const char *TYPE_STRINGS[] = {
     [TYPE_PATH] = "path"
 };
 
-TValue *tvalue(TYPE type, Value val)
+struct tvalue *tvalue(TYPE type, Value val)
 {
-    TValue *tval = malloc(sizeof(*tval));
+    struct tvalue *tval = malloc(sizeof(*tval));
 
     tval->v = val;
     tval->t = type;
@@ -39,7 +39,7 @@ TValue *tvalue(TYPE type, Value val)
     return tval;
 }
 
-void tvalue_pp(TValue *tval)
+void tvalue_pp(struct tvalue *tval)
 {
     if (tval == NULL) {
         printf("()");
@@ -94,7 +94,7 @@ void tuple_pp(Value v)
     putchar(')');
 }
 
-void tvalues_pp(TValue *tval, int size)
+void tvalues_pp(struct tvalue *tval, int size)
 {
     putchar('[');
     for (int i = 0; i < size; i++) {
@@ -105,17 +105,17 @@ void tvalues_pp(TValue *tval, int size)
     putchar(']');
 }
 
-TValue *tuple(int arity)
+struct tvalue *tuple(int arity)
 {
     assert(arity <= 255);
 
-    Tuple *t = malloc(sizeof(*t) + sizeof(TValue) * arity);
+    Tuple *t = malloc(sizeof(*t) + sizeof(struct tvalue) * arity);
            t->arity = arity;
 
     return tvalue(TYPE_TUPLE, (Value){ .tuple = t });
 }
 
-TValue *list(TValue *head)
+struct tvalue *list(struct tvalue *head)
 {
     List *l = malloc(sizeof(*l));
           l->head = head;
@@ -124,7 +124,7 @@ TValue *list(TValue *head)
     return tvalue(TYPE_LIST, (Value){ .list = l });
 }
 
-List *list_cons(List *list, TValue *head)
+List *list_cons(List *list, struct tvalue *head)
 {
     List *l = malloc(sizeof(*l));
           l->head = head;
@@ -133,14 +133,14 @@ List *list_cons(List *list, TValue *head)
     return l;
 }
 
-TValue *atom(const char *name)
+struct tvalue *atom(const char *name)
 {
     assert(name);
 
     return tvalue(TYPE_ATOM, (Value){ .atom = name });
 }
 
-TValue *number(const char *src)
+struct tvalue *number(const char *src)
 {
     int number = atoi(src);
 

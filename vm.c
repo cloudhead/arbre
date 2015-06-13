@@ -43,9 +43,9 @@
 #endif
 
 struct module *vm_module  (VM *vm, const char *name);
-TValue *vm_execute (VM *vm, Process *proc);
+struct tvalue *vm_execute (VM *vm, Process *proc);
 
-int match (TValue *locals, TValue *pattern, TValue *v, TValue *local);
+int match (struct tvalue *locals, struct tvalue *pattern, struct tvalue *v, struct tvalue *local);
 
 VM *vm(void)
 {
@@ -67,7 +67,7 @@ void vm_free(VM *vm)
     // TODO: Implement
 }
 
-uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k);
+uint8_t *vm_readk(VM *vm, uint8_t *b, struct tvalue *k);
 
 uint8_t *vm_readlist(VM *vm, uint8_t *b, Value *v)
 {
@@ -78,7 +78,7 @@ uint8_t *vm_readlist(VM *vm, uint8_t *b, Value *v)
     List *l = list_cons(NULL, NULL);
 
     for (size_t i = 0; i < length; i++) {
-        TValue *val = malloc(sizeof(*val));
+        struct tvalue *val = malloc(sizeof(*val));
 
         b = vm_readk(vm, b, val);
         l = list_cons(l, val);
@@ -91,7 +91,7 @@ uint8_t *vm_readlist(VM *vm, uint8_t *b, Value *v)
     return b;
 }
 
-uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k)
+uint8_t *vm_readk(VM *vm, uint8_t *b, struct tvalue *k)
 {
     TYPE t = *b ++;
     Value v;
@@ -140,7 +140,7 @@ uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k)
             debug("(");
 
             // TODO: Use `tuple` function
-            v.tuple = malloc(sizeof(*v.tuple) + sizeof(TValue) * arity);
+            v.tuple = malloc(sizeof(*v.tuple) + sizeof(struct tvalue) * arity);
             v.tuple->arity = arity;
 
             for (int i = 0; i < arity; i++) {
@@ -163,7 +163,7 @@ uint8_t *vm_readk(VM *vm, uint8_t *b, TValue *k)
 uint8_t *vm_readclause(VM *vm, struct path *p, int index, uint8_t *b)
 {
     /* Pattern */
-    TValue pattern = bin_readnode(&b);
+    struct tvalue pattern = bin_readnode(&b);
 
     /* Number of locals */
     uint8_t nlocals = *b ++;
@@ -266,7 +266,7 @@ void vm_open(VM *vm, const char *name, uint8_t *buffer)
     }
 }
 
-int match_atom(Value pattern, Value v, TValue *local)
+int match_atom(Value pattern, Value v, struct tvalue *local)
 {
     // TODO: If we keep a global store of atoms, we only
     // need a pointer comparison here.
@@ -276,7 +276,7 @@ int match_atom(Value pattern, Value v, TValue *local)
     return -1;
 }
 
-int match_tuple(TValue *locals, Value pattern, Value v, TValue *local)
+int match_tuple(struct tvalue *locals, Value pattern, Value v, struct tvalue *local)
 {
     int m = 0, nmatches = 0;
 
@@ -294,7 +294,7 @@ int match_tuple(TValue *locals, Value pattern, Value v, TValue *local)
     return nmatches;
 }
 
-int match_list(TValue *locals, Value pattern, Value v, TValue *local)
+int match_list(struct tvalue *locals, Value pattern, Value v, struct tvalue *local)
 {
     int m = 0, nmatches = 0;
 
@@ -311,7 +311,7 @@ int match_list(TValue *locals, Value pattern, Value v, TValue *local)
         }
 
         if (pat->head->t & Q_RANGE) {
-            TValue *t = tvalue(TYPE_LIST, (Value){ .list = val });
+            struct tvalue *t = tvalue(TYPE_LIST, (Value){ .list = val });
             m = match(locals, pat->head, t, local + nmatches);
             return nmatches + m;
         } else {
@@ -333,7 +333,7 @@ int match_list(TValue *locals, Value pattern, Value v, TValue *local)
     return nmatches;
 }
 
-int match(TValue *locals, TValue *pattern, TValue *v, TValue *local)
+int match(struct tvalue *locals, struct tvalue *pattern, struct tvalue *v, struct tvalue *local)
 {
     assert(pattern);
 
@@ -370,12 +370,12 @@ int match(TValue *locals, TValue *pattern, TValue *v, TValue *local)
     return -1;
 }
 
-int vm_tailcall(VM *vm, Process *proc, struct clause *c, TValue *arg)
+int vm_tailcall(VM *vm, Process *proc, struct clause *c, struct tvalue *arg)
 {
     struct frame  *frame = proc->stack->frame;
-    TValue *local        = frame->locals;
+    struct tvalue *local = frame->locals;
 
-    memset(local, 0, sizeof(TValue) * c->nlocals);
+    memset(local, 0, sizeof(struct tvalue) * c->nlocals);
 
     int nlocals = match(NULL, &c->pattern, arg, local);
 
@@ -400,7 +400,7 @@ int vm_tailcall(VM *vm, Process *proc, struct clause *c, TValue *arg)
     return nlocals;
 }
 
-int vm_call(VM *vm, Process *proc, struct clause *c, TValue *arg)
+int vm_call(VM *vm, Process *proc, struct clause *c, struct tvalue *arg)
 {
     /* TODO: Perform pattern-match */
 
@@ -411,8 +411,8 @@ int vm_call(VM *vm, Process *proc, struct clause *c, TValue *arg)
 
     stack_push(s, c);
 
-    TValue *locals = s->frame->locals,
-           *local  = locals;
+    struct tvalue *locals = s->frame->locals,
+                  *local  = locals;
 
     int nlocals = match(NULL, &c->pattern, arg, local);
 
@@ -477,7 +477,7 @@ Process *vm_select(VM *vm)
 #define D     (iD(i))
 #define J     (iJ(i))
 
-TValue *vm_execute(VM *vm, Process *proc)
+struct tvalue *vm_execute(VM *vm, Process *proc)
 {
     struct clause *c;
 
@@ -486,8 +486,8 @@ TValue *vm_execute(VM *vm, Process *proc)
 
     Instruction i;
 
-    TValue *R;
-    TValue *K;
+    struct tvalue *R;
+    struct tvalue *K;
 
 reentry:
 
@@ -539,8 +539,8 @@ reentry:
                 f->pc += J;
                 break;
             case OP_MATCH: {
-                TValue b = RK(B),
-                       c = RK(C);
+                struct tvalue b = RK(B),
+                              c = RK(C);
 
                 if (match(R, &b, &c, &R[A + 1]) >= 0)
                     f->pc ++;
@@ -550,8 +550,8 @@ reentry:
                 break;
             }
             case OP_GT: {
-                TValue b = RK(B),
-                       c = RK(C);
+                struct tvalue b = RK(B),
+                              c = RK(C);
 
                 assert(b.t == TYPE_NUMBER);
                 assert(c.t == TYPE_NUMBER);
@@ -564,8 +564,8 @@ reentry:
                 break;
             }
             case OP_EQ: {
-                TValue b = RK(B),
-                       c = RK(C);
+                struct tvalue b = RK(B),
+                              c = RK(C);
 
                 if (b.v.number == c.v.number)
                     f->pc ++;
@@ -591,7 +591,7 @@ reentry:
 
                 assert(R[B].t == TYPE_LIST);
 
-                TValue *t = ISK(c) ? &K[INDEXK(c)] : &R[c];
+                struct tvalue *t = ISK(c) ? &K[INDEXK(c)] : &R[c];
 
                 List *l = list_cons(R[B].v.list, t);
                 R[A] = *tvalue(TYPE_LIST, (Value){ .list = l });
@@ -602,8 +602,8 @@ reentry:
                 R[A].v.pathid->path   = RK(C).v.atom;
                 break;
             case OP_TAILCALL: {
-                int      matches = -1;
-                TValue   arg     = R[C];
+                int             matches = -1;
+                struct tvalue   arg     = R[C];
 
                 c = c->path->clauses[B];
 
@@ -614,8 +614,8 @@ reentry:
             case OP_CALL: {
                 int matches = -1;
 
-                TValue callee = RK(B);
-                TValue arg = RK(C);
+                struct tvalue callee = RK(B);
+                struct tvalue arg = RK(C);
 
                 switch (callee.t) {
                     case TYPE_PATH: {
@@ -694,7 +694,7 @@ reentry:
     return NULL;
 }
 
-TValue *vm_run(VM *vm, const char *module, const char *path)
+struct tvalue *vm_run(VM *vm, const char *module, const char *path)
 {
     struct module *m = vm_module(vm, module);
 

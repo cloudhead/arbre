@@ -85,7 +85,7 @@ ClauseEntry *clauseentry(struct node *n, uint8_t index)
 {
     ClauseEntry  *c = malloc(sizeof(*c));
                   c->node      = n;
-                  c->kheader   = calloc(128,  sizeof(TValue*));
+                  c->kheader   = calloc(128,  sizeof(struct tvalue*));
                   c->ktable    = symtab(128);
                   c->kindex    = 0;
                   c->nreg      = 0;

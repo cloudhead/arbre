@@ -24,7 +24,7 @@ struct stack *stack(void)
     struct stack *s = malloc(sizeof(*s));
 
     s->size = 0;
-    s->capacity = sizeof(struct frame) + sizeof(TValue);
+    s->capacity = sizeof(struct frame) + sizeof(struct tvalue);
     s->base = malloc(s->capacity);
     s->frame = NULL;
     s->depth = 0;
@@ -48,7 +48,7 @@ void stack_correct(struct stack *s, struct frame *old)
 void stack_push(struct stack *s, struct clause *c)
 {
     int nsize = s->size + sizeof(struct frame)
-                        + sizeof(TValue) * c->nlocals;
+                        + sizeof(struct tvalue) * c->nlocals;
 
     struct frame *oldbase = NULL,
                  *prev = s->frame,
@@ -90,7 +90,7 @@ struct frame *stack_pop(struct stack *s)
 {
     struct frame *f = s->frame, *old;
 
-    s->size -= sizeof(*f) + sizeof(TValue) * f->clause->nlocals;
+    s->size -= sizeof(*f) + sizeof(struct tvalue) * f->clause->nlocals;
 
     assert(s->size >= 0);
 
@@ -169,24 +169,24 @@ struct path *path(const char *name, int nclauses)
     return p;
 }
 
-struct clause *clause(TValue pattern, int nlocals, int clen)
+struct clause *clause(struct tvalue pattern, int nlocals, int clen)
 {
     struct clause *c = malloc(sizeof(*c));
 
     c->pattern = pattern;
     c->nlocals = nlocals;
-    c->constants = malloc(sizeof(TValue) * clen);
+    c->constants = malloc(sizeof(struct tvalue) * clen);
     c->constantsn = clen;
     c->pc = -1;
 
     return c;
 }
 
-TValue *select_(int nclauses)
+struct tvalue *select_(int nclauses)
 {
     assert(nclauses <= 255);
 
-    Select *s = malloc(sizeof(*s) + sizeof(TValue *) * nclauses);
+    Select *s = malloc(sizeof(*s) + sizeof(struct tvalue *) * nclauses);
             s->nclauses = nclauses;
 
     return tvalue(TYPE_SELECT, (Value){ .select = s });
