@@ -880,7 +880,7 @@ static struct node *parse_path(Parser *p)
             break;
         default:
             error(p, ERR_DEFAULT);
-            break;
+            return NULL;
     }
     n = node(p->token, OPATH);
 
