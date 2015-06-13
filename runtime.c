@@ -174,7 +174,7 @@ Clause *clause(TValue pattern, int nlocals, int clen)
     return  c;
 }
 
-TValue *select(int nclauses)
+TValue *select_(int nclauses)
 {
     assert(nclauses <= 255);
 
