@@ -63,7 +63,7 @@ TYPE OP_TYPES[] = {
 struct node *node(Token *t, OP op)
 {
     struct node *n   = calloc(1, sizeof(*n));
-    n->type   = -1;
+    n->type   = TYPE_INVALID;
     n->sym    = NULL;
     n->pos    = t->pos;
     n->source = t->source;
@@ -247,7 +247,7 @@ void pp_nodel(struct node *n, int lvl)
                 break;
             case OIDENT:
                 printf("%s", n->src);
-                if (n->type != -1) {
+                if (n->type != TYPE_INVALID) {
                     printf(" : %d", n->type);
                 }
                 break;
