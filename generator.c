@@ -179,8 +179,8 @@ static int gen_atom(Generator *g, struct node *n)
 
 static int gen_block(Generator *g, struct node *n)
 {
-    NodeList *ns  = n->o.block.body;
-    int       reg = 0;
+    struct nodelist *ns  = n->o.block.body;
+    int              reg = 0;
 
     g->block = n;
 
@@ -327,7 +327,7 @@ static TValue *gen_pattern(Generator *g, struct node *n)
             int i = 0;
             pattern = tuple(n->o.tuple.arity);
 
-            for (NodeList *ns = n->o.tuple.members ; ns ; ns = ns->tail) {
+            for (struct nodelist *ns = n->o.tuple.members ; ns ; ns = ns->tail) {
                 pattern->v.tuple->members[i++] = *gen_pattern(g, ns->head);
             }
             break;
@@ -379,7 +379,7 @@ static TValue *gen_pattern(Generator *g, struct node *n)
             if (n->o.list.length > 0) {
                 assert(n->o.list.items->end);
 
-                for (NodeList *ns = n->o.list.items ; ns ; ns = ns->tail) {
+                for (struct nodelist *ns = n->o.list.items ; ns ; ns = ns->tail) {
                     l = list_cons(l, gen_pattern(g, ns->head));
                 }
             }
@@ -396,7 +396,7 @@ static TValue *gen_pattern(Generator *g, struct node *n)
 
 static int gen_select(Generator *g, struct node *n)
 {
-    NodeList *ns;
+    struct nodelist *ns;
     struct node *arg = n->o.select.arg;
 
     unsigned result = nextreg(g), ret;
@@ -445,7 +445,7 @@ static int gen_select(Generator *g, struct node *n)
         }
 
         { /* Guards */
-            NodeList *ns = c->o.clause.guards;
+            struct nodelist *ns = c->o.clause.guards;
 
             for (int i = 0; i < nguards; i++) {
                 gen_node(g, ns->head);
@@ -541,7 +541,7 @@ static void gen_locals(Generator *g, struct node *n)
 {
     switch (n->op) {
         case OTUPLE:
-            for (NodeList *ns = n->o.tuple.members ; ns ; ns = ns->tail) {
+            for (struct nodelist *ns = n->o.tuple.members ; ns ; ns = ns->tail) {
                 gen_locals(g, ns->head);
             }
             break;
@@ -602,7 +602,7 @@ static int gen_num(Generator *g, struct node *n)
 
 static int gen_tuple(Generator *g, struct node *n)
 {
-    NodeList *ns;
+    struct nodelist *ns;
 
     unsigned reg = nextreg(g);
 
@@ -724,7 +724,7 @@ static void dump_number(struct node *n, FILE *out)
 
 static void dump_node(struct node *n, FILE *out)
 {
-    NodeList *ns;
+    struct nodelist *ns;
 
     fputc(OP_TYPES[n->op], out);
 

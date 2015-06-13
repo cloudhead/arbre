@@ -226,14 +226,14 @@ static struct node *range(Parser *p, struct node *from, struct node *to)
  *     list  ::= open items? close
  *     items ::= (exp ',' items) | exp
  */
-static NodeList *parse_seq(Parser *p,
-                            TOKEN open,
-                            TOKEN close,
-                            struct node *(parse)(Parser *),
-                            unsigned *size)
+static struct nodelist *parse_seq(Parser *p,
+                                  TOKEN open,
+                                  TOKEN close,
+                                  struct node *(parse)(Parser *),
+                                  unsigned *size)
 {
-    NodeList    *ns = nodelist(NULL);
-    struct node *n  = NULL;
+    struct nodelist *ns = nodelist(NULL);
+    struct node     *n  = NULL;
 
     expect(p, open); /* Eat opening delimiter */
 
@@ -270,10 +270,10 @@ static struct node *parse_tuple(Parser *p)
 {
     unsigned len;
     struct node *n;
-    NodeList *members = parse_seq(p, T_LPAREN,
-                                     T_RPAREN,
-                                     &parse_expression,
-                                     &len);
+    struct nodelist *members = parse_seq(p, T_LPAREN,
+                                         T_RPAREN,
+                                         &parse_expression,
+                                         &len);
     if (len == 1) {
         n = members->head;
     } else {
@@ -936,10 +936,10 @@ static struct node *parse_guard(Parser *p)
     return parse_expression(p);
 }
 
-static NodeList *parse_guards(Parser *p, int *len)
+static struct nodelist *parse_guards(Parser *p, int *len)
 {
     struct node     *n;
-    NodeList *ns = nodelist(NULL);
+    struct nodelist *ns = nodelist(NULL);
 
     do {
         n = parse_guard(p);
@@ -957,8 +957,8 @@ static NodeList *parse_guards(Parser *p, int *len)
  */
 static struct node *_parse_select(Parser *p, struct node *arg)
 {
-    NodeList *ns     = nodelist(NULL),
-             *guards = NULL;
+    struct nodelist *ns     = nodelist(NULL),
+                    *guards = NULL;
 
     struct node *clause  = NULL,
                 *select  = node(p->token, OSELECT),

@@ -10,7 +10,7 @@ typedef struct {
     int _;
 } Reducer;
 
-static NodeList *reduce_nodelist(Reducer *r, NodeList *ns);
+static struct nodelist *reduce_nodelist(Reducer *r, struct nodelist *ns);
 static struct node *reduce_path(Reducer *r, struct node *n);
 static struct node *reduce_list(Reducer *r, struct node *n);
 static struct node *reduce_block(Reducer *r, struct node *n);
@@ -111,8 +111,8 @@ static struct node *reduce_list(Reducer *r, struct node *n)
     if (n->o.list.length == 0)
         return cons(NULL, NULL);
 
-    NodeList *ns = n->o.list.items;
-    NodeList *end = ns->end;
+    struct nodelist *ns = n->o.list.items;
+    struct nodelist *end = ns->end;
 
     struct node *new = NULL;
 
@@ -175,12 +175,12 @@ static struct node *reduce_path(Reducer *r, struct node *n)
 
 static struct node *reduce_block(Reducer *r, struct node *n)
 {
-    NodeList *ns = n->o.block.body;
+    struct nodelist *ns = n->o.block.body;
     reduce_nodelist(r, ns);
     return n;
 }
 
-static NodeList *reduce_nodelist(Reducer *r, NodeList *ns)
+static struct nodelist *reduce_nodelist(Reducer *r, struct nodelist *ns)
 {
     while (ns) {
         reduce_node(r, &ns->head);

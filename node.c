@@ -81,11 +81,11 @@ void node_free(struct node *n)
 }
 
 /*
- * NodeList allocator/initializer
+ * Nodelist allocator/initializer
  */
-NodeList *nodelist(struct node *head)
+struct nodelist *nodelist(struct node *head)
 {
-    NodeList *list = malloc(sizeof(*list));
+    struct nodelist *list = malloc(sizeof(*list));
     list->head = head;
     list->tail = NULL;
     list->end  = list;
@@ -94,11 +94,11 @@ NodeList *nodelist(struct node *head)
 }
 
 /*
- * Append struct node `n` to NodeList `list`
+ * Append `n` to `list`
  */
-void append(NodeList *list, struct node *n)
+void append(struct nodelist *list, struct node *n)
 {
-    NodeList *end;
+    struct nodelist *end;
 
     if (list->head) {
         end = nodelist(n);
@@ -133,8 +133,8 @@ void pp_nodel(struct node *n, int lvl)
         return;
     }
 
-    NodeList *ns;
-    OP        op = n->op;
+    struct nodelist *ns;
+    OP               op = n->op;
 
     if (lvl > 0)
         putchar('('), opprint(op), putchar(' ');

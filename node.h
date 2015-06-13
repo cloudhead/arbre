@@ -5,7 +5,7 @@
  *
  * node.h
  *
- *   AST node & NodeList related declarations
+ *   AST node & struct nodelist related declarations
  *
  */
 
@@ -55,27 +55,27 @@ typedef enum {
 extern TYPE OP_TYPES[];
 
 /*
- * # `struct node` and `NodeList` data-type definitions
+ * # `struct node` and `struct nodelist` data-type definitions
  *
- *   `struct node`s represent abstract operations in syntax trees (see: `Tree`).
- *   `NodeList`s are linked-lists of `struct node`s.
+ *   Nodes represent abstract operations in syntax trees (see: `Tree`).
+ *   Nodelists are linked-lists of nodes.
  *
- *   `struct node`s have "common" attributes, which is shared amongst all node types,
+ *   Nodes have "common" attributes, which is shared amongst all node types,
  *   and type-specific attributes which aren't shared.
  *
- *   Supposing we have three nodes: `N1`, `N2`, `N3`, the NodeList
+ *   Supposing we have three nodes: `N1`, `N2`, `N3`, the nodelist
  *   would look like this:
  *
- *      NodeList      .--> NodeList      .--> NodeList <------.
+ *      nodelist      .--> nodelist      .--> nodelist <------.
  *      .head -> N1   |    .head -> N2   |   .head -> N3      |
  *      .tail --------'    .tail --------'   .tail -> NULL    |
  *      .end -------------------------------------------------'
  *
- *   Additionally, the `prev` attribute points to the previous NodeList.
+ *   Additionally, the `prev` attribute points to the previous nodelist.
  *
- *   An empty NodeList looks like this:
+ *   An empty nodelist looks like this:
  *
- *       NodeList <-----.
+ *       nodelist <-----.
  *       .head -> NULL  |
  *       .tail -> NULL  |
  *       .end ----------'
@@ -129,7 +129,7 @@ struct node {
         struct {
             struct node     *lval;
             struct node     *rval;
-            struct NodeList *guards;
+            struct nodelist *guards;
             int             nguards;
         } clause;
 
@@ -151,7 +151,7 @@ struct node {
 
         struct {
             unsigned        nclauses;
-            struct NodeList *clauses;
+            struct nodelist *clauses;
             struct node     *arg;
         } select;
 
@@ -162,40 +162,38 @@ struct node {
 
         struct {
             unsigned          arity;
-            struct NodeList  *members;
+            struct nodelist  *members;
         } tuple;
 
         struct {
             unsigned         length;
-            struct NodeList *items;
+            struct nodelist *items;
         } list;
 
-        struct { struct NodeList *items; } map;
+        struct { struct nodelist *items; } map;
 
         struct {
             struct node      *parent;
-            struct NodeList  *body;
+            struct nodelist  *body;
         } block;
     } o;
 };
 
-struct NodeList {
+struct nodelist {
     struct node     *head;
-    struct NodeList *tail;
-    struct NodeList *end;
-    struct NodeList *prev;
+    struct nodelist *tail;
+    struct nodelist *end;
+    struct nodelist *prev;
 };
-
-typedef  struct NodeList  NodeList;
 
 void        pp_node(struct node *n);
 void        pp_nodel(struct node *n, int lvl);
-void        append(NodeList *list, struct node *n);
+void        append(struct nodelist *list, struct node *n);
 
 struct node  *node(Token *, OP op);
 void          node_free(struct node *);
 
-NodeList   *nodelist(struct node *head);
-void        nodelist_free(NodeList *);
+struct nodelist   *nodelist(struct node *head);
+void               nodelist_free(struct nodelist *);
 
 int         nodetos(struct node *t, char *buff);
