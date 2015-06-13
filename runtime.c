@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include <stddef.h>
 
 #include "arbre.h"
 #include "op.h"
