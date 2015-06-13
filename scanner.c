@@ -87,7 +87,6 @@ static void next(struct scanner *s)
 
         if (c == '\0') {
             /* TODO: Handle error */
-        } else if (c >= 0x80) {
             /* TODO: Handle unicode */
         } else {
             s->ch = c;
