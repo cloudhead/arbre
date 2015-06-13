@@ -32,11 +32,6 @@
 #include "arbre.h"
 #include "scanner.h"
 
-/* I'm not sure why we have to declare these,
- * but clang complains otherwise. */
-char *strndup(char const *, unsigned long);
-int   isascii(int c);
-
 static void next(Scanner *);
 static void pushlvl(Scanner *, int);
 static int  poplvl(Scanner *);
