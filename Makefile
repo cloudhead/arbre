@@ -1,6 +1,6 @@
 
 CC     := clang
-CFLAGS := -Wall -pedantic -std=c99 -O0 -g
+CFLAGS := -Wall -pedantic -std=c11 -O0 -g
 INCS   := -I../
 SRC    := $(wildcard *.c)
 OBJ    := $(SRC:.c=.o)
