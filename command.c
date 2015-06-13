@@ -262,7 +262,7 @@ static int command_build(Command *c)
     for (int i = 0; i < c->inputc; i++) {
         char *path = c->inputs[i];
 
-        Source  *src = source(path);
+        struct source  *src = source(path);
         Parser  *p   = parser(src);
 
         #ifdef DEBUG

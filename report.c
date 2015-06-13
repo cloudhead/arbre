@@ -26,9 +26,9 @@ char     *strdup(const char *);
 const char *REPORT_COLORS[] = { COLOR_RED,     COLOR_MAGENTA,   COLOR_GREY };
 const char *REPORT_LABELS[] = { "error",       "warning",       "note" };
 
-static void highlight(Source *, struct node *);
-static void vpheaderf(enum REPORT_TYPE, Source *, const char *, va_list);
-static void psrcline(Source *, int);
+static void highlight(struct source *, struct node *);
+static void vpheaderf(enum REPORT_TYPE, struct source *, const char *, va_list);
+static void psrcline(struct source *, int);
 static void fill(char, int);
 static void carret(int);
 static void tty(const char *);
@@ -65,7 +65,7 @@ void vtreportf(enum REPORT_TYPE type, Token *t, const char *fmt, va_list ap)
  */
 void vnreportf(enum REPORT_TYPE type, struct node *n, const char *fmt, va_list ap)
 {
-    Source *s = n->source;
+    struct source *s = n->source;
 
     source_seek(s, n->pos);
     vpheaderf(type, s, fmt, ap);
@@ -112,7 +112,7 @@ void preportf(enum REPORT_TYPE type, Parser *p, const char *fmt, ...)
  *
  *     <filename>:<line>:<column>: <message-type>: <message>
  */
-static void vpheaderf(enum REPORT_TYPE type, Source *s, const char *fmt, va_list ap)
+static void vpheaderf(enum REPORT_TYPE type, struct source *s, const char *fmt, va_list ap)
 {
     tty(COLOR_BOLD);
 
@@ -132,9 +132,9 @@ static void vpheaderf(enum REPORT_TYPE type, Source *s, const char *fmt, va_list
 }
 
 /*
- * Print a line of code from Source `s`
+ * Print a line of code from struct source `s`
  */
-static void psrcline(Source *s, int line)
+static void psrcline(struct source *s, int line)
 {
     char *str = strdup(s->lineps[line]);
     reportf("\n%s\n", strtok(str, "\n"));
@@ -176,7 +176,7 @@ static void carret(int col)
 /*
  * Highlight a binary node's source
  */
-static void highlight(Source *s, struct node *n)
+static void highlight(struct source *s, struct node *n)
 {
     struct node *lval = n->o.match.lval,
          *rval = n->o.match.rval;

@@ -55,7 +55,7 @@ static  struct node  *parse_select(Parser *p, struct node *arg);
 /*
  * Parser allocator/initializer
  */
-Parser *parser(Source *src)
+Parser *parser(struct source *src)
 {
     Parser  *p = malloc(sizeof(*p));
     p->scanner = scanner(src);

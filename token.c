@@ -35,7 +35,7 @@ char *tokentos(Token *t, char *str, bool showsrc)
 /*
  * Allocate and return a new Token.
  */
-Token *token(TOKEN tok, Source *source, size_t pos, char *src)
+Token *token(TOKEN tok, struct source *source, size_t pos, char *src)
 {
     Token *t   =  malloc(sizeof(*t));
     t->tok     =  tok;

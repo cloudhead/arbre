@@ -6,7 +6,7 @@
  * source.h
  *
  */
-typedef struct {
+struct source {
     const char  *path;
     char        *data;
     size_t       size;
@@ -15,10 +15,10 @@ typedef struct {
     int          col;
     char       **lineps;
     int          lineps_size;
-} Source;
+};
 
-Source *source(const char *);
-void    source_free(Source *);
-void    source_addline(Source *, size_t);
-void    source_seek(Source *s, size_t pos);
-void    source_rewind(Source *s);
+struct source *source(const char *);
+void           source_free(struct source *);
+void           source_addline(struct source *, size_t);
+void           source_seek(struct source *s, size_t pos);
+void           source_rewind(struct source *s);

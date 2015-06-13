@@ -20,9 +20,9 @@
 
 static char *readfile(const char *, size_t *);
 
-Source *source(const char *path)
+struct source *source(const char *path)
 {
-    Source *src = malloc(sizeof(*src));
+    struct source *src = malloc(sizeof(*src));
 
     src->path        = path;
     src->data        = readfile(path, &src->size);
@@ -35,14 +35,14 @@ Source *source(const char *path)
     return src;
 }
 
-void source_free(Source *src)
+void source_free(struct source *src)
 {
     free(src->data);
     free(src->lineps);
     free(src);
 }
 
-void source_seek(Source *s, size_t pos)
+void source_seek(struct source *s, size_t pos)
 {
     for (s->line = 0; s->line + 1 < s->lines; s->line++) {
         if (s->lineps[s->line + 1] > s->data + pos) break;
@@ -52,13 +52,13 @@ void source_seek(Source *s, size_t pos)
     }
 }
 
-void source_rewind(Source *s)
+void source_rewind(struct source *s)
 {
     s->line = 0;
     s->col  = 0;
 }
 
-void source_addline(Source *s, size_t lpos)
+void source_addline(struct source *s, size_t lpos)
 {
     s->lineps[s->lines ++] = s->data + lpos;
 

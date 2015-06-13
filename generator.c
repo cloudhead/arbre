@@ -95,7 +95,7 @@ Variable *var(char *name, Register reg)
     return v;
 }
 
-Module *source_module(Source *src)
+Module *source_module(struct source *src)
 {
     char *sep  = strrchr(src->path, '.'),
          *name = strndup(src->path, sep - src->path);
@@ -103,7 +103,7 @@ Module *source_module(Source *src)
     return module(name, 0);
 }
 
-Generator *generator(Tree *tree, Source *source)
+Generator *generator(Tree *tree, struct source *source)
 {
     Generator *g = malloc(sizeof(*g));
 

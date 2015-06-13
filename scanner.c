@@ -14,8 +14,8 @@
  *
  * usage:
  *
- *   Source  *src = source("fnord.arb");
- *   Scanner *s   = scanner(src);
+ *   struct source  *src = source("fnord.arb");
+ *   struct scanner *s   = scanner(src);
  *   Token   *t;
  *
  *   while ((t = scan(s)).tok != T_EOF) {
@@ -32,16 +32,16 @@
 #include "arbre.h"
 #include "scanner.h"
 
-static void next(Scanner *);
-static void pushlvl(Scanner *, int);
-static int  poplvl(Scanner *);
+static void next(struct scanner *);
+static void pushlvl(struct scanner *, int);
+static int  poplvl(struct scanner *);
 
 /*
  * Scanner allocator
  */
-Scanner *scanner(Source *source)
+struct scanner *scanner(struct source *source)
 {
-    Scanner *s = malloc(sizeof(*s));
+    struct scanner *s = malloc(sizeof(*s));
 
     s->src    = source->data;
     s->source = source;
@@ -68,7 +68,7 @@ Scanner *scanner(Source *source)
 /*
  * Scanner de-allocator
  */
-void scanner_free(Scanner *s)
+void scanner_free(struct scanner *s)
 {
     free(s->lvls.stack);
     free(s);
@@ -78,7 +78,7 @@ void scanner_free(Scanner *s)
  * Read the next character into s->ch.
  * Set s->ch to -1 if we've reached the EOF.
  */
-static void next(Scanner *s)
+static void next(struct scanner *s)
 {
     s->rpos ++;
 
@@ -101,7 +101,7 @@ static void next(Scanner *s)
  * Consume whitespace. '\n' is treated differently,
  * due to the indentation-sensitive grammar.
  */
-static void whitespace(Scanner *s)
+static void whitespace(struct scanner *s)
 {
     while (s->ch != '\n' && isspace(s->ch)) {
         next(s);
@@ -111,7 +111,7 @@ static void whitespace(Scanner *s)
 /*
  * Consume an identifier, such as: fnord
  */
-static void scan_ident(Scanner *s)
+static void scan_ident(struct scanner *s)
 {
     if (isalnum(s->ch) || s->ch == '_')
         next(s);
@@ -124,7 +124,7 @@ static void scan_ident(Scanner *s)
 /*
  * Consume an atom, such as: 'fnord
  */
-static void scan_atom(Scanner *s)
+static void scan_atom(struct scanner *s)
 {
     if (s->ch != '\'')
         return;
@@ -139,7 +139,7 @@ static void scan_atom(Scanner *s)
 /*
  * Consume a number, such as: 42
  */
-static void scan_number(Scanner *s)
+static void scan_number(struct scanner *s)
 {
     while (isdigit(s->ch)) {
         next(s);
@@ -149,7 +149,7 @@ static void scan_number(Scanner *s)
 /*
  * Consume a string, such as: "fnord, fnord, fnord"
  */
-static void scan_string(Scanner *s)
+static void scan_string(struct scanner *s)
 {
     while (s->ch != '"') {
         if (s->ch == '\n' || s->ch < 0) {
@@ -163,7 +163,7 @@ static void scan_string(Scanner *s)
 /*
  * Consume a comment, such as: -- fnord comment
  */
-static void scan_comment(Scanner *s)
+static void scan_comment(struct scanner *s)
 {
     while (s->ch != '\n') {
         next(s);
@@ -173,7 +173,7 @@ static void scan_comment(Scanner *s)
 /*
  * Consume a character, such as: `z`
  */
-static void scan_char(Scanner *s)
+static void scan_char(struct scanner *s)
 {
     if (s->ch == '`') {
         next(s);
@@ -192,7 +192,7 @@ static void scan_char(Scanner *s)
 /*
  * Consume indentation. Return `true` if there's an indent.
  */
-static int scan_indent(Scanner *s)
+static int scan_indent(struct scanner *s)
 {
     size_t pos, indent;
 
@@ -219,7 +219,7 @@ static int scan_indent(Scanner *s)
 /*
  * Push the current indentation level to the stack
  */
-static void pushlvl(Scanner *s, int lvl)
+static void pushlvl(struct scanner *s, int lvl)
 {
     s->lvls.size ++;
     s->lvls.stack = realloc(s->lvls.stack, s->lvls.size * sizeof(lvl));
@@ -230,7 +230,7 @@ static void pushlvl(Scanner *s, int lvl)
 /*
  * Pop the current indentation from the stack
  */
-static int poplvl(Scanner *s)
+static int poplvl(struct scanner *s)
 {
     int lvl = *(s->lvls.sp);
 
@@ -241,7 +241,7 @@ static int poplvl(Scanner *s)
     return lvl;
 }
 
-static void newline(Scanner *s)
+static void newline(struct scanner *s)
 {
     s->lf      = false;
     s->line    ++;
@@ -264,7 +264,7 @@ static void newline(Scanner *s)
  * by the scanner yet, and return them on next call to `scan` in [1].
  * This is done via the `dedent` property of the scanner.
  */
-Token *scan(Scanner *s)
+Token *scan(struct scanner *s)
 {
     TOKEN   tok = T_ILLEGAL;
     size_t  pos = s->pos = s->rpos;

@@ -84,7 +84,7 @@ extern TYPE OP_TYPES[];
 struct node {
                               /* Common attributes */
     struct Sym    *sym;       /* Pointer to symbol table entry */
-    Source        *source;    /* Source file this node belongs to */
+    struct source *source;    /* struct source file this node belongs to */
     size_t         pos;       /* Position of this node in the source file */
     char          *src;       /* Raw syntax */
     OP             op;        /* Operation (node type) */

@@ -8,7 +8,7 @@
  */
 typedef struct {
     Tree           *tree;
-    Source         *source;
+    struct source  *source;
     PathEntry      *path;
     PathEntry     **paths;
     Module         *module;
@@ -20,6 +20,6 @@ typedef struct {
     uint8_t         slot;
 } Generator;
 
-Generator *generator (Tree *tree, Source *source);
+Generator *generator (Tree *tree, struct source *source);
 void       generate  (Generator *g, FILE *fp);
 
