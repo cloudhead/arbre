@@ -18,8 +18,8 @@
 
 enum  REPORT_TYPE  { REPORT_ERROR,  REPORT_WARNING,  REPORT_NOTE };
 
-void  nreportf(enum REPORT_TYPE, Node   *, const char *, ...);
-void vnreportf(enum REPORT_TYPE, Node   *, const char *, va_list ap);
+void  nreportf(enum REPORT_TYPE, struct node *, const char *, ...);
+void vnreportf(enum REPORT_TYPE, struct node *, const char *, va_list ap);
 
 #ifdef REPORT_PARSER
 void  preportf(enum REPORT_TYPE, Parser *, const char *, ...);

@@ -26,7 +26,7 @@ char     *strdup(const char *);
 const char *REPORT_COLORS[] = { COLOR_RED,     COLOR_MAGENTA,   COLOR_GREY };
 const char *REPORT_LABELS[] = { "error",       "warning",       "note" };
 
-static void highlight(Source *, Node *);
+static void highlight(Source *, struct node *);
 static void vpheaderf(enum REPORT_TYPE, Source *, const char *, va_list);
 static void psrcline(Source *, int);
 static void fill(char, int);
@@ -61,9 +61,9 @@ void vtreportf(enum REPORT_TYPE type, Token *t, const char *fmt, va_list ap)
 }
 
 /*
- * Report based on a Node object
+ * Report based on a node object
  */
-void vnreportf(enum REPORT_TYPE type, Node *n, const char *fmt, va_list ap)
+void vnreportf(enum REPORT_TYPE type, struct node *n, const char *fmt, va_list ap)
 {
     Source *s = n->source;
 
@@ -84,7 +84,7 @@ void vnreportf(enum REPORT_TYPE type, Node *n, const char *fmt, va_list ap)
     }
     source_rewind(n->source);
 }
-void nreportf(enum REPORT_TYPE type, Node *n, const char *fmt, ...)
+void nreportf(enum REPORT_TYPE type, struct node *n, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -176,9 +176,9 @@ static void carret(int col)
 /*
  * Highlight a binary node's source
  */
-static void highlight(Source *s, Node *n)
+static void highlight(Source *s, struct node *n)
 {
-    Node *lval = n->o.match.lval,
+    struct node *lval = n->o.match.lval,
          *rval = n->o.match.rval;
 
     source_seek(s, lval->pos);

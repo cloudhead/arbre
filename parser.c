@@ -39,18 +39,18 @@ char *strndup(char const *, unsigned long);
 static  bool   expect(Parser *p, TOKEN t);
 static  void   error(Parser *p, const char *fmt, ...);
 
-static  Node  *parse_expression(Parser *);
-static  Node  *parse_primary(Parser *);
-static  Node  *parse_access(Parser *);
-static  Node  *parse_apply(Parser *, Node *);
-static  Node  *parse_number(Parser *);
-static  Node  *parse_module(Parser *);
-static  Node  *parse_bind(Parser *, Node *);
-static  Node  *parse_match(Parser *p, Node *lval);
-static  Node  *parse_send(Parser *, Node *);
-static  Node  *parse_clause(Parser *);
-static  Node  *parse_spawn(Parser *);
-static  Node  *parse_select(Parser *p, Node *arg);
+static  struct node  *parse_expression(Parser *);
+static  struct node  *parse_primary(Parser *);
+static  struct node  *parse_access(Parser *);
+static  struct node  *parse_apply(Parser *, struct node *);
+static  struct node  *parse_number(Parser *);
+static  struct node  *parse_module(Parser *);
+static  struct node  *parse_bind(Parser *, struct node *);
+static  struct node  *parse_match(Parser *p, struct node *lval);
+static  struct node  *parse_send(Parser *, struct node *);
+static  struct node  *parse_clause(Parser *);
+static  struct node  *parse_spawn(Parser *);
+static  struct node  *parse_select(Parser *p, struct node *arg);
 
 /*
  * Parser allocator/initializer
@@ -93,9 +93,9 @@ void pparser(Parser *p)
 }
 
 /*
- * Set a Node's `src` property automatically
+ * Set a node's `src` property automatically
  */
-static void setsrc(Parser *p, Node *n)
+static void setsrc(Parser *p, struct node *n)
 {
     n->src = strndup(p->scanner->src + n->pos, p->pos - n->pos);
 }
@@ -187,9 +187,9 @@ static void end(Parser *p)
 /*
  * Block allocator/initializer
  */
-static Node *block(Parser *p)
+static struct node *block(Parser *p)
 {
-    Node  *b = node(p->token, OBLOCK);
+    struct node  *b = node(p->token, OBLOCK);
            b->o.block.parent = p->block;
            b->o.block.body   = nodelist(NULL);
     return b;
@@ -198,9 +198,9 @@ static Node *block(Parser *p)
 /*
  * Accessor allocator/initializer
  */
-static Node *access(Parser *p, Node *base, Node *attr)
+static struct node *access(Parser *p, struct node *base, struct node *attr)
 {
-    Node *n = node(p->token, OACCESS);
+    struct node *n = node(p->token, OACCESS);
     n->o.access.lval = base;
     n->o.access.rval = attr;
     return n;
@@ -209,9 +209,9 @@ static Node *access(Parser *p, Node *base, Node *attr)
 /*
  * Range allocator/initializer
  */
-static Node *range(Parser *p, Node *from, Node *to)
+static struct node *range(Parser *p, struct node *from, struct node *to)
 {
-    Node *n = node(p->token, ORANGE);
+    struct node *n = node(p->token, ORANGE);
     n->o.range.lval = from;
     n->o.range.rval = to;
     return n;
@@ -229,11 +229,11 @@ static Node *range(Parser *p, Node *from, Node *to)
 static NodeList *parse_seq(Parser *p,
                             TOKEN open,
                             TOKEN close,
-                            Node *(parse)(Parser *),
+                            struct node *(parse)(Parser *),
                             unsigned *size)
 {
-    NodeList *ns = nodelist(NULL);
-    Node     *n  = NULL;
+    NodeList    *ns = nodelist(NULL);
+    struct node *n  = NULL;
 
     expect(p, open); /* Eat opening delimiter */
 
@@ -266,10 +266,10 @@ static NodeList *parse_seq(Parser *p,
  *
  *     ("fnord", 42, ('h', 'i'))
  */
-static Node *parse_tuple(Parser *p)
+static struct node *parse_tuple(Parser *p)
 {
     unsigned len;
-    Node     *n;
+    struct node *n;
     NodeList *members = parse_seq(p, T_LPAREN,
                                      T_RPAREN,
                                      &parse_expression,
@@ -297,9 +297,9 @@ static Node *parse_tuple(Parser *p)
  *     1..10
  *     x..
  */
-static Node *parse_list_exp(Parser *p)
+static struct node *parse_list_exp(Parser *p)
 {
-    Node *n = NULL, *to = NULL;
+    struct node *n = NULL, *to = NULL;
 
     if ((n = parse_expression(p))) {
         if (p->tok == T_ELLIPSIS) {
@@ -319,10 +319,10 @@ static Node *parse_list_exp(Parser *p)
  *     [1, 2, 3..9]
  *     [x..]
  */
-static Node *parse_list(Parser *p)
+static struct node *parse_list(Parser *p)
 {
     unsigned len = 0;
-    Node *n = node(p->token, OLIST);
+    struct node *n = node(p->token, OLIST);
 
     if ((n->o.list.items = parse_seq(p, T_LBRACK, T_RBRACK, &parse_list_exp, &len))) {
         setsrc(p, n);
@@ -336,7 +336,7 @@ static Node *parse_list(Parser *p)
  *
  *     key: "value"
  */
-static Node *parse_map_exp(Parser *p)
+static struct node *parse_map_exp(Parser *p)
 {
     return parse_clause(p);
 }
@@ -346,9 +346,9 @@ static Node *parse_map_exp(Parser *p)
  *
  *     {one: 1, two: 2}
  */
-static Node *parse_map(Parser *p)
+static struct node *parse_map(Parser *p)
 {
-    Node *n = node(p->token, OMAP);
+    struct node *n = node(p->token, OMAP);
     if ((n->o.map.items = parse_seq(p, T_LBRACE, T_RBRACE, &parse_map_exp, NULL))) {
         setsrc(p, n);
         return n;
@@ -362,9 +362,9 @@ static Node *parse_map(Parser *p)
  *
  *     fnord
  */
-static Node *parse_ident(Parser *p)
+static struct node *parse_ident(Parser *p)
 {
-    Node *n = node(p->token, OIDENT);
+    struct node *n = node(p->token, OIDENT);
     n->o.ident.decl  = NULL;
     n->o.ident.def   = NULL;
     next(p);
@@ -376,9 +376,9 @@ static Node *parse_ident(Parser *p)
  *
  *     'fnord
  */
-static Node *parse_atom(Parser *p)
+static struct node *parse_atom(Parser *p)
 {
-    Node *n = node(p->token, OATOM);
+    struct node *n = node(p->token, OATOM);
     n->o.atom = p->src;
     n->type = TYPE_ATOM;
     next(p);
@@ -390,9 +390,9 @@ static Node *parse_atom(Parser *p)
  *
  *     "fnord"
  */
-static Node *parse_string(Parser *p)
+static struct node *parse_string(Parser *p)
 {
-    Node *n = node(p->token, OSTRING);
+    struct node *n = node(p->token, OSTRING);
     n->o.string = p->src;
     n->type = TYPE_STRING;
     next(p);
@@ -404,9 +404,9 @@ static Node *parse_string(Parser *p)
  *
  *     `y`
  */
-static Node *parse_char(Parser *p)
+static struct node *parse_char(Parser *p)
 {
-    Node *n = node(p->token, OCHAR);
+    struct node *n = node(p->token, OCHAR);
     n->o.chr = *(p->src);
     next(p);
     return n;
@@ -417,9 +417,9 @@ static Node *parse_char(Parser *p)
  *
  *     42
  */
-static Node *parse_number(Parser *p)
+static struct node *parse_number(Parser *p)
 {
-    Node *n = node(p->token, ONUMBER);
+    struct node *n = node(p->token, ONUMBER);
     n->o.number = p->src;
     n->type = TYPE_NUMBER;
     next(p);
@@ -431,9 +431,9 @@ static Node *parse_number(Parser *p)
  *
  *     <-fnord
  */
-static Node *parse_wait(Parser *p)
+static struct node *parse_wait(Parser *p)
 {
-    Node *n = node(p->token, OWAIT), *e;
+    struct node *n = node(p->token, OWAIT), *e;
     int type;
 
     switch (p->tok) {
@@ -455,11 +455,11 @@ static Node *parse_wait(Parser *p)
  *
  *     \x : x + 1
  */
-static Node *parse_lambda(Parser *p)
+static struct node *parse_lambda(Parser *p)
 {
     next(p); // '\'
 
-    Node *n = parse_clause(p);
+    struct node *n = parse_clause(p);
 
     return n;
 }
@@ -470,9 +470,9 @@ static Node *parse_lambda(Parser *p)
  *     A -> B
  *     A -> (\X : X + 1) -> B
  */
-static Node *parse_pipe(Parser *p, Node *lval)
+static struct node *parse_pipe(Parser *p, struct node *lval)
 {
-    Node *n;
+    struct node *n;
 
     while (p->tok == T_RARROW || p->tok == T_RDARROW || p->tok == T_REQARROW) {
         next(p); // '->'
@@ -495,9 +495,9 @@ static Node *parse_pipe(Parser *p, Node *lval)
  *
  *     a + b
  */
-static Node *parse_add(Parser *p, Node *lval)
+static struct node *parse_add(Parser *p, struct node *lval)
 {
-    Node *n = node(p->token, OADD);
+    struct node *n = node(p->token, OADD);
 
     next(p); // '+'
 
@@ -512,9 +512,9 @@ static Node *parse_add(Parser *p, Node *lval)
  *
  *     a - b
  */
-static Node *parse_sub(Parser *p, Node *lval)
+static struct node *parse_sub(Parser *p, struct node *lval)
 {
-    Node *n = node(p->token, OSUB);
+    struct node *n = node(p->token, OSUB);
 
     next(p); // '-'
 
@@ -529,9 +529,9 @@ static Node *parse_sub(Parser *p, Node *lval)
  *
  *     A < B
  */
-static Node *parse_lt(Parser *p, Node *lval)
+static struct node *parse_lt(Parser *p, struct node *lval)
 {
-    Node *n = node(p->token, OLT);
+    struct node *n = node(p->token, OLT);
 
     next(p); // '<'
 
@@ -546,9 +546,9 @@ static Node *parse_lt(Parser *p, Node *lval)
  *
  *     A > B
  */
-static Node *parse_gt(Parser *p, Node *lval)
+static struct node *parse_gt(Parser *p, struct node *lval)
 {
-    Node *n = node(p->token, OGT);
+    struct node *n = node(p->token, OGT);
 
     next(p); // '>'
 
@@ -562,9 +562,9 @@ static Node *parse_gt(Parser *p, Node *lval)
  * Parse an expression. This can be almost
  * anything which returns a value.
  */
-static Node *parse_expression(Parser *p)
+static struct node *parse_expression(Parser *p)
 {
-    Node *n = NULL;
+    struct node *n = NULL;
 
     switch (p->tok) { // Parse lval
         case T_IDENT:
@@ -626,9 +626,9 @@ static void parse_comments(Parser *p)
  * T_INDENT and T_DEDENT tokens to delimit
  * themselves. Inline blocks look for T_LF.
  */
-static Node *parse_block(Parser *p)
+static struct node *parse_block(Parser *p)
 {
-    Node *n = block(p);
+    struct node *n = block(p);
 
     p->block = n;
 
@@ -664,9 +664,9 @@ static Node *parse_block(Parser *p)
  *
  *     (/ fnord (/ x y))
  */
-static Node *parse_access(Parser *p)
+static struct node *parse_access(Parser *p)
 {
-    Node *n = NULL, *a;
+    struct node *n = NULL, *a;
 
     switch (p->tok) {
         case T_IDENT:  n = parse_ident(p);   break;
@@ -697,9 +697,9 @@ static Node *parse_access(Parser *p)
  *     ("hello", fnord)
  *     ('ok, data)
  */
-static Node *parse_pattern(Parser *p)
+static struct node *parse_pattern(Parser *p)
 {
-    Node *n = NULL;
+    struct node *n = NULL;
 
     switch (p->tok) {
         case T_UNDER   :
@@ -721,9 +721,9 @@ static Node *parse_pattern(Parser *p)
  *
  *     John := (human, male, 29)
  */
-static Node *parse_bind(Parser *p, Node *lval)
+static struct node *parse_bind(Parser *p, struct node *lval)
 {
-    Node *n;
+    struct node *n;
 
     n = node(p->token, OBIND);
     n->o.bind.lval = lval;
@@ -745,9 +745,9 @@ static Node *parse_bind(Parser *p, Node *lval)
  *     42 = 42
  *     (ok, _) = (ok, 42)
  */
-static Node *parse_match(Parser *p, Node *lval)
+static struct node *parse_match(Parser *p, struct node *lval)
 {
-    Node *n;
+    struct node *n;
 
     n = node(p->token, OMATCH);
     n->o.match.lval = lval;
@@ -769,9 +769,9 @@ static Node *parse_match(Parser *p, Node *lval)
  *     http
  *     .
  */
-static Node *parse_module(Parser *p)
+static struct node *parse_module(Parser *p)
 {
-    Node *n = node(p->token, OMODULE);
+    struct node *n = node(p->token, OMODULE);
 
     switch (p->tok) {
         case T_SLASH:
@@ -800,9 +800,9 @@ static Node *parse_module(Parser *p)
  *
  *     X : X + 1
  */
-static Node *parse_clause(Parser *p)
+static struct node *parse_clause(Parser *p)
 {
-    Node *n = node(p->token, OCLAUSE);
+    struct node *n = node(p->token, OCLAUSE);
 
     if (p->tok == T_COLON) {
         next(p);
@@ -823,9 +823,9 @@ static Node *parse_clause(Parser *p)
  *
  *     + (ping) : pong
  */
-static Node *parse_msgpath(Parser *p)
+static struct node *parse_msgpath(Parser *p)
 {
-    Node  *n = node(p->token, OMPATH);
+    struct node *n = node(p->token, OMPATH);
 
     next(p); // Consume `+`
 
@@ -840,10 +840,10 @@ static Node *parse_msgpath(Parser *p)
  *
  *     + ./start (8080)
  */
-static Node *parse_spawn(Parser *p)
+static struct node *parse_spawn(Parser *p)
 {
-    Node  *n = node(p->token, OSPAWN);
-    Node  *a = NULL;
+    struct node *n = node(p->token, OSPAWN);
+    struct node *a = NULL;
 
     next(p); // Consume `+`
 
@@ -864,9 +864,9 @@ static Node *parse_spawn(Parser *p)
  *
  *     ./ping : pong
  */
-static Node *parse_path(Parser *p)
+static struct node *parse_path(Parser *p)
 {
-    Node  *n = NULL;
+    struct node  *n = NULL;
     PATH   type;
 
     switch (p->tok) {
@@ -912,9 +912,9 @@ static Node *parse_path(Parser *p)
  *
  *     Fnord <- ("hi", 42)
  */
-static Node *parse_send(Parser *p, Node *t)
+static struct node *parse_send(Parser *p, struct node *t)
 {
-    Node  *n = node(p->token, OSEND), *e;
+    struct node *n = node(p->token, OSEND), *e;
     int    type;
 
     switch (p->tok) {
@@ -931,14 +931,14 @@ static Node *parse_send(Parser *p, Node *t)
     return n;
 }
 
-static Node *parse_guard(Parser *p)
+static struct node *parse_guard(Parser *p)
 {
     return parse_expression(p);
 }
 
 static NodeList *parse_guards(Parser *p, int *len)
 {
-    Node     *n;
+    struct node     *n;
     NodeList *ns = nodelist(NULL);
 
     do {
@@ -955,14 +955,14 @@ static NodeList *parse_guards(Parser *p, int *len)
  *
  *     A | B | (X : X + 1) | C
  */
-static Node *_parse_select(Parser *p, Node *arg)
+static struct node *_parse_select(Parser *p, struct node *arg)
 {
     NodeList *ns     = nodelist(NULL),
              *guards = NULL;
 
-    Node     *clause  = NULL,
-             *select  = node(p->token, OSELECT),
-             *pattern = NULL;
+    struct node *clause  = NULL,
+                *select  = node(p->token, OSELECT),
+                *pattern = NULL;
 
     select->o.select.arg = arg;
 
@@ -1006,9 +1006,9 @@ static Node *_parse_select(Parser *p, Node *arg)
 
     return select;
 }
-static Node *parse_select(Parser *p, Node *arg)
+static struct node *parse_select(Parser *p, struct node *arg)
 {
-    Node *n;
+    struct node *n;
 
     expect(p, T_QUESTION);
 
@@ -1029,9 +1029,9 @@ static Node *parse_select(Parser *p, Node *arg)
  *     fnord (42)
  *     F "hello."
  */
-static Node *parse_apply(Parser *p, Node *t)
+static struct node *parse_apply(Parser *p, struct node *t)
 {
-    Node *n = node(p->token, OAPPLY), *e = NULL;
+    struct node *n = node(p->token, OAPPLY), *e = NULL;
 
     e = parse_expression(p);
 
@@ -1049,9 +1049,9 @@ static Node *parse_apply(Parser *p, Node *t)
  *
  * TODO: Find a way to obsolete this.
  */
-static Node *parse_primary(Parser *p)
+static struct node *parse_primary(Parser *p)
 {
-    Node *node = NULL;
+    struct node *node = NULL;
 
     if ((node = parse_expression(p))) {
         end(p);
@@ -1066,9 +1066,9 @@ static Node *parse_primary(Parser *p)
  *
  *     +/http (/) @ web
  */
-static Node *parse_decl(Parser *p)
+static struct node *parse_decl(Parser *p)
 {
-    Node *n, *module, *args = NULL, *alias = NULL;
+    struct node *n, *module, *args = NULL, *alias = NULL;
 
     module = access(p, parse_module(p),  parse_access(p));
 
@@ -1097,9 +1097,9 @@ static Node *parse_decl(Parser *p)
  * and module attributes, which live outside
  * of functions.
  */
-static Node *parse_toplevel(Parser *p)
+static struct node *parse_toplevel(Parser *p)
 {
-    Node *node = NULL;
+    struct node *node = NULL;
 
     switch (p->tok) {
         case T_PERIOD:
@@ -1125,7 +1125,7 @@ static Node *parse_toplevel(Parser *p)
  */
 Tree *parse(Parser *p)
 {
-    Node    *node;
+    struct node    *node;
 
     next(p);
 

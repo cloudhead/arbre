@@ -8,7 +8,7 @@
  */
 
 struct Tree {
-    struct Node  *root;
+    struct node  *root;
     SymTable     *symbols;
     SymTable     *tsymbols;
     SymTable     *psymbols;
@@ -27,7 +27,7 @@ void        exitscope(Tree *t);
 void        pp_tree(Tree *);
 
 struct ClauseEntry {
-    Node           *node;
+    struct node    *node;
 
     /* Constants */
     SymTable       *ktable;
@@ -48,7 +48,7 @@ typedef struct ClauseEntry ClauseEntry;
 
 struct PathEntry {
     char          *name;
-    Node          *node;
+    struct node   *node;
     uint8_t        index;
 
     /* Clauses */
@@ -61,7 +61,7 @@ typedef unsigned Register;
 
 struct Variable {
     char          *name;
-    Node          *def;
+    struct node   *def;
     struct Type   *type;
     Register       reg : 8;
 };
@@ -70,5 +70,5 @@ typedef struct Variable Variable;
 typedef struct PathEntry PathEntry;
 
 Variable     *var(char *, Register);
-PathEntry    *pathentry(char *, Node *, uint8_t);
-ClauseEntry  *clauseentry(Node *, uint8_t);
+PathEntry    *pathentry(char *, struct node *, uint8_t);
+ClauseEntry  *clauseentry(struct node *, uint8_t);

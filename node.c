@@ -58,11 +58,11 @@ TYPE OP_TYPES[] = {
 };
 
 /*
- * Node allocator/initializer
+ * struct node allocator/initializer
  */
-Node *node(Token *t, OP op)
+struct node *node(Token *t, OP op)
 {
-    Node *n   = calloc(1, sizeof(*n));
+    struct node *n   = calloc(1, sizeof(*n));
     n->type   = -1;
     n->sym    = NULL;
     n->pos    = t->pos;
@@ -73,9 +73,9 @@ Node *node(Token *t, OP op)
 }
 
 /*
- * Node de-allocator
+ * struct node de-allocator
  */
-void node_free(Node *n)
+void node_free(struct node *n)
 {
     free(n);
 }
@@ -83,7 +83,7 @@ void node_free(Node *n)
 /*
  * NodeList allocator/initializer
  */
-NodeList *nodelist(Node *head)
+NodeList *nodelist(struct node *head)
 {
     NodeList *list = malloc(sizeof(*list));
     list->head = head;
@@ -94,9 +94,9 @@ NodeList *nodelist(Node *head)
 }
 
 /*
- * Append Node `n` to NodeList `list`
+ * Append struct node `n` to NodeList `list`
  */
-void append(NodeList *list, Node *n)
+void append(NodeList *list, struct node *n)
 {
     NodeList *end;
 
@@ -118,7 +118,7 @@ void append(NodeList *list, Node *n)
 /*
  * Print node
  */
-void pp_node(Node *n)
+void pp_node(struct node *n)
 {
     pp_nodel(n, 0);
 }
@@ -126,7 +126,7 @@ void pp_node(Node *n)
 /*
  * Print node at a given indentation level `lvl`
  */
-void pp_nodel(Node *n, int lvl)
+void pp_nodel(struct node *n, int lvl)
 {
     if (! n) {
         printf("∅");

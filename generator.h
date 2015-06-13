@@ -12,7 +12,7 @@ typedef struct {
     PathEntry      *path;
     PathEntry     **paths;
     Module         *module;
-    Node           *block; /* Current block */
+    struct node    *block; /* Current block */
     int             env; /* Index of root module */
     int             head;
     char           *out;

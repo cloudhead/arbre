@@ -23,7 +23,7 @@
 Tree *tree(void)
 {
     Tree *t = malloc(sizeof(*t));
-    Node *b = calloc(1, sizeof(*b));
+    struct node *b = calloc(1, sizeof(*b));
 
     b->o.block.body  = nodelist(NULL);
 
@@ -81,7 +81,7 @@ void pp_tree(Tree *t)
     pp_node(t->root);
 }
 
-ClauseEntry *clauseentry(Node *n, uint8_t index)
+ClauseEntry *clauseentry(struct node *n, uint8_t index)
 {
     ClauseEntry  *c = malloc(sizeof(*c));
                   c->node      = n;
@@ -99,7 +99,7 @@ ClauseEntry *clauseentry(Node *n, uint8_t index)
 /*
  * Path-entry allocator
  */
-PathEntry *pathentry(char *name, Node *n, uint8_t index)
+PathEntry *pathentry(char *name, struct node *n, uint8_t index)
 {
     PathEntry  *p = malloc(sizeof(*p));
                 p->name      = name;

@@ -35,31 +35,31 @@ char  *strndup(const char *, size_t);
 #include "report.h"
 #undef  REPORT_GEN
 
-static int    gen_block   (Generator *, Node *);
-static int    gen_match   (Generator *, Node *);
-static int    gen_bind    (Generator *, Node *);
-static int    gen_node    (Generator *, Node *);
-static int    gen_ident   (Generator *, Node *);
-static int    gen_tuple   (Generator *, Node *);
-static int    gen_list    (Generator *, Node *);
-static int    gen_cons    (Generator *, Node *);
-static int    gen_add     (Generator *, Node *);
-static int    gen_sub     (Generator *, Node *);
-static int    gen_gt      (Generator *, Node *);
-static int    gen_lt      (Generator *, Node *);
-static int    gen_num     (Generator *, Node *);
-static int    gen_atom    (Generator *, Node *);
-static int    gen_path    (Generator *, Node *);
-static int    gen_select  (Generator *, Node *);
-static int    gen_apply   (Generator *, Node *);
-static int    gen_access  (Generator *, Node *);
-static int    gen_clause  (Generator *, Node *);
+static int    gen_block   (Generator *, struct node *);
+static int    gen_match   (Generator *, struct node *);
+static int    gen_bind    (Generator *, struct node *);
+static int    gen_node    (Generator *, struct node *);
+static int    gen_ident   (Generator *, struct node *);
+static int    gen_tuple   (Generator *, struct node *);
+static int    gen_list    (Generator *, struct node *);
+static int    gen_cons    (Generator *, struct node *);
+static int    gen_add     (Generator *, struct node *);
+static int    gen_sub     (Generator *, struct node *);
+static int    gen_gt      (Generator *, struct node *);
+static int    gen_lt      (Generator *, struct node *);
+static int    gen_num     (Generator *, struct node *);
+static int    gen_atom    (Generator *, struct node *);
+static int    gen_path    (Generator *, struct node *);
+static int    gen_select  (Generator *, struct node *);
+static int    gen_apply   (Generator *, struct node *);
+static int    gen_access  (Generator *, struct node *);
+static int    gen_clause  (Generator *, struct node *);
 static int    gen         (Generator *, Instruction);
 
 static void dump_path(PathEntry *p, FILE *out);
-static void gen_locals(Generator *g, Node *n);
+static void gen_locals(Generator *g, struct node *n);
 
-int (*OP_GENERATORS[])(Generator*, Node*) = {
+int (*OP_GENERATORS[])(Generator *, struct node *) = {
     [OBLOCK]    =  gen_block,  [ODECL]     =  NULL,
     [OMATCH]    =  gen_match,  [OBIND]     =  gen_bind,
     [OMODULE]   =  NULL,       [OSELECT]   =  gen_select,
@@ -169,7 +169,7 @@ static unsigned nextreg(Generator *g)
     return g->path->clause->nreg++;
 }
 
-static int gen_atom(Generator *g, Node *n)
+static int gen_atom(Generator *g, struct node *n)
 {
     Value v = (Value){ .atom = n->src };
     TValue *tval = tvalue(TYPE_ATOM, v);
@@ -177,7 +177,7 @@ static int gen_atom(Generator *g, Node *n)
     return RKASK(gen_constant(g, n->src, tval));
 }
 
-static int gen_block(Generator *g, Node *n)
+static int gen_block(Generator *g, struct node *n)
 {
     NodeList *ns  = n->o.block.body;
     int       reg = 0;
@@ -193,9 +193,9 @@ static int gen_block(Generator *g, Node *n)
     return reg;
 }
 
-static int gen_access(Generator *g, Node *n)
+static int gen_access(Generator *g, struct node *n)
 {
-    Node *lval = n->o.access.lval,
+    struct node *lval = n->o.access.lval,
          *rval = n->o.access.rval;
 
     /* TODO: This isn't used in all cases, move it. */
@@ -231,7 +231,7 @@ static int gen_access(Generator *g, Node *n)
     return reg;
 }
 
-static int gen_apply(Generator *g, Node *n)
+static int gen_apply(Generator *g, struct node *n)
 {
     int lval = gen_node(g, n->o.apply.lval),
         rval = gen_node(g, n->o.apply.rval);
@@ -242,7 +242,7 @@ static int gen_apply(Generator *g, Node *n)
 
     char *name = n->o.apply.lval->o.path.name->src;
 
-    for (Node *b = g->block; n == b->o.block.body->end->head; b = b->o.block.parent) {
+    for (struct node *b = g->block; n == b->o.block.body->end->head; b = b->o.block.parent) {
         if (name == g->path->name || !strcmp(name, g->path->name)) { /* Tail-call */
             tailcall = true;
             break;
@@ -258,7 +258,7 @@ static int gen_apply(Generator *g, Node *n)
     return rr;
 }
 
-static int gen_clause(Generator *g, Node *n)
+static int gen_clause(Generator *g, struct node *n)
 {
     int reg = -1;
     int rega = 0;
@@ -293,7 +293,7 @@ static int gen_clause(Generator *g, Node *n)
     return index;
 }
 
-static int gen_ident(Generator *g, Node *n)
+static int gen_ident(Generator *g, struct node *n)
 {
     Sym *ident = tree_lookup(g->tree, n->src);
 
@@ -304,7 +304,7 @@ static int gen_ident(Generator *g, Node *n)
     }
 }
 
-static int gen_defined(Generator *g, Node *n)
+static int gen_defined(Generator *g, struct node *n)
 {
     int  reg;
 
@@ -315,7 +315,7 @@ static int gen_defined(Generator *g, Node *n)
 }
 
 /* TODO: Implement a node2tval function */
-static TValue *gen_pattern(Generator *g, Node *n)
+static TValue *gen_pattern(Generator *g, struct node *n)
 {
     TValue *pattern;
 
@@ -394,10 +394,10 @@ static TValue *gen_pattern(Generator *g, Node *n)
     return pattern;
 }
 
-static int gen_select(Generator *g, Node *n)
+static int gen_select(Generator *g, struct node *n)
 {
     NodeList *ns;
-    Node     *arg = n->o.select.arg;
+    struct node *arg = n->o.select.arg;
 
     unsigned result = nextreg(g), ret;
     unsigned long savedpc = -1, offset;
@@ -416,7 +416,7 @@ static int gen_select(Generator *g, Node *n)
                   g->block == clause->node->o.clause.rval;
 
     for (int i = 0; i < nclauses; i++) {
-        Node *c = ns->head;
+        struct node *c = ns->head;
 
         int nguards = c->o.clause.nguards;
         int gpatches[nguards];
@@ -493,7 +493,7 @@ static int gen_select(Generator *g, Node *n)
     return result;
 }
 
-static int gen_add(Generator *g, Node *n)
+static int gen_add(Generator *g, struct node *n)
 {
     int lval = gen_node(g, n->o.add.lval),
         rval = gen_node(g, n->o.add.rval);
@@ -505,7 +505,7 @@ static int gen_add(Generator *g, Node *n)
     return reg;
 }
 
-static int gen_sub(Generator *g, Node *n)
+static int gen_sub(Generator *g, struct node *n)
 {
     int lval = gen_node(g, n->o.add.lval),
         rval = gen_node(g, n->o.add.rval);
@@ -517,7 +517,7 @@ static int gen_sub(Generator *g, Node *n)
     return reg;
 }
 
-static int gen_gt(Generator *g, Node *n)
+static int gen_gt(Generator *g, struct node *n)
 {
     int lval = gen_node(g, n->o.cmp.lval),
         rval = gen_node(g, n->o.cmp.rval);
@@ -527,7 +527,7 @@ static int gen_gt(Generator *g, Node *n)
     return -1;
 }
 
-static int gen_lt(Generator *g, Node *n)
+static int gen_lt(Generator *g, struct node *n)
 {
     int lval = gen_node(g, n->o.cmp.lval),
         rval = gen_node(g, n->o.cmp.rval);
@@ -537,7 +537,7 @@ static int gen_lt(Generator *g, Node *n)
     return -1;
 }
 
-static void gen_locals(Generator *g, Node *n)
+static void gen_locals(Generator *g, struct node *n)
 {
     switch (n->op) {
         case OTUPLE:
@@ -565,7 +565,7 @@ static void gen_locals(Generator *g, Node *n)
     }
 }
 
-static int gen_path(Generator *g, Node *n)
+static int gen_path(Generator *g, struct node *n)
 {
     char *name = n->o.path.name->src;
 
@@ -585,7 +585,7 @@ static int gen_path(Generator *g, Node *n)
     return gen_clause(g, n->o.path.clause);
 }
 
-static int gen_num(Generator *g, Node *n)
+static int gen_num(Generator *g, struct node *n)
 {
     // TODO: Use number(const char *)
 
@@ -600,7 +600,7 @@ static int gen_num(Generator *g, Node *n)
     return RKASK(gen_constant(g, n->src, tval));
 }
 
-static int gen_tuple(Generator *g, Node *n)
+static int gen_tuple(Generator *g, struct node *n)
 {
     NodeList *ns;
 
@@ -616,7 +616,7 @@ static int gen_tuple(Generator *g, Node *n)
     return reg;
 }
 
-static int gen_list(Generator *g, Node *n)
+static int gen_list(Generator *g, struct node *n)
 {
     unsigned reg = nextreg(g);
 
@@ -625,9 +625,9 @@ static int gen_list(Generator *g, Node *n)
     return reg;
 }
 
-static int gen_cons(Generator *g, Node *n)
+static int gen_cons(Generator *g, struct node *n)
 {
-    Node *lval = n->o.cons.lval,
+    struct node *lval = n->o.cons.lval,
          *rval = n->o.cons.rval;
 
     unsigned reg = -1;
@@ -645,9 +645,9 @@ static int gen_cons(Generator *g, Node *n)
     return reg;
 }
 
-static int gen_bind(Generator *g, Node *n)
+static int gen_bind(Generator *g, struct node *n)
 {
-    Node *lval = n->o.match.lval,
+    struct node *lval = n->o.match.lval,
          *rval = n->o.match.rval;
 
     int lreg, rreg;
@@ -688,9 +688,9 @@ static int gen_bind(Generator *g, Node *n)
     return 0;
 }
 
-static int gen_match(Generator *g, Node *n)
+static int gen_match(Generator *g, struct node *n)
 {
-    Node *lval = n->o.match.lval,
+    struct node *lval = n->o.match.lval,
          *rval = n->o.match.rval;
 
     int larg = gen_node(g, lval),
@@ -704,25 +704,25 @@ static int gen_match(Generator *g, Node *n)
     return 0;
 }
 
-static int gen_node(Generator *g, Node *n)
+static int gen_node(Generator *g, struct node *n)
 {
     return OP_GENERATORS[n->op](g, n);
 }
 
-static void dump_atom(Node *n, FILE *out)
+static void dump_atom(struct node *n, FILE *out)
 {
     fputc(strlen(n->o.atom) + 1, out);
     fwrite(n->o.atom, strlen(n->o.atom), 1, out);
     fputc('\0', out);
 }
 
-static void dump_number(Node *n, FILE *out)
+static void dump_number(struct node *n, FILE *out)
 {
     int i = atoi(n->o.number);
     fwrite(&i, sizeof(i), 1, out);
 }
 
-static void dump_node(Node *n, FILE *out)
+static void dump_node(struct node *n, FILE *out)
 {
     NodeList *ns;
 
@@ -758,7 +758,7 @@ static void dump_node(Node *n, FILE *out)
     }
 }
 
-static void dump_pattern(Node *pattern, FILE *out)
+static void dump_pattern(struct node *pattern, FILE *out)
 {
     dump_node(pattern, out);
 }

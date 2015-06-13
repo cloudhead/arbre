@@ -29,7 +29,7 @@ int io_vsnprintf(char *s, size_t n, const char *fmt, va_list ap)
         if (fmt[i] == '#') {
             switch (fmt[++i]) {
                 case 'n':
-                    index += snprintf(s + index, rem, "%s", va_arg(ap, Node*)->src);
+                    index += snprintf(s + index, rem, "%s", va_arg(ap, struct node *)->src);
                     break;
                 // TODO: Do we need this?
                 // case 't':

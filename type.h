@@ -10,15 +10,15 @@
  */
 struct Type {
     char         *name;
-    Node         *node;
+    struct node  *node;
     unsigned int  id;
 };
 
 typedef  struct Type  Type;
 
-Type   *type      (char *name, Node *n, int id);
+Type   *type      (char *name, struct node *n, int id);
 Type   *nil       (void);
-TYPE    typeid    (Node *n);
+TYPE    typeid    (struct node *n);
 
 int     typeidtos (int t, char *buff);
 int     typetos   (struct Type *t, char *buff);

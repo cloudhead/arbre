@@ -5,7 +5,7 @@
  *
  * node.h
  *
- *   AST Node & NodeList related declarations
+ *   AST node & NodeList related declarations
  *
  */
 
@@ -55,12 +55,12 @@ typedef enum {
 extern TYPE OP_TYPES[];
 
 /*
- * # `Node` and `NodeList` data-type definitions
+ * # `struct node` and `NodeList` data-type definitions
  *
- *   `Node`s represent abstract operations in syntax trees (see: `Tree`).
- *   `NodeList`s are linked-lists of `Node`s.
+ *   `struct node`s represent abstract operations in syntax trees (see: `Tree`).
+ *   `NodeList`s are linked-lists of `struct node`s.
  *
- *   `Node`s have "common" attributes, which is shared amongst all node types,
+ *   `struct node`s have "common" attributes, which is shared amongst all node types,
  *   and type-specific attributes which aren't shared.
  *
  *   Supposing we have three nodes: `N1`, `N2`, `N3`, the NodeList
@@ -81,7 +81,7 @@ extern TYPE OP_TYPES[];
  *       .end ----------'
  *
  */
-struct Node {
+struct node {
                               /* Common attributes */
     struct Sym    *sym;       /* Pointer to symbol table entry */
     Source        *source;    /* Source file this node belongs to */
@@ -98,66 +98,66 @@ struct Node {
         char   chr;
 
         /* TODO: Refactor this into single struct */
-        struct { struct Node  *lval;  struct Node  *rval; } access;
-        struct { struct Node  *lval;  struct Node  *rval; } apply;
-        struct { struct Node  *lval;  struct Node  *rval; } send;
-        struct { struct Node  *lval;  struct Node  *rval; } type;
-        struct { struct Node  *lval;  struct Node  *rval; } range;
-        struct { struct Node  *lval;  struct Node  *rval; } pipe;
-        struct { struct Node  *lval;  struct Node  *rval; } add;
-        struct { struct Node  *lval;  struct Node  *rval; } sub;
-        struct { struct Node  *lval;  struct Node  *rval; } match;
-        struct { struct Node  *lval;  struct Node  *rval; } bind;
-        struct { struct Node  *lval;  struct Node  *rval; } cmp;
-        struct { struct Node  *lval;  struct Node  *rval; } cons;
-        struct { struct Node  *lval;  struct Node  *rval; } binop;
+        struct { struct node  *lval;  struct node  *rval; } access;
+        struct { struct node  *lval;  struct node  *rval; } apply;
+        struct { struct node  *lval;  struct node  *rval; } send;
+        struct { struct node  *lval;  struct node  *rval; } type;
+        struct { struct node  *lval;  struct node  *rval; } range;
+        struct { struct node  *lval;  struct node  *rval; } pipe;
+        struct { struct node  *lval;  struct node  *rval; } add;
+        struct { struct node  *lval;  struct node  *rval; } sub;
+        struct { struct node  *lval;  struct node  *rval; } match;
+        struct { struct node  *lval;  struct node  *rval; } bind;
+        struct { struct node  *lval;  struct node  *rval; } cmp;
+        struct { struct node  *lval;  struct node  *rval; } cons;
+        struct { struct node  *lval;  struct node  *rval; } binop;
 
         struct {
-            struct Node  *proc;
+            struct node  *proc;
         } wait;
 
         struct {
-            struct Node  *apply;
+            struct node  *apply;
         } spawn;
 
         struct {
             PATH          type;
-            struct Node  *name;
-            struct Node  *clause;
+            struct node  *name;
+            struct node  *clause;
         } path;
 
         struct {
-            struct Node     *lval;
-            struct Node     *rval;
+            struct node     *lval;
+            struct node     *rval;
             struct NodeList *guards;
             int             nguards;
         } clause;
 
         struct {
             PATH          type;
-            struct Node  *clause;
+            struct node  *clause;
         } mpath;
 
         struct {
-            struct Node  *module;
-            struct Node  *args;
-            struct Node  *alias;
+            struct node  *module;
+            struct node  *args;
+            struct node  *alias;
         } decl;
 
         struct {
-            struct Node  *path;
+            struct node  *path;
             MODULE        type;
         } module;
 
         struct {
             unsigned        nclauses;
             struct NodeList *clauses;
-            struct Node     *arg;
+            struct node     *arg;
         } select;
 
         struct {
-            struct Node  *decl;
-            struct Node  *def;
+            struct node  *decl;
+            struct node  *def;
         } ident;
 
         struct {
@@ -173,30 +173,29 @@ struct Node {
         struct { struct NodeList *items; } map;
 
         struct {
-            struct Node      *parent;
+            struct node      *parent;
             struct NodeList  *body;
         } block;
     } o;
 };
 
 struct NodeList {
-    struct Node     *head;
+    struct node     *head;
     struct NodeList *tail;
     struct NodeList *end;
     struct NodeList *prev;
 };
 
-typedef  struct Node      Node;
 typedef  struct NodeList  NodeList;
 
-void        pp_node(Node *n);
-void        pp_nodel(Node *n, int lvl);
-void        append(NodeList *list, Node *n);
+void        pp_node(struct node *n);
+void        pp_nodel(struct node *n, int lvl);
+void        append(NodeList *list, struct node *n);
 
-Node       *node(Token *, OP op);
-void        node_free(Node *);
+struct node  *node(Token *, OP op);
+void          node_free(struct node *);
 
-NodeList   *nodelist(Node *head);
+NodeList   *nodelist(struct node *head);
 void        nodelist_free(NodeList *);
 
-int         nodetos(Node *t, char *buff);
+int         nodetos(struct node *t, char *buff);

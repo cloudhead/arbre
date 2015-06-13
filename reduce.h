@@ -11,15 +11,15 @@ typedef struct {
 } Reducer;
 
 static NodeList *reduce_nodelist(Reducer *r, NodeList *ns);
-static Node *reduce_path(Reducer *r, Node *n);
-static Node *reduce_list(Reducer *r, Node *n);
-static Node *reduce_block(Reducer *r, Node *n);
-static Node *reduce_bind(Reducer *r, Node *n);
-static Node *reduce_apply(Reducer *r, Node *n);
-static Node *reduce_select(Reducer *r, Node *n);
-static Node *reduce_pipe(Reducer *r, Node *n);
+static struct node *reduce_path(Reducer *r, struct node *n);
+static struct node *reduce_list(Reducer *r, struct node *n);
+static struct node *reduce_block(Reducer *r, struct node *n);
+static struct node *reduce_bind(Reducer *r, struct node *n);
+static struct node *reduce_apply(Reducer *r, struct node *n);
+static struct node *reduce_select(Reducer *r, struct node *n);
+static struct node *reduce_pipe(Reducer *r, struct node *n);
 
-Node *(*REDUCERS[])(Reducer*, Node*) = {
+struct node *(*REDUCERS[])(Reducer *, struct node *) = {
     [OBLOCK]    =  reduce_block,  [ODECL]     =  NULL,
     [OMATCH]    =  NULL,          [OBIND]     =  reduce_bind,
     [OMODULE]   =  NULL,          [OSELECT]   =  reduce_select,
@@ -38,48 +38,48 @@ Node *(*REDUCERS[])(Reducer*, Node*) = {
 
 #define node_access(l, r) (binop(OACCESS, l, r))
 
-static Node *anode(OP op)
+static struct node *anode(OP op)
 {
-    Node *n   = calloc(1, sizeof(*n));
+    struct node *n   = calloc(1, sizeof(*n));
     n->op     = op;
     return n;
 }
 
-static Node *node_apply(Node *lval, Node *rval)
+static struct node *node_apply(struct node *lval, struct node *rval)
 {
-    Node *n = anode(OAPPLY);
+    struct node *n = anode(OAPPLY);
     n->o.apply.lval = lval;
     n->o.apply.rval = rval;
     return n;
 }
 
-static Node *binop(OP op, Node *lval, Node *rval)
+static struct node *binop(OP op, struct node *lval, struct node *rval)
 {
-    Node *n = anode(op);
+    struct node *n = anode(op);
     n->o.binop.lval = lval;
     n->o.binop.rval = rval;
     return n;
 }
 
-static Node *node_atom(const char *name)
+static struct node *node_atom(const char *name)
 {
-    Node  *n = anode(OATOM);
+    struct node  *n = anode(OATOM);
            n->o.atom = (char *)name;
     return n;
 }
 
-static Node *ntuple(int arity, ...)
+static struct node *ntuple(int arity, ...)
 {
     va_list ap;
 
-    Node  *n = anode(OTUPLE), *e;
+    struct node  *n = anode(OTUPLE), *e;
            n->o.tuple.arity = arity;
            n->o.tuple.members = nodelist(NULL);
 
     va_start(ap, arity);
 
     for (int i = 0; i < arity; i++) {
-        e = va_arg(ap, Node *);
+        e = va_arg(ap, struct node *);
         append(n->o.tuple.members, e);
     }
     va_end(ap);
@@ -87,26 +87,26 @@ static Node *ntuple(int arity, ...)
     return n;
 }
 
-static Node *aapply(const char *module, const char *path, Node *rval)
+static struct node *aapply(const char *module, const char *path, struct node *rval)
 {
     return node_apply(node_access(node_atom(module), node_atom(path)), rval);
 }
 
-static Node *cons(Node *lval, Node *rval)
+static struct node *cons(struct node *lval, struct node *rval)
 {
-    Node *n = anode(OCONS);
+    struct node *n = anode(OCONS);
     n->o.cons.lval = lval;
     n->o.cons.rval = rval;
     return n;
 }
 
-static Node *reduce_pipe(Reducer *r, Node *n)
+static struct node *reduce_pipe(Reducer *r, struct node *n)
 {
-    Node *t = ntuple(2, n->o.pipe.lval, n->o.pipe.rval);
+    struct node *t = ntuple(2, n->o.pipe.lval, n->o.pipe.rval);
     return aapply("io", "pipe", t);
 }
 
-static Node *reduce_list(Reducer *r, Node *n)
+static struct node *reduce_list(Reducer *r, struct node *n)
 {
     if (n->o.list.length == 0)
         return cons(NULL, NULL);
@@ -114,7 +114,7 @@ static Node *reduce_list(Reducer *r, Node *n)
     NodeList *ns = n->o.list.items;
     NodeList *end = ns->end;
 
-    Node *new = NULL;
+    struct node *new = NULL;
 
     while (end) {
         new = cons(end->head, new);
@@ -124,9 +124,9 @@ static Node *reduce_list(Reducer *r, Node *n)
     return new;
 }
 
-static void reduce_node(Reducer *r, Node **n)
+static void reduce_node(Reducer *r, struct node **n)
 {
-    Node *new;
+    struct node *new;
 
     if (*n == NULL)
         return;
@@ -140,40 +140,40 @@ static void reduce_node(Reducer *r, Node **n)
     }
 }
 
-static Node *reduce_bind(Reducer *r, Node *n)
+static struct node *reduce_bind(Reducer *r, struct node *n)
 {
     reduce_node(r, &n->o.bind.lval);
     reduce_node(r, &n->o.bind.rval);
     return n;
 }
 
-static Node *reduce_apply(Reducer *r, Node *n)
+static struct node *reduce_apply(Reducer *r, struct node *n)
 {
     reduce_node(r, &n->o.apply.lval);
     reduce_node(r, &n->o.apply.rval);
     return n;
 }
 
-static Node *reduce_select(Reducer *r, Node *n)
+static struct node *reduce_select(Reducer *r, struct node *n)
 {
     reduce_node(r, &n->o.select.arg);
     reduce_nodelist(r, n->o.select.clauses);
     return n;
 }
 
-static Node *reduce_clause(Reducer *r, Node *n)
+static struct node *reduce_clause(Reducer *r, struct node *n)
 {
     reduce_block(r, n->o.clause.rval);
     return n;
 }
 
-static Node *reduce_path(Reducer *r, Node *n)
+static struct node *reduce_path(Reducer *r, struct node *n)
 {
     reduce_clause(r, n->o.path.clause);
     return n;
 }
 
-static Node *reduce_block(Reducer *r, Node *n)
+static struct node *reduce_block(Reducer *r, struct node *n)
 {
     NodeList *ns = n->o.block.body;
     reduce_nodelist(r, ns);
